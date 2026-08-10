@@ -1,0 +1,24 @@
+# CRM Hackathon — AI Hackathon #01 DEV Edition
+
+> Context tổng hợp cho cuộc thi AI Hackathon #01 nội bộ HBLAB (ngày thi 15/08/2026, chủ đề DEV Edition).
+> Đề bài: xây một module của hệ thống CRM nội bộ HBLAB từ Specs của BTC, dùng AI xuyên suốt vòng đời phát triển.
+> Bộ tài liệu này gộp thể lệ, tiêu chí chấm điểm, nghiệp vụ Sales B2B/ITO, nỗi đau CRM, và nguyên tắc thiết kế AI-native.
+
+## Context chính
+
+- [Context tổng hợp Hackathon](docs/hackathon-context.md): Điểm khởi đầu. Bối cảnh cuộc thi, vì sao BTC tổ chức, bài toán cốt lõi, chiến lược suy ra từ tài liệu, checklist trước ngày thi, câu hỏi cần BTC giải đáp.
+- [Thể lệ & tiêu chí chấm điểm](docs/hackathon-rules-and-scoring.md): Timeline, agenda ngày thi, 3 vòng chấm, rubric 5 giai đoạn × 4 mức, quality gates (bonus/penalty), điều kiện log Claude Code lên Grafana.
+- [Nghiệp vụ Sales B2B ITO & nỗi đau CRM](docs/sales-ito-crm-domain.md): Bối cảnh ITO, từ điển thuật ngữ, phễu bán hàng, signals, ICP, buyer personas, nỗi đau 3 tầng, 5 nguyên tắc vàng khi xây công cụ cho Sales.
+- [Nguyên tắc thiết kế AI-native](docs/ai-native-design-principles.md): Ontology thay ERD, Observation → Claim → Proposal + Provenance, trần tự chủ của AI, playbook & vòng lặp học tập, tháp độ tin cậy nguồn tin, checklist developer.
+
+## Nguồn gốc (Google Drive — nội bộ HBLAB)
+
+- [Folder tài liệu AI Hackathon chủ đề 01](https://drive.google.com/drive/folders/1S5PcEUzsk33u1pngkDmCG4AkH4Yv1UrR): Folder BTC chia sẻ cho các đội thi.
+- [Thể lệ AI HACKATHON #01 – DEV EDITION](https://docs.google.com/document/d/1YjW_nDSiMmb0lR5B35o3jhQW9fs8LPRak6AMWf2oMIw/edit): Thể lệ, agenda, đề bài, tiêu chí 3 vòng chấm. Nằm ngoài folder tài liệu.
+- [1. Business Playbook](https://docs.google.com/document/d/1JQj2wgSKYX73-xoecmDsrNzJLF1fUMKPov8WWKNAqQ4/edit): Sales B2B trong ngành ITO, tài liệu đọc trước dành cho Dev/Tester/BA/PM.
+- [2. Thiết kế phần mềm thế hệ AI Native](https://drive.google.com/file/d/1Zx8SMPBwWxw48k-pVRTJDzI4fD3e6QAI/view): PDF training nội bộ 08/08/2026, bối cảnh dự án AI-native CRM.
+- [3. Checklist chấm điểm AI-Hackathon](https://docs.google.com/spreadsheets/d/1uY-VhETMbuBmOapI4C_f1Za_D2RlHXEGN1EP99cqDVE/edit): Rubric chi tiết 4 mức cho từng giai đoạn + quality gates.
+
+## Optional
+
+- [4. Hỏi đáp thông tin cuộc thi](https://docs.google.com/spreadsheets/d/1T3A3BaUSEOL3iZf5dy_-bb2451-JcL4Zi0aNYHV7SVo/edit): Sheet hỏi BTC. Hiện chỉ có dòng ví dụ, chưa có nội dung.
