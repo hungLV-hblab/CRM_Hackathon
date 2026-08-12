@@ -8,6 +8,7 @@ import {
   ENTRY_TYPE,
   FETCH_STATUS,
   NEXT_STEP_SOURCE,
+  PROPOSAL_STATUS,
   PROPOSAL_TYPE,
   REJECT_REASON,
   SIGNAL_TYPE,
@@ -23,7 +24,7 @@ import {
  * section 8): change the ontology → contracts test goes red → fix `enums.ts` → the next
  * generated migration comes out different.
  *
- * All 11 enums are declared even though the skeleton uses 5: adding a value to a Postgres
+ * All enums are declared even though the skeleton uses 5: adding a value to a Postgres
  * enum later needs `ALTER TYPE`, which costs far more than declaring them once now.
  */
 export const companyTypeEnum = pgEnum('company_type', enumCodes(COMPANY_TYPE))
@@ -31,6 +32,8 @@ export const stageEnum = pgEnum('stage', enumCodes(STAGE))
 export const signalTypeEnum = pgEnum('signal_type', enumCodes(SIGNAL_TYPE))
 export const confidenceEnum = pgEnum('confidence', enumCodes(CONFIDENCE))
 export const proposalTypeEnum = pgEnum('proposal_type', enumCodes(PROPOSAL_TYPE))
+/** ADR-0016 — queue flag only, NOT a mirror of `decision`. Every number reads `decision`. */
+export const proposalStatusEnum = pgEnum('proposal_status', enumCodes(PROPOSAL_STATUS))
 export const decisionEnum = pgEnum('decision', enumCodes(DECISION))
 export const rejectReasonEnum = pgEnum('reject_reason', enumCodes(REJECT_REASON))
 
