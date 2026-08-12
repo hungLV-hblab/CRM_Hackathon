@@ -1,3 +1,7 @@
+import { z } from 'zod'
+
+import type { ClaimDto } from './claim'
+import { TRIGGER_CONTEXT, enumCodes } from '../enums'
 import type { FetchStatus } from '../enums'
 
 /**
@@ -21,4 +25,53 @@ export interface ObservationDto {
   rawContent: string
   rawHtml: string | null
   fetchStatus: FetchStatus
+}
+
+/**
+ * The read zone renders findings UNDER the snapshot they came from, never in a flat list:
+ * that layout is what makes rule 1 checkable by eye — a finding with no snapshot above it has
+ * nowhere to sit.
+ */
+export interface ObservationWithClaimsDto extends ObservationDto {
+  claims: ClaimDto[]
+}
+
+/**
+ * Reading a source again is an explicit act, so the caller says which snapshot to read and
+ * under which context. `triggerContext` is not cosmetic: I-4 forbids a `manual_ingest`
+ * finding from ever becoming a timeline entry, so the value chosen here decides what the
+ * finding is allowed to cause later.
+ */
+export const ingestSnapshotSchema = z.object({
+  /** Which stored snapshot to read. Live crawling is out of scope for this module. */
+  variant: z.enum(['before', 'after']),
+  triggerContext: z.enum(enumCodes(TRIGGER_CONTEXT)).default('manual_ingest'),
+})
+
+export type IngestSnapshotDto = z.infer<typeof ingestSnapshotSchema>
+
+/**
+ * What reading a source produced. Every field here is a number the team has to be able to
+ * defend, per ADR-0014: the share of findings dropped for an unverifiable quote is a METRIC
+ * proving rule 1 is doing something, not a silent failure.
+ */
+export interface IngestResultDto {
+  /** null when the content was unchanged — I-3 means no snapshot row and no LLM call. */
+  observationId: string | null
+  /** True when `content_hash` matched the previous snapshot: "đã đọc, không đổi". */
+  unchanged: boolean
+  /**
+   * `'ai_disabled'` when the kill switch is off and nothing was generated (ADR-0009). Same
+   * vocabulary as `WatchCycleRun.skipped_reason` on purpose: the switch has to stop EVERY
+   * generation path, and reading a source by hand is one of them.
+   */
+  skippedReason: 'ai_disabled' | null
+  /** `failed` means the source could not be read. No findings are produced, none are guessed. */
+  fetchStatus: FetchStatus
+  claimsProposed: number
+  claimsSaved: number
+  /** Dropped because `quoteText` was not a verbatim substring (I-2). */
+  claimsDroppedNoVerbatimQuote: number
+  /** Proposed as `certain` but downgraded by the ADR-0007 gate. */
+  claimsDowngradedFromCertain: number
 }
