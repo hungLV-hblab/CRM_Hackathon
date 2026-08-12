@@ -62,7 +62,8 @@ Test chạy được từ Phase 1 trở đi. Không phase nào coi là xong khi 
 > - (a) Phép đo đột biến trên `updateStage` cho thấy **ADR-0004 chỉ có một lớp chứ không phải hai**: hàm ghi cứng `dbApp` nên quyền theo cột của ADR-0010 không bao giờ được chạm tới — bỏ dòng kiểm `actor` thì lệnh chạy lọt hoàn toàn mà test vẫn xanh. Đã sửa (chọn pool theo `actor`), đo lại: `permission denied for table opportunities`.
 > - (b) ADR-0011 verify bằng chạy thật, và phép đo bắt được lỗi `timer.unref()` biến vòng quét worker thành **vòng restart mỗi ~11s** — log trông gần đúng nên đếm dòng là xanh nhầm.
 > **Luật mới của đội, đã áp cho toàn bộ mã nguồn:** code + comment viết tiếng Anh; chỉ chuỗi hiển thị cho người dùng (nhãn enum ontology 3.5, thông báo lỗi Sales đọc) giữ tiếng Việt. **Tên file luôn tiếng Anh**, ngoại lệ duy nhất là thư mục route Next (chính là đoạn URL). Docs và plan vẫn tiếng Việt.
-> **Chưa commit lần nào.** Toàn bộ `apps/`, `packages/`, `infra/` vẫn ở trạng thái untracked — `git add` trước khi rời máy.
+> **Đã commit** (`0374730 feat: init base with ontology`) — 87 file `apps/`, `packages/`, `infra/` tracked. Nợ này đã trả.
+> **Rà soát checkbox 13/08 01:10 — 4 mục không đạt, để nguyên `[ ]` chứ không tick cho đẹp:** ba phép đo đột biến chưa chạy (enum parity ở P1 · GRANT ở P2 · `@Cron` ở P4) và tiêu chí "domain chỉ import `Injectable`" ở P3 không đạt theo câu chữ (`ForbiddenException`, `Inject` vẫn còn). Sáu điểm nghiệm thu toàn plan không phụ thuộc bốn mục này nên plan vẫn đóng; nhưng ba phép đo đột biến là **luật của đội cho mọi đường ghi mới**, phải chạy cho nhóm 3/4/5.
 
 ```
         ┌─ P2 (A) ─────────────┐

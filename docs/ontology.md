@@ -1,7 +1,7 @@
 # Ontology — AI Native CRM
 
 > Sinh 12/08/2026 từ [template](./ontology-template.md), dựa trên [Specs BTC](./hackathon-spec-ai-native-crm.md) và [phiên phản biện 260812-1742](./ai-sessions/260812-1742-req-phan-bien-de-bai-ai-native-crm.md).
-> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ⬜ chưa có người ngoài người viết đọc lại.
+> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ✅ HungLV đọc lại và chấp nhận 13/08/2026. Sửa file này thì phải duyệt lại.
 > Nền lý thuyết: [ai-native-design-principles.md](./ai-native-design-principles.md).
 >
 > **File này là nguồn sự thật về ĐẶT TÊN và RÀNG BUỘC.** Code không khớp file này là code sai, không phải file sai.
@@ -19,7 +19,7 @@ Người dùng: `Sales` (một tài khoản, sở hữu mọi công ty — khôn
 
 | Đối tượng | Từ trong Specs | Thuộc tính tối thiểu ở module này |
 | --- | --- | --- |
-| `Observation` | bản lưu | `id`, `company_id`, `source_url`, `source_tier`, `captured_at`, `raw_content`, `content_hash`, `fetch_status` |
+| `Observation` | bản lưu | `id`, `company_id`, `source_url`, `source_tier`, `captured_at`, `raw_html`, `raw_content`, `extractor_version`, `content_hash`, `fetch_status`. Bản chụp là HTML: `raw_html` giữ nguyên bản, `raw_content` là text trích ra đã chuẩn hoá — **offset câu trích và `content_hash` tính trên `raw_content`** ([ADR-0012](decisions/0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md)) |
 | `Claim` | phát hiện | `id`, `company_id`, `observation_id`, `statement`, `signal_type`, `confidence`, `quote_text`, `quote_start`, `quote_end`, `trigger_context` |
 | `Proposal` | gợi ý | `id`, `company_id`, `claim_id`, `proposal_type`, `target_field`, `current_value`, `proposed_value`, `impact_if_wrong`, `status` |
 | `Provenance` | câu trích + vị trí | **Không phải bảng riêng — là ràng buộc.** Mọi `Claim` phải trỏ về `Observation` kèm `quote_start`/`quote_end`; mọi `Proposal` phải trỏ về `Claim`. Xem I-1, I-2 |
@@ -223,13 +223,13 @@ Mười chỗ Specs mơ hồ hoặc tự mâu thuẫn, đã quyết xong (12/08)
 - [x] Vùng cấm liệt kê tường minh, có cách chặn hai lớp (mục 5)
 - [x] Có chỗ ghi nhận accept/reject/edit trên từng Proposal (`ProposalDecision`)
 - [x] 10 diễn giải ở mục 9 đã có ADR (0002–0009)
-- [ ] **Người (không phải AI) đã đọc và duyệt file này**
-- [ ] Enum ở 3.5 đã ánh xạ vào code/CSDL thật
-- [ ] Phần thực nghiệm còn nợ trong ADR-0002/0003/0007 đã chạy (một lần đo, ba ADR dùng chung)
+- [x] **Người (không phải AI) đã đọc và duyệt file này** — HungLV, 13/08/2026
+- [x] Enum ở 3.5 đã ánh xạ vào code/CSDL thật — `packages/contracts/src/enums.ts` (16 enum) → `pgEnum` sinh thẳng từ đó, giữ bởi `ontology-enum-parity.test.ts` đọc chính file này
+- [ ] Phần thực nghiệm còn nợ trong ADR-0002/0003/0007 đã chạy (một lần đo, ba ADR dùng chung) — **còn nợ**, trả trong phase nhóm 2 cùng nợ verify của [ADR-0014](decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md)
 
 ## Câu hỏi chưa giải quyết
 
 - ~~Stack TBD → kiểu dữ liệu, biểu diễn enum, cơ chế ràng buộc lớp CSDL.~~ **Đã chốt 12/08:** stack Next.js + NestJS + Drizzle + Postgres; enum dùng `pgEnum` gốc, nguồn sự thật là một file trong `packages/contracts`; ràng buộc lớp CSDL dùng **hai role + GRANT theo cột**, không dùng trigger → [ADR-0010](decisions/0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md).
 - `source_tier` (tháp độ tin cậy 1–6) hiện luôn là "website công ty" → giữ trường nhưng chưa có tầng nào khác; bỏ hẳn hay giữ chỗ, chờ quyết.
-- Bản chụp là HTML hay text (Q-3 gửi BTC) → ảnh hưởng cách tính `quote_start`/`quote_end` (offset trên chuỗi nào).
+- ~~Bản chụp là HTML hay text (Q-3 gửi BTC) → ảnh hưởng cách tính `quote_start`/`quote_end` (offset trên chuỗi nào).~~ **Đã chốt 12/08:** bản chụp lưu HTML; `Observation` giữ cả `raw_html` lẫn `raw_content` (text trích ra), offset và hash tính trên `raw_content`; giao diện hai tab *Văn bản* / *Bản gốc* → [ADR-0012](decisions/0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md).
 - Chưa rõ Admin có được thao tác CRM không (Q-6) → chưa viết được ma trận quyền đầy đủ.

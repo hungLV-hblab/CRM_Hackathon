@@ -69,11 +69,11 @@ plugins: [swc.vite({ module: { type: 'es6' } })]
 
 ## Success Criteria
 
-- [ ] `pnpm install` sạch, không peer warning chặn
-- [ ] `pnpm test` chạy, test enum xanh
-- [ ] Sửa 1 giá trị enum trong `enums.ts` → test **đỏ** (chứng minh test có răng)
-- [ ] Một file `.ts` rỗng trong `apps/api` import được `@crm/contracts` và biên dịch
-- [ ] `.env.example` có đủ `DATABASE_URL_OWNER` / `_APP` / `_SYSTEM`, `JWT_SECRET`, `APP_ROLE`, `WATCH_CYCLE_SECONDS`, `ANTHROPIC_API_KEY`
+- [x] `pnpm install` sạch, không peer warning chặn
+- [x] `pnpm test` chạy, test enum xanh — `contracts/src/__tests__/ontology-enum-parity.test.ts`, 22 test xanh
+- [ ] Sửa 1 giá trị enum trong `enums.ts` → test **đỏ** (chứng minh test có răng) — **chưa chạy**, không có bằng chứng trong báo cáo nghiệm thu
+- [x] Một file `.ts` rỗng trong `apps/api` import được `@crm/contracts` và biên dịch
+- [x] `.env.example` có đủ `DATABASE_URL_OWNER` / `_APP` / `_SYSTEM`, `JWT_SECRET`, `APP_ROLE`, `WATCH_CYCLE_SECONDS`, `ANTHROPIC_API_KEY`
 
 ## Risk Assessment
 

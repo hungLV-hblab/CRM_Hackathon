@@ -66,11 +66,11 @@ Kịch bản 2 là phép đo bác bỏ `@Cron` — nếu đổi sang `@Cron` th�
 
 ## Success Criteria
 
-- [ ] 6 kịch bản xanh
-- [ ] Đổi cài đặt sang `@Cron('*/60 * * * * *')` → kịch bản 2 **đỏ**. Sau đó khôi phục
-- [ ] `APP_ROLE=worker pnpm --filter api start` → log 1 dòng mỗi 60s, **không** mở cổng HTTP
-- [ ] `UPDATE system_settings SET value='10' WHERE key='watch_cycle_seconds'` khi worker đang chạy → nhịp đổi trong ≤1 chu kỳ, không restart *(đây chính là phép đo nợ của ADR-0011)*
-- [ ] Cập nhật mục "Đội đã verify" của ADR-0011 bằng kết quả thật
+- [x] 6 kịch bản xanh — `watch/__tests__/self-scheduling-watch-cycle.test.ts`
+- [ ] Đổi cài đặt sang `@Cron('*/60 * * * * *')` → kịch bản 2 **đỏ**. Sau đó khôi phục — **chưa chạy**
+- [x] `APP_ROLE=worker` → log 1 dòng mỗi 60s, **không** mở cổng HTTP — điểm nghiệm thu 4; phép đo bắt được lỗi `timer.unref()` biến vòng quét thành vòng restart ~11s
+- [x] `UPDATE system_settings SET value='10' WHERE key='watch_cycle_seconds'` khi worker đang chạy → nhịp đổi trong ≤1 chu kỳ, không restart — đo thật lúc `15:05:38`, không có dòng `Starting Nest application` mới
+- [x] Cập nhật mục "Đội đã verify" của ADR-0011 bằng kết quả thật — [ADR-0011](../../docs/decisions/0011-worker-cung-image-va-vong-quet-tu-hen-nhip.md) mục "Đội đã verify bằng cách nào"
 
 ## Risk Assessment
 

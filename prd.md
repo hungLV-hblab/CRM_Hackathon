@@ -20,23 +20,23 @@ Sản phẩm cần làm được hai việc cùng lúc: là một CRM đầy đ�
 
 ## 2. Từ vựng dùng trong tài liệu này
 
-| Từ | Nghĩa |
-|---|---|
-| **Công ty** | Một pháp nhân khách hàng tiềm năng hoặc đang giao dịch |
-| **Loại công ty** | Một trong năm loại khách hàng ITO ở tài liệu đọc trước: Traditional, IT Solution, IT Product, Tech-based/Startup, ITO khác |
-| **Người liên hệ** | Một cá nhân thuộc đúng một công ty |
-| **Cơ hội** | Một thương vụ đang theo đuổi tại một công ty. Một công ty có thể có nhiều cơ hội |
-| **Giai đoạn** | Vị trí của cơ hội trên đường đi tới ký hợp đồng |
-| **Hoạt động** | Một việc đã xảy ra và được ghi lại: gặp mặt, gọi điện, gửi tài liệu, khách phản hồi |
-| **Việc tiếp theo** | Một câu mô tả việc sắp làm cho cơ hội, kèm ngày hạn |
-| **Bản lưu** | Nội dung thô hệ thống đọc được từ một nguồn, giữ nguyên văn kèm thời điểm đọc |
-| **Phát hiện** | Một nhận định ngắn hệ thống rút ra từ bản lưu, luôn kèm câu trích nguyên văn và vị trí trong bản lưu |
-| **Mức chắc chắn** | Ba bậc gắn cho mỗi phát hiện: **Chắc** (trích thẳng, không suy luận), **Có thể** (suy một bước từ nguồn cụ thể), **Đoán** (không có bằng chứng trực tiếp) |
-| **Gợi ý** | Một thay đổi hệ thống muốn thực hiện, trình bày dạng "hiện tại → đề nghị", chờ người quyết |
-| **Đang theo dõi** | Nhãn bật/tắt trên công ty. Công ty mang nhãn này được hệ thống đọc lại nguồn theo chu kỳ |
-| **Sales** | Vai trò người dùng thông thường. Bán hàng hằng ngày |
-| **Quản trị** | Vai trò vận hành. Xem được phần đo lường chất lượng mà Sales không thấy |
-| **Người sở hữu** | Tài khoản Sales chịu trách nhiệm về một công ty và các cơ hội của công ty đó. Dữ liệu mẫu chỉ có một tài khoản Sales, nên mọi công ty đều thuộc về tài khoản đó — đội không phải làm phân quyền theo người sở hữu |
+| Từ                 | Nghĩa                                                                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Công ty**        | Một pháp nhân khách hàng tiềm năng hoặc đang giao dịch                                                                                                                                                            |
+| **Loại công ty**   | Một trong năm loại khách hàng ITO ở tài liệu đọc trước: Traditional, IT Solution, IT Product, Tech-based/Startup, ITO khác                                                                                        |
+| **Người liên hệ**  | Một cá nhân thuộc đúng một công ty                                                                                                                                                                                |
+| **Cơ hội**         | Một thương vụ đang theo đuổi tại một công ty. Một công ty có thể có nhiều cơ hội                                                                                                                                  |
+| **Giai đoạn**      | Vị trí của cơ hội trên đường đi tới ký hợp đồng                                                                                                                                                                   |
+| **Hoạt động**      | Một việc đã xảy ra và được ghi lại: gặp mặt, gọi điện, gửi tài liệu, khách phản hồi                                                                                                                               |
+| **Việc tiếp theo** | Một câu mô tả việc sắp làm cho cơ hội, kèm ngày hạn                                                                                                                                                               |
+| **Bản lưu**        | Nội dung thô hệ thống đọc được từ một nguồn, giữ nguyên văn kèm thời điểm đọc                                                                                                                                     |
+| **Phát hiện**      | Một nhận định ngắn hệ thống rút ra từ bản lưu, luôn kèm câu trích nguyên văn và vị trí trong bản lưu                                                                                                              |
+| **Mức chắc chắn**  | Ba bậc gắn cho mỗi phát hiện: **Chắc** (trích thẳng, không suy luận), **Có thể** (suy một bước từ nguồn cụ thể), **Đoán** (không có bằng chứng trực tiếp)                                                         |
+| **Gợi ý**          | Một thay đổi hệ thống muốn thực hiện, trình bày dạng "hiện tại → đề nghị", chờ người quyết                                                                                                                        |
+| **Đang theo dõi**  | Nhãn bật/tắt trên công ty. Công ty mang nhãn này được hệ thống đọc lại nguồn theo chu kỳ                                                                                                                          |
+| **Sales**          | Vai trò người dùng thông thường. Bán hàng hằng ngày                                                                                                                                                               |
+| **Quản trị**       | Vai trò vận hành. Xem được phần đo lường chất lượng mà Sales không thấy                                                                                                                                           |
+| **Người sở hữu**   | Tài khoản Sales chịu trách nhiệm về một công ty và các cơ hội của công ty đó. Dữ liệu mẫu chỉ có một tài khoản Sales, nên mọi công ty đều thuộc về tài khoản đó — đội không phải làm phân quyền theo người sở hữu |
 
 **Đối chiếu với tài liệu đọc trước.** Sales Playbook gọi tên vài thứ khác đi. **Tín hiệu (Signal)** ở playbook chính là **phát hiện** ở đây — bốn loại kinh điển của playbook là gọi vốn, nhân sự cấp cao, mở rộng, tuyển dụng. **PIC** chính là **đầu mối chính** của công ty. **SQL** là giai đoạn **Đủ điều kiện** của cơ hội. **ICP** không thành một tính năng riêng — phần của nó còn lại trong sản phẩm là trường **loại công ty** và việc nhóm 2 đọc tín hiệu theo loại công ty. Những phần playbook dạy mà đề bài này **không** yêu cầu: soạn message tiếp cận, phân vai buyer persona, nỗi đau ba tầng — vì ranh giới ở mục 5 cấm sản phẩm gửi bất cứ thứ gì ra ngoài.
 
@@ -66,8 +66,8 @@ Bản chụp là tệp nội dung tĩnh nằm trong bộ dữ liệu. **Nguồn 
 - Tạo, sửa, xoá và xem chi tiết **công ty**. Khi tạo, người dùng bắt buộc điền tên, ngành và **loại công ty** (năm loại ở mục 2); những ô còn lại tuỳ chọn và bỏ trống được.
 - Tạo, sửa, xoá **người liên hệ** dưới một công ty. Mỗi người liên hệ có tên, chức danh, thư điện tử. Mỗi công ty đánh dấu được đúng một người là **đầu mối chính** — chính là PIC ở tài liệu đọc trước: người sở hữu nỗi đau, không nhất thiết là người có chức danh cao nhất.
 - Tạo và quản lý **cơ hội** thuộc một công ty, có tên, giá trị dự kiến, tháng dự kiến chốt và giai đoạn hiện tại.
-- Bảy giai đoạn, thứ tự cố định, không cho đội tự đổi tên: **Tiếp cận → Đủ điều kiện → Soạn đề xuất → Thương lượng → Thắng → Thua → Tạm dừng**. Bốn giai đoạn đầu — Tiếp cận, Đủ điều kiện, Soạn đề xuất, Thương lượng — và Tạm dừng tính là *đang mở*; Thắng và Thua là *đã đóng*.
-- **Đủ điều kiện** là chốt chặn quan trọng nhất của phễu (playbook gọi là qualify thành SQL): chỉ theo đuổi tiếp khi kiểm được **cả hai chiều** — khách *cần* (requirement) và khách *chi được* (budget). Khi kéo một cơ hội sang giai đoạn này, màn hình hỏi ngay hai ô: **dấu hiệu nhu cầu** và **dấu hiệu ngân sách**, mỗi ô một câu kèm chỗ ghi nguồn. Bỏ qua được — cơ hội vẫn sang Đủ điều kiện, mang cờ cảnh báo cho tới khi bổ sung. Không chặn thao tác kéo.
+- Bảy giai đoạn, thứ tự cố định, không cho đội tự đổi tên: **Tiếp cận → Đủ điều kiện → Soạn đề xuất → Thương lượng → Thắng → Thua → Tạm dừng**. Bốn giai đoạn đầu — Tiếp cận, Đủ điều kiện, Soạn đề xuất, Thương lượng — và Tạm dừng tính là _đang mở_; Thắng và Thua là _đã đóng_.
+- **Đủ điều kiện** là chốt chặn quan trọng nhất của phễu (playbook gọi là qualify thành SQL): chỉ theo đuổi tiếp khi kiểm được **cả hai chiều** — khách _cần_ (requirement) và khách _chi được_ (budget). Khi kéo một cơ hội sang giai đoạn này, màn hình hỏi ngay hai ô: **dấu hiệu nhu cầu** và **dấu hiệu ngân sách**, mỗi ô một câu kèm chỗ ghi nguồn. Bỏ qua được — cơ hội vẫn sang Đủ điều kiện, mang cờ cảnh báo cho tới khi bổ sung. Không chặn thao tác kéo.
 - Người dùng đổi giai đoạn bằng **kéo thả**, không phải mở biểu mẫu. Đi lùi và nhảy cóc đều được, hệ thống không chặn.
 - Ghi **hoạt động** gắn vào công ty, có ngày, loại, mô tả và người liên hệ liên quan. Hoạt động, việc đổi giai đoạn và ghi chú hiện chung trên **một dòng thời gian của công ty**, mới nhất ở trên.
 - Mỗi cơ hội có **Việc tiếp theo** và **ngày hạn**. Cơ hội đang mở mà thiếu một trong hai ô thì **vẫn lưu được**, nhưng mang một cờ cảnh báo nhìn thấy được và không xuất hiện trong danh sách việc phải làm cho tới khi điền đủ. Không chặn thao tác lưu.
@@ -90,7 +90,7 @@ Bản chụp là tệp nội dung tĩnh nằm trong bộ dữ liệu. **Nguồn 
 - Bản lưu và phát hiện hiện ở **một khu riêng trong màn hình công ty**. Sales xem được khu này. Đây là **vùng đọc**: nội dung ở đây không phải hồ sơ công ty và không phải dòng thời gian.
 - **Cùng một loại tin mang nghĩa khác nhau tuỳ loại công ty** — ví dụ gọi vốn ở một startup là "sắp xây MVP", ở một công ty product là "sắp tăng tốc roadmap". Câu nhận định phải cho thấy tín hiệu đã được đọc dưới góc loại công ty nào.
 - **Việc sinh ra các phát hiện không làm thay đổi bất cứ thứ gì trong hồ sơ công ty, dòng thời gian hay cơ hội.** Phát hiện chỉ là nguyên liệu. Việc chạm vào dữ liệu của Sales là phần việc của nhóm 3 (chờ duyệt), nhóm 4 (tự đặt Việc tiếp theo) và nhóm 5 (vòng quét). Cho phát hiện chạy thẳng lên dòng thời gian là làm nhóm 2 thành nhóm 5.
-- **Không lưu được một phát hiện không có câu trích.** 
+- **Không lưu được một phát hiện không có câu trích.**
 - Bấm vào một phát hiện ở bất cứ đâu nó xuất hiện thì mở đúng đoạn văn gốc trong bản lưu, có đánh dấu, không phải mở cả trang rồi để người tự dò.
 - Ba mức chắc chắn phân biệt được **mà không cần đọc chữ** — bằng ký hiệu hoặc màu, không chỉ bằng nhãn.
 - Đọc lại cùng một nguồn không xoá phát hiện cũ. Phát hiện mới nằm cạnh phát hiện cũ, và mỗi cái mang thời điểm riêng.
@@ -108,7 +108,7 @@ Bản chụp là tệp nội dung tĩnh nằm trong bộ dữ liệu. **Nguồn 
 - Mỗi gợi ý hiện đủ bốn thứ tại chỗ, không phải bấm sang màn hình khác: nội dung dạng **hiện tại → đề nghị**, **câu trích** làm bằng chứng, **mức chắc chắn**, và **một dòng nói rõ hệ quả nếu thông tin này sai**.
 - Ba nút: **Duyệt**, **Sửa rồi duyệt**, **Bỏ**. Bỏ là một thao tác, kèm chọn lý do từ một danh sách ngắn: thông tin sai, đúng nhưng không liên quan, đã cũ, hiểu sai ngữ cảnh, khác. Số thao tác để bỏ không được nhiều hơn số thao tác để duyệt.
 - **Không duyệt thì không có gì xảy ra.** Hồ sơ công ty giữ nguyên vô thời hạn. Gợi ý không tự hết hạn thành hành động, không tự áp dụng sau một khoảng thời gian, không có chế độ tự duyệt.
-- **Sửa rồi duyệt** được ghi lại là *sửa*, không ghi là *duyệt*. Hai con số này phải tách bạch.
+- **Sửa rồi duyệt** được ghi lại là _sửa_, không ghi là _duyệt_. Hai con số này phải tách bạch.
 - Mỗi gợi ý và mỗi lần người dùng quyết đều được lưu: nội dung gợi ý, ai quyết, lúc nào, quyết gì, lý do nếu bỏ, và mất bao nhiêu giây kể từ lúc mở gợi ý tới lúc bấm.
 - Gợi ý đã bị bỏ không sinh lại với cùng nội dung, trừ khi có bản lưu mới.
 - Màn hình danh sách cơ hội và màn hình công ty hiện dấu hiệu "đang có gợi ý chờ duyệt", để người dùng không phải nhớ đi kiểm tra hàng đợi.
@@ -179,20 +179,22 @@ Ba ranh giới đầu phải chặn được kể cả khi thao tác đến từ
 
 Đội phải nộp một bộ kiểm thử tự động chạy được bằng **một lệnh**, phủ đủ 10 điểm dưới đây. Ban giám khảo chạy chính bộ này, cộng với việc thử tay.
 
-| # | Nội dung |
-|---|---|
-| T-1 | Tắt toàn bộ phần AI. Tạo được công ty, người liên hệ, cơ hội; kéo cơ hội qua ba giai đoạn, trong đó có Đủ điều kiện; bỏ qua hai ô dấu hiệu vẫn kéo được và cơ hội mang cờ cảnh báo; ghi hoạt động; tìm kiếm và lọc; mở màn hình tổng quan. Không chức năng nào của nhóm 1 hỏng |
-| T-2 | Không lưu được một phát hiện thiếu câu trích. Thử ghi thẳng, phải bị từ chối |
-| T-3 | Bấm vào một phát hiện thì mở đúng đoạn văn gốc trong bản lưu, có đánh dấu vị trí |
-| T-4 | Sinh một gợi ý rồi không làm gì. Sau ít nhất ba chu kỳ vòng quét, hồ sơ công ty vẫn y nguyên |
-| T-5 | Duyệt một gợi ý, sửa-rồi-duyệt một gợi ý, bỏ một gợi ý. Cả ba đều để lại bản ghi có ai, lúc nào, quyết gì; con số *sửa* không bị cộng vào con số *duyệt* |
-| T-6 | Đổi một công ty đang có cơ hội mở sang phiên bản trang web "sau". Việc tiếp theo của cơ hội tự đổi, có thông báo, và ô mang dấu hiệu do hệ thống đặt |
-| T-7 | Bấm Hoàn tác ở T-6, một cú bấm, giá trị cũ trở lại đúng nguyên trạng. Có bản ghi cho cả lần tự đặt lẫn lần hoàn tác |
-| T-8 | Bật Đang theo dõi cho ba công ty, đổi nguồn của hai công ty. Trong vòng hai chu kỳ, hai mục mới xuất hiện trên dòng thời gian mà không ai bấm gì; Nhật ký vòng quét có dòng tổng kết cho từng vòng |
-| T-9 | Bấm nút tắt toàn bộ phần AI trong lúc vòng quét đang chạy. Hai chu kỳ kế tiếp không thêm mục nào vào dòng thời gian, không sinh gợi ý, không tự đặt Việc tiếp theo; dữ liệu đã sinh còn nguyên; Sales thấy dòng thông báo đang tắt. Bật lại thì vòng quét chạy tiếp, cả hai lần bấm đều có ghi vết |
-| T-10 | Thử đổi giai đoạn, đổi giá trị tiền và xoá một công ty dưới danh nghĩa hệ thống, không đi qua giao diện người dùng. Cả ba đều bị từ chối |
+| #    | Nội dung                                                                                                                                                                                                                                                                                           |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-1  | Tắt toàn bộ phần AI. Tạo được công ty, người liên hệ, cơ hội; kéo cơ hội qua ba giai đoạn, trong đó có Đủ điều kiện; bỏ qua hai ô dấu hiệu vẫn kéo được và cơ hội mang cờ cảnh báo; ghi hoạt động; tìm kiếm và lọc; mở màn hình tổng quan. Không chức năng nào của nhóm 1 hỏng                     |
+| T-2  | Không lưu được một phát hiện thiếu câu trích. Thử ghi thẳng, phải bị từ chối                                                                                                                                                                                                                       |
+| T-3  | Bấm vào một phát hiện thì mở đúng đoạn văn gốc trong bản lưu, có đánh dấu vị trí                                                                                                                                                                                                                   |
+| T-4  | Sinh một gợi ý rồi không làm gì. Sau ít nhất ba chu kỳ vòng quét, hồ sơ công ty vẫn y nguyên                                                                                                                                                                                                       |
+| T-5  | Duyệt một gợi ý, sửa-rồi-duyệt một gợi ý, bỏ một gợi ý. Cả ba đều để lại bản ghi có ai, lúc nào, quyết gì; con số _sửa_ không bị cộng vào con số _duyệt_                                                                                                                                           |
+| T-6  | Đổi một công ty đang có cơ hội mở sang phiên bản trang web "sau". Việc tiếp theo của cơ hội tự đổi, có thông báo, và ô mang dấu hiệu do hệ thống đặt                                                                                                                                               |
+| T-7  | Bấm Hoàn tác ở T-6, một cú bấm, giá trị cũ trở lại đúng nguyên trạng. Có bản ghi cho cả lần tự đặt lẫn lần hoàn tác                                                                                                                                                                                |
+| T-8  | Bật Đang theo dõi cho ba công ty, đổi nguồn của hai công ty. Trong vòng hai chu kỳ, hai mục mới xuất hiện trên dòng thời gian mà không ai bấm gì; Nhật ký vòng quét có dòng tổng kết cho từng vòng                                                                                                 |
+| T-9  | Bấm nút tắt toàn bộ phần AI trong lúc vòng quét đang chạy. Hai chu kỳ kế tiếp không thêm mục nào vào dòng thời gian, không sinh gợi ý, không tự đặt Việc tiếp theo; dữ liệu đã sinh còn nguyên; Sales thấy dòng thông báo đang tắt. Bật lại thì vòng quét chạy tiếp, cả hai lần bấm đều có ghi vết |
+| T-10 | Thử đổi giai đoạn, đổi giá trị tiền và xoá một công ty dưới danh nghĩa hệ thống, không đi qua giao diện người dùng. Cả ba đều bị từ chối                                                                                                                                                           |
 
 ---
+
+.
 
 ## 7. Nộp bài
 

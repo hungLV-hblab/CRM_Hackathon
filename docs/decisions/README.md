@@ -37,6 +37,9 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0014](0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) | Design | Nhóm 2 dùng LLM thật; code kiểm câu trích là chuỗi con và tự tính offset, không khớp thì bỏ claim | Chấp nhận — **nợ verify** |
+| [0013](0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) | Development | Seed bằng dữ liệu tự đặt, không chờ format BTC; chấp nhận effort migrate sau | Chấp nhận |
+| [0012](0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md) | Design | Bản lưu giữ cả HTML gốc và text trích; offset câu trích và hash tính trên text | Chấp nhận |
 | [0011](0011-worker-cung-image-va-vong-quet-tu-hen-nhip.md) | Design | Worker cùng image qua `APP_ROLE`; vòng quét tự hẹn nhịp thay `@Cron` | Chấp nhận |
 | [0010](0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) | Design | Lớp chặn CSDL bằng hai role Postgres + GRANT theo cột, không dùng trigger | Chấp nhận |
 | [0009](0009-pham-vi-nut-tat-ai-chi-dung-sinh-moi.md) | Requirement | Nút tắt AI chỉ dừng việc sinh mới; hàng đợi tồn đọng vẫn duyệt được | Chấp nhận |

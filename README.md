@@ -133,7 +133,7 @@ Collector: `https://otel.hblab.ai:4317` (gRPC, đã kiểm tra sống ngày 12/0
 
 | Người | Config trên máy | Thấy data trên Grafana |
 | --- | --- | --- |
-| HungLV | ✅ đủ 6 biến OTEL | ❓ chưa verify — thiếu URL + tài khoản Grafana, đang chờ BTC |
+| HungLV | ✅ đủ 6 biến OTEL | ✅ đã thấy data trên Grafana (13/08) |
 | *(thành viên 2)* | ❓ chưa biết | ❓ |
 | *(thành viên 3)* | ❓ chưa biết | ❓ |
 

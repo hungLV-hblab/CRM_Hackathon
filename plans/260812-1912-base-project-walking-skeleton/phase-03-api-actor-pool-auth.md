@@ -75,11 +75,11 @@ Ba khẳng định, không phải một: **ném lỗi** · **ghi AuditEvent** ·
 
 ## Success Criteria
 
-- [ ] 3 khẳng định T-10 mini xanh
-- [ ] 4 khẳng định đăng nhập xanh
-- [ ] Bỏ dòng kiểm `actor` trong `updateStage` → test vẫn **đỏ** ở tầng CSDL (chứng minh lớp 2 độc lập, không phải trang trí). Sau đó khôi phục
-- [ ] `POST /companies` + `GET /companies` chạy qua `curl` với cookie
-- [ ] Không service nào ở `domain/` import từ `@nestjs/common` ngoài `Injectable`
+- [x] 3 khẳng định T-10 mini xanh — `t10-mini-system-actor-blocked.test.ts`
+- [x] 4 khẳng định đăng nhập xanh — điểm nghiệm thu 2 (`sales@` 200 · `admin@` 200 · sai mật khẩu 401 · Sales gọi `/api/settings` 403)
+- [x] Bỏ dòng kiểm `actor` trong `updateStage` → test vẫn **đỏ** ở tầng CSDL. Sau đó khôi phục — **phép đo này bắt được lỗi thật**: lần 1 chạy lọt (ghi cứng `dbApp`), sửa xong đo lại ra `permission denied for table opportunities`
+- [x] `POST /companies` + `GET /companies` chạy qua cookie phiên — điểm nghiệm thu 3, qua e2e Playwright trên stack production
+- [ ] Không service nào ở `domain/` import từ `@nestjs/common` ngoài `Injectable` — **không đạt theo đúng câu chữ**: `company-service.ts` và `opportunity-service.ts` còn import `ForbiddenException`, `Inject`. Mục đích (khởi tạo bằng `new`, không boot HTTP) vẫn đạt — T-10 mini chạy đúng kiểu đó. Chốt lại tiêu chí này khi mở nhóm 3/4/5
 
 ## Risk Assessment
 

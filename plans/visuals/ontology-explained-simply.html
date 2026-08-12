@@ -361,7 +361,8 @@
       <div class="step-num">01</div>
       <div>
         <h4>Observation <span class="vn">— bản lưu</span></h4>
-        <p>Hệ thống chụp lại trang web, lưu nguyên văn kèm giờ chụp. Chưa suy diễn gì cả. Đây là dữ liệu thô.</p>
+        <p>Hệ thống chụp lại trang web kèm giờ chụp. Lưu <strong>hai bản</strong>: HTML gốc để làm chứng cứ,
+        và phần chữ trích ra để làm việc. Chưa suy diễn gì cả — đây là dữ liệu thô.</p>
       </div>
     </div>
     <div class="arrow">↓</div>
@@ -413,6 +414,17 @@
     do quỹ Beacon dẫn dắt…
     <span class="meta">quote_start = 412 · quote_end = 488 · hai con số này do <b>code đếm</b>, không hỏi AI</span>
   </div>
+
+  <p>
+    Hai con số đó đếm trên <strong>phần chữ đã trích</strong>, không đếm trên HTML. Đếm trên HTML thì
+    một câu có thẻ nằm giữa — <code>Kanzaki &lt;b&gt;Holdings&lt;/b&gt; hoàn tất vòng Series A</code> —
+    sẽ không bao giờ tìm thấy, và phát hiện đúng bị vứt oan. Hỏng ở đúng chỗ tên công ty in đậm và
+    vòng gọi vốn có link, tức là đúng chỗ tin tức nằm.
+  </p>
+  <p>
+    Bấm vào câu trích thì Sales thấy hai tab: <strong>Văn bản</strong> có highlight (đường truy nguồn thật),
+    và <strong>Bản gốc</strong> hiện trang web đúng như nó vốn có.
+  </p>
 
   <p>
     Đây không phải chi tiết vặt. Nếu để AI tự khai vị trí, nó có thể diễn đạt lại câu văn cho mượt
@@ -565,7 +577,8 @@
     <li>Làm bảy bảng còn thiếu theo thứ tự nào — theo luồng dữ liệu (bản lưu → phát hiện → gợi ý → duyệt),
       hay theo màn hình demo (dựng hàng đợi duyệt trước)?</li>
     <li><code>contacts</code> có vào demo vòng 1 không, hay để cột <code>contact_id</code> treo tới sau hackathon?</li>
-    <li>Bản chụp lưu dạng HTML hay text? Câu hỏi này quyết định vị trí ký tự của câu trích đếm trên chuỗi nào.</li>
+    <li><s>Bản chụp lưu dạng HTML hay text?</s> <strong>Chốt 12/08:</strong> lưu HTML, kèm bản chữ trích ra;
+      offset và hash đếm trên bản chữ — ADR-0012.</li>
     <li>Ontology vẫn <strong>chưa có ai ngoài người viết đọc và duyệt</strong>. Đây là điều kiện bắt buộc trong
       Definition of Done, và vòng 2 sẽ hỏi random dựa trên nó.</li>
   </ul>
