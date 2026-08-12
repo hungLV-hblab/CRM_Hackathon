@@ -1,0 +1,244 @@
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { desc, eq } from 'drizzle-orm'
+
+import {
+  CLAIM_EXTRACTOR,
+  type ClaimExtractor,
+  type FetchStatus,
+  type IngestResultDto,
+  type ObservationDto,
+  type ObservationWithClaimsDto,
+  type TriggerContext,
+} from '@crm/contracts'
+import { type CrmDatabase, companies, observations } from '@crm/db'
+
+import { ClaimService } from '../claim/claim-service'
+import { DRIZZLE_APP, DRIZZLE_SYSTEM } from '../../common/db/db.module'
+import { DemoSnapshotSource, type SnapshotVariant } from '../../ai/demo-snapshots'
+import { SystemSettingService } from '../../settings/system-setting-service'
+import {
+  EXTRACTOR_VERSION,
+  hashSnapshotContent,
+  normalizeSnapshotText,
+} from '../../ai/normalize-snapshot-text'
+
+/**
+ * Nothing read, nothing generated. Every zero here is a real zero, not a placeholder: rule 4
+ * of CLAUDE.md — an empty answer beats a plausible one.
+ */
+const EMPTY_RESULT: IngestResultDto = {
+  observationId: null,
+  unchanged: false,
+  skippedReason: null,
+  fetchStatus: 'ok',
+  claimsProposed: 0,
+  claimsSaved: 0,
+  claimsDroppedNoVerbatimQuote: 0,
+  claimsDowngradedFromCertain: 0,
+}
+
+/**
+ * Autonomy zone 1 — reading a source and recording what it said. The AI does this freely
+ * because nothing here touches Sales' official data, and this class has no way to reach it:
+ * it can insert into `observations` and it can ask `ClaimService` for findings. That is all.
+ *
+ * Writes use `DRIZZLE_SYSTEM` even when a human pressed the button. Creating an `Observation`
+ * is an act of the AI branch, so the AI identity is the writer regardless of who triggered it
+ * — and `crm_system` holds INSERT on exactly `observations` and `claims`, nothing else.
+ */
+@Injectable()
+export class ObservationService {
+  private readonly logger = new Logger('ObservationService')
+
+  constructor(
+    @Inject(DRIZZLE_SYSTEM) private readonly dbSystem: CrmDatabase,
+    @Inject(DRIZZLE_APP) private readonly dbApp: CrmDatabase,
+    @Inject(CLAIM_EXTRACTOR) private readonly extractor: ClaimExtractor,
+    private readonly claims: ClaimService,
+    private readonly snapshots: DemoSnapshotSource,
+    private readonly settings: SystemSettingService,
+  ) {}
+
+  /**
+   * Read a company's source once.
+   *
+   * I-3 is enforced HERE rather than by a unique index, per ADR-0017: the invariant is
+   * "different from the MOST RECENT snapshot", and a unique index on
+   * `(company_id, content_hash)` says "different from every snapshot ever", which also rejects
+   * the before → after → before sequence a judge produces when replaying the T-6/T-8 script a
+   * second time.
+   *
+   * The expensive half of I-3 is the LLM call, so the comparison happens BEFORE the extractor
+   * is touched. The test asserts the extractor was called zero times — asserting only "no new
+   * row" would leave a version that still pays for the call every 60 seconds.
+   */
+  async ingest(
+    companyId: string,
+    variant: SnapshotVariant,
+    triggerContext: TriggerContext,
+  ): Promise<IngestResultDto> {
+    /**
+     * ADR-0009 — the AI kill switch stops NEW generation, and reading a source by hand is a
+     * generation path just like the watch cycle. Checked first, and read fresh from the
+     * database every call for the same reason the worker does: a cached value would make the
+     * switch take effect "eventually", which is not what T-9 asks for.
+     */
+    const parameters = await this.settings.read()
+    if (!parameters.aiEnabled) {
+      this.logger.log(`Bỏ qua đọc nguồn công ty ${companyId}: AI đang tắt`)
+      return { ...EMPTY_RESULT, skippedReason: 'ai_disabled' }
+    }
+
+    const company = await this.loadCompanyForReading(companyId)
+    const snapshot = this.snapshots.read(companyId, variant)
+
+    if (!snapshot) {
+      return this.recordUnreadableSource(companyId)
+    }
+
+    const rawContent = normalizeSnapshotText(snapshot.rawHtml)
+    const contentHash = hashSnapshotContent(rawContent)
+
+    const latest = await this.latestObservation(companyId)
+    if (latest?.contentHash === contentHash) {
+      this.logger.log(`Đã đọc, không đổi: công ty ${companyId} — không tạo bản lưu, không gọi LLM`)
+      return { ...EMPTY_RESULT, unchanged: true }
+    }
+
+    const [created] = await this.dbSystem
+      .insert(observations)
+      .values({
+        companyId,
+        sourceUrl: snapshot.sourceUrl,
+        rawHtml: snapshot.rawHtml,
+        rawContent,
+        contentHash,
+        extractorVersion: EXTRACTOR_VERSION,
+        fetchStatus: 'ok',
+      })
+      .returning()
+
+    const drafts = await this.extractor.extract({
+      id: created.id,
+      companyId,
+      rawContent,
+      // ontology section 4: a finding is read under the lens of the company type.
+      companyType: company.companyType,
+      triggerContext,
+    })
+
+    const result = await this.claims.saveDrafts(
+      created.id,
+      companyId,
+      rawContent,
+      triggerContext,
+      drafts,
+    )
+
+    this.logger.log(
+      `Bản lưu ${created.id}: ${result.saved.length}/${result.proposed} phát hiện được lưu, ` +
+        `${result.droppedNoVerbatimQuote} bỏ vì câu trích không khớp, ` +
+        `${result.downgradedFromCertain} hạ mức Chắc`,
+    )
+
+    return {
+      observationId: created.id,
+      unchanged: false,
+      skippedReason: null,
+      fetchStatus: 'ok',
+      claimsProposed: result.proposed,
+      claimsSaved: result.saved.length,
+      claimsDroppedNoVerbatimQuote: result.droppedNoVerbatimQuote,
+      claimsDowngradedFromCertain: result.downgradedFromCertain,
+    }
+  }
+
+  /** The read zone: snapshots newest first, each with the findings drawn from it. */
+  async readingZone(companyId: string): Promise<ObservationWithClaimsDto[]> {
+    const rows = await this.dbApp
+      .select()
+      .from(observations)
+      .where(eq(observations.companyId, companyId))
+      .orderBy(desc(observations.capturedAt))
+
+    return Promise.all(
+      rows.map(async (row) => ({
+        ...toDto(row),
+        claims: await this.claims.listForObservation(row.id),
+      })),
+    )
+  }
+
+  /**
+   * ontology 3.5 — an unreadable source is recorded as `failed`, never guessed. So a row IS
+   * written (the attempt is a fact worth keeping) with empty content and no findings at all.
+   *
+   * I-3 deliberately does NOT apply to this path. I-3 exists to stop timeline spam and LLM
+   * cost, and a failed read causes neither; treating a second failure as "đã đọc, không đổi"
+   * would hide an ongoing outage behind a reassuring log line.
+   */
+  private async recordUnreadableSource(companyId: string): Promise<IngestResultDto> {
+    const sourceUrl = this.snapshots.sourceUrlFor(companyId) ?? 'unknown'
+    const [created] = await this.dbSystem
+      .insert(observations)
+      .values({
+        companyId,
+        sourceUrl,
+        rawHtml: null,
+        rawContent: '',
+        contentHash: hashSnapshotContent(''),
+        extractorVersion: EXTRACTOR_VERSION,
+        fetchStatus: 'failed',
+      })
+      .returning()
+
+    this.logger.warn(`Không đọc được nguồn của công ty ${companyId} — ghi fetch_status=failed`)
+
+    return {
+      observationId: created.id,
+      unchanged: false,
+      skippedReason: null,
+      fetchStatus: 'failed',
+      claimsProposed: 0,
+      claimsSaved: 0,
+      claimsDroppedNoVerbatimQuote: 0,
+      claimsDowngradedFromCertain: 0,
+    }
+  }
+
+  private async latestObservation(companyId: string) {
+    const [latest] = await this.dbSystem
+      .select({ contentHash: observations.contentHash })
+      .from(observations)
+      .where(eq(observations.companyId, companyId))
+      .orderBy(desc(observations.capturedAt))
+      .limit(1)
+
+    return latest
+  }
+
+  /** Read under the AI identity: `crm_system` holds SELECT on `companies` and nothing more. */
+  private async loadCompanyForReading(companyId: string) {
+    const [company] = await this.dbSystem
+      .select({ id: companies.id, companyType: companies.companyType })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1)
+
+    if (!company) throw new NotFoundException('Không tìm thấy công ty')
+    return company
+  }
+}
+
+function toDto(row: typeof observations.$inferSelect): ObservationDto {
+  return {
+    id: row.id,
+    companyId: row.companyId,
+    sourceUrl: row.sourceUrl,
+    sourceTier: row.sourceTier,
+    capturedAt: row.capturedAt.toISOString(),
+    rawContent: row.rawContent,
+    rawHtml: row.rawHtml,
+    fetchStatus: row.fetchStatus as FetchStatus,
+  }
+}
