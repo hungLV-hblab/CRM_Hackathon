@@ -1,5 +1,3 @@
-docs/*
-plans/*
 assets/*
 dist/*
 coverage/*
@@ -12,7 +10,6 @@ __pycache__/*
 node_modules/*
 
 .opencode/*
-.claude/*
 .serena/*
 .pnpm-store/*
 .github/*

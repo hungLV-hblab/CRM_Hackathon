@@ -1,8 +1,26 @@
 # CRM Hackathon — AI Hackathon #01 DEV Edition
 
 > Context tổng hợp cho cuộc thi AI Hackathon #01 nội bộ HBLAB (ngày thi 15/08/2026, chủ đề DEV Edition).
-> Đề bài: xây một module của hệ thống CRM nội bộ HBLAB từ Specs của BTC, dùng AI xuyên suốt vòng đời phát triển.
-> Bộ tài liệu này gộp thể lệ, tiêu chí chấm điểm, nghiệp vụ Sales B2B/ITO, nỗi đau CRM, và nguyên tắc thiết kế AI-native.
+> Đề bài (phát 12/08/2026): xây **"AI Native CRM"** — một CRM B2B dùng tay được trọn vẹn, cộng một lớp AI đọc nguồn công khai rồi chủ động đẩy thông tin vào đúng chỗ. Sáu nhóm tính năng, bốn ranh giới cứng, mười điểm nghiệm thu chạy bằng một lệnh.
+> Bộ tài liệu này gộp đề bài, thể lệ, tiêu chí chấm điểm, nghiệp vụ Sales B2B/ITO, nỗi đau CRM, và nguyên tắc thiết kế AI-native.
+
+## Đề bài (nguồn sự thật số 1)
+
+- [Đề bài "AI Native CRM"](docs/hackathon-spec-ai-native-crm.md): Specs BTC nguyên văn. Bối cảnh nghiệp vụ (2 nỗi đau: hồ sơ công ty luôn cũ, gõ lại thông tin ăn hết thời gian), từ vựng đề bài, bộ dữ liệu mẫu, 6 nhóm tính năng, ranh giới, bộ nghiệm thu T-1..T-10, yêu cầu nộp bài.
+
+Bản đồ nhanh vào đề bài — dùng khi cần tìm đúng mục:
+
+- **Mục 2 — Từ vựng:** công ty · loại công ty (5 loại ITO) · người liên hệ · cơ hội · giai đoạn · hoạt động · việc tiếp theo · **bản lưu** (snapshot) · **phát hiện** (signal) · **mức chắc chắn** (Chắc/Có thể/Đoán) · **gợi ý** (proposal) · Đang theo dõi · Sales/Quản trị. Kèm bảng đối chiếu với Sales Playbook (Signal↔phát hiện, PIC↔đầu mối chính, SQL↔Đủ điều kiện).
+- **Mục 3 — Dữ liệu:** 12–15 công ty, ~30 người liên hệ, 8 cơ hội, mỗi công ty 2 bản chụp web "trước"/"sau". Nguồn web = bản chụp tĩnh, **không** crawl web thật. Đổi trước→sau là cách kích hoạt mọi kịch bản AI.
+- **Nhóm 1 — CRM làm tay:** CRUD công ty/người liên hệ/cơ hội, 7 giai đoạn cố định (Tiếp cận → Đủ điều kiện → Soạn đề xuất → Thương lượng → Thắng → Thua → Tạm dừng), kéo thả đổi giai đoạn, cờ cảnh báo thay vì chặn thao tác, dòng thời gian công ty, tìm kiếm/lọc, màn hình tổng quan. **Tắt sạch AI vẫn chạy đủ.**
+- **Nhóm 2 — Đọc nguồn & rút phát hiện:** bản lưu nguyên văn + phát hiện có câu trích và vị trí trong bản lưu; không câu trích thì không lưu được; 3 mức chắc chắn phân biệt được không cần đọc chữ; phát hiện **không** chạm hồ sơ/dòng thời gian.
+- **Nhóm 3 — Hàng đợi gợi ý:** hiện tại → đề nghị, câu trích, mức chắc chắn, hệ quả nếu sai; 3 nút Duyệt / Sửa rồi duyệt / Bỏ (kèm lý do); không duyệt thì không có gì xảy ra; *sửa* tách bạch khỏi *duyệt*; đo thời gian quyết.
+- **Nhóm 4 — Tự đặt Việc tiếp theo:** vùng AI được tự làm. Tự điền Việc tiếp theo + ngày hạn theo độ gấp của loại tín hiệu, kèm câu trích, có thông báo, **Hoàn tác một cú bấm trong 7 ngày**, ghi vết cả 2 chiều; không đè lên ô người gõ chưa tới hạn.
+- **Nhóm 5 — Vòng quét Đang theo dõi:** vòng lặp khép kín đọc lại nguồn → so bản lưu → rút phát hiện → tự thêm mục dòng thời gian gắn nhãn "do hệ thống thêm"; chu kỳ cấu hình được, mặc định 60s; Nhật ký vòng quét mỗi vòng + tổng hợp mỗi 10 vòng.
+- **Nhóm 6 — Bảng điều khiển Quản trị:** metric (phân bố mức chắc chắn, tỉ lệ duyệt/sửa/bỏ + lý do, thời gian quyết, tỉ lệ hoàn tác), chỉnh chu kỳ vòng quét, **nút tắt toàn bộ AI** có hiệu lực ngay và Sales thấy trạng thái tắt.
+- **Mục 5 — Ranh giới cứng:** không tự đổi giai đoạn · không tự đánh Thắng/Thua hay sửa giá trị tiền · không tự liên hệ khách · không tự xoá dữ liệu do người tạo. Ba ranh giới đầu phải chặn được cả khi thao tác đến **ngoài giao diện** (T-10).
+- **Mục 6 — Nghiệm thu:** T-1..T-10, một lệnh chạy hết. BGK chạy chính bộ này.
+- **Mục 7 — Nộp bài:** GitLab HBLAB · log Claude Code lên Grafana · chạy ở cấu hình production on-premise (không dev server, config qua env, DB thật, 2 tài khoản đăng nhập, khởi động 1 lệnh) · bộ test 1 lệnh · seed dữ liệu 1 lệnh và idempotent.
 
 ## Context chính
 
@@ -10,6 +28,18 @@
 - [Thể lệ & tiêu chí chấm điểm](docs/hackathon-rules-and-scoring.md): Timeline, agenda ngày thi, 3 vòng chấm, rubric 5 giai đoạn × 4 mức, quality gates (bonus/penalty), điều kiện log Claude Code lên Grafana.
 - [Nghiệp vụ Sales B2B ITO & nỗi đau CRM](docs/sales-ito-crm-domain.md): Bối cảnh ITO, từ điển thuật ngữ, phễu bán hàng, signals, ICP, buyer personas, nỗi đau 3 tầng, 5 nguyên tắc vàng khi xây công cụ cho Sales.
 - [Nguyên tắc thiết kế AI-native](docs/ai-native-design-principles.md): Ontology thay ERD, Observation → Claim → Proposal + Provenance, trần tự chủ của AI, playbook & vòng lặp học tập, tháp độ tin cậy nguồn tin, checklist developer.
+
+Ánh xạ từ vựng đề bài ↔ ontology của đội (mục 3 CLAUDE.md): bản lưu → `Observation` · phát hiện → `Claim` · gợi ý → `Proposal` · câu trích + vị trí trong bản lưu → `Provenance`.
+
+## Rule file & lưu vết quyết định (đội dùng chung)
+
+- [CLAUDE.md](CLAUDE.md): Rule file dùng chung — 7 luật bất di bất dịch, từ vựng ontology, trần tự chủ AI, quy trình làm việc với AI, convention, Definition of Done.
+- [Ontology của module](docs/ontology.md): **Nguồn sự thật về đặt tên và ràng buộc.** Thực thể + enum cố định (7 giai đoạn, 6 loại tin, 3 mức chắc chắn, 5 lý do bỏ), quan hệ có tên, trần tự chủ 4 vùng + vùng cấm chặn 2 lớp, **14 bất biến code phải enforce**, công thức auto-accept / error-detection rate, 10 diễn giải Specs đã chốt bằng ADR-0002…0009.
+- [Phản biện đề bài 12/08](docs/ai-sessions/260812-1742-req-phan-bien-de-bai-ai-native-crm.md): 4 persona × 38 chất vấn, 15 điểm mơ hồ, 18 edge case, 7 user story kèm AC, 8 câu hỏi gửi BTC, đề xuất cắt scope 40%.
+- [Template ontology](docs/ontology-template.md): Khung gốc để sinh file trên.
+- [Nhật ký quyết định (ADR)](docs/decisions/README.md): Khi nào viết ADR, template, chỉ mục. Bắt buộc ghi phương án bị loại + cách đội verify.
+- [Prompt log & phiên phản biện](docs/ai-sessions/README.md): Nơi lưu quá trình làm việc với AI dạng đọc được.
+- Lệnh dùng chung: `/hack:req-challenge` (persona phản biện yêu cầu) · `/hack:design-challenge` (virtual architect + decision matrix) · `/hack:adr` (chốt ADR).
 
 ## Nguồn gốc (Google Drive — nội bộ HBLAB)
 
