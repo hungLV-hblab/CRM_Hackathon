@@ -1,3 +1,7 @@
 export * from './enums'
 export * from './ports/claim-extractor'
 export * from './dto/company'
+export * from './dto/observation'
+export * from './dto/claim'
+export * from './dto/proposal'
+export * from './dto/notification'

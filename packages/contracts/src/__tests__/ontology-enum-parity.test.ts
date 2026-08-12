@@ -10,10 +10,15 @@ import { ENUMS } from '../enums'
  * docs/ontology.md at run time and compares it with the objects in enums.ts. Change one
  * side and forget the other and it goes red.
  *
- * Known limitation, stated plainly: the ontology only declares display labels for 7 of the
- * 11 rows. For the other four (next_step_source·created_by, trigger_context, entry_type,
+ * Known limitation, stated plainly: the ontology only declares display labels for 8 of the
+ * 12 rows. For the other four (next_step_source·created_by, trigger_context, entry_type,
  * fetch_status) the "Hiển thị" cell is a note, not a label list — so only the CODES are
  * guarded there. Those labels are ours and have no source to check against.
+ *
+ * Second known limitation, and it cost a real bug: this test compares section 3.5 against
+ * enums.ts, but it does NOT check that every enum-typed COLUMN named in sections 3.1–3.4 has
+ * a row in 3.5. `proposals.status` was listed in 3.2 with no 3.5 row and no enum in code for
+ * a full day without anything going red.
  */
 
 interface OntologyEnumRow {
@@ -75,8 +80,8 @@ export function readEnumTableFromOntology(content: string): OntologyEnumRow[] {
 const table = readEnumTableFromOntology(readFileSync(ONTOLOGY_PATH, 'utf8'))
 
 describe('enums.ts matches the section 3.5 table of ontology.md', () => {
-  it('reads exactly 11 enum rows from the ontology', () => {
-    expect(table).toHaveLength(11)
+  it('reads exactly 12 enum rows from the ontology', () => {
+    expect(table).toHaveLength(12)
   })
 
   it.each(table.flatMap((row) => row.names.map((name) => ({ name, row }))))(
