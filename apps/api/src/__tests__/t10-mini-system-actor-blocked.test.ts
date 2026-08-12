@@ -1,7 +1,7 @@
 import { Pool } from 'pg'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 
-import { createConnection } from '@crm/db'
+import { createConnection, resetTestDatabase } from '@crm/db'
 
 import { SYSTEM_ACTOR, humanActor } from '../common/actor/actor-context'
 import { AuditEventService } from '../common/audit/audit-event-service'
@@ -31,9 +31,7 @@ const audit = new AuditEventService(appConnection.db, systemConnection.db)
 const opportunityService = new OpportunityService(appConnection.db, systemConnection.db, audit)
 
 beforeEach(async () => {
-  await owner.query(
-    'TRUNCATE TABLE audit_events, watch_cycle_runs, timeline_entries, opportunities, companies, system_settings, users RESTART IDENTITY CASCADE',
-  )
+  await resetTestDatabase(owner)
   await owner.query(
     `INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, 'sales@test.local', 'x', 'Sales', 'sales')`,
     [USER_ID],
