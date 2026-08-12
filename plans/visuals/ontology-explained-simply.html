@@ -1,0 +1,594 @@
+<title>Ontology vào code — giải thích dễ hiểu</title>
+
+<style>
+  /* ── Tokens: bảng màu "mực trên giấy kỹ thuật" — nền xám ngả xanh, mực navy,
+     một điểm nhấn xanh thông duy nhất. Xanh lá = đã có, gạch nung = còn nợ. ── */
+  :root {
+    --paper:      #F1F4F6;
+    --surface:    #FFFFFF;
+    --surface-2:  #E8EDF0;
+    --ink:        #16222B;
+    --ink-soft:   #51636E;
+    --rule:       #D3DCE1;
+    --accent:     #0E6B60;
+    --accent-bg:  #DEEDEA;
+    --ok:         #1C6B58;
+    --ok-bg:      #DEEDE8;
+    --gap:        #A2402D;
+    --gap-bg:     #F5E4E0;
+    --code-bg:    #E6ECEF;
+    --shadow:     0 1px 2px rgba(22,34,43,.06), 0 8px 24px rgba(22,34,43,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #10171A;
+      --surface:   #182126;
+      --surface-2: #1F2A30;
+      --ink:       #E3EBEE;
+      --ink-soft:  #9DB0B9;
+      --rule:      #2B383F;
+      --accent:    #4FB3A2;
+      --accent-bg: #16302E;
+      --ok:        #4FB3A2;
+      --ok-bg:     #16302E;
+      --gap:       #E0836E;
+      --gap-bg:    #33211C;
+      --code-bg:   #1D272C;
+      --shadow:    0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #10171A;
+    --surface:   #182126;
+    --surface-2: #1F2A30;
+    --ink:       #E3EBEE;
+    --ink-soft:  #9DB0B9;
+    --rule:      #2B383F;
+    --accent:    #4FB3A2;
+    --accent-bg: #16302E;
+    --ok:        #4FB3A2;
+    --ok-bg:     #16302E;
+    --gap:       #E0836E;
+    --gap-bg:    #33211C;
+    --code-bg:   #1D272C;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 20px 96px;
+  }
+
+  .wrap { max-width: 46rem; margin: 0 auto; }
+
+  /* ── Đầu trang ── */
+  header.top {
+    padding: 56px 0 32px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: clamp(2rem, 5.5vw, 2.9rem);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0 0 16px;
+  }
+  .standfirst {
+    font-size: 1.12rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 34rem;
+  }
+
+  h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.55rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+    margin: 56px 0 4px;
+  }
+  h2 + .sub { color: var(--ink-soft); margin: 0 0 24px; }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 650;
+    margin: 32px 0 8px;
+  }
+  p { margin: 0 0 16px; }
+  strong { font-weight: 650; }
+
+  code {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .86em;
+    background: var(--code-bg);
+    padding: .12em .38em;
+    border-radius: 3px;
+  }
+
+  /* ── Câu chốt: một dòng nổi bật, dùng rất tiết chế ── */
+  .keyline {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-bg);
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 1.05rem;
+  }
+  .keyline p:last-child { margin: 0; }
+
+  /* ── Dòng chảy câu chuyện ── */
+  .flow {
+    display: grid;
+    gap: 12px;
+    margin: 28px 0 8px;
+    counter-reset: step;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr;
+    gap: 16px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .step-num {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .8rem;
+    color: var(--accent);
+    padding-top: .28rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .step h4 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 650;
+  }
+  .step h4 .vn {
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .step p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+  .arrow {
+    text-align: center;
+    color: var(--rule);
+    font-size: 1.1rem;
+    line-height: 1;
+    margin: -6px 0;
+  }
+
+  /* ── Ô trích dẫn minh hoạ provenance ── */
+  .snippet {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin: 20px 0;
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .84rem;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .snippet mark {
+    background: var(--accent-bg);
+    color: var(--ink);
+    border-bottom: 2px solid var(--accent);
+    padding: .1em 0;
+  }
+  .snippet .meta {
+    display: block;
+    margin-top: 12px;
+    color: var(--ink-soft);
+    font-size: .78rem;
+  }
+
+  /* ── Bốn cửa ── */
+  .gates { display: grid; gap: 14px; margin: 28px 0; }
+  .gate {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .gate-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .gate-head h3 { margin: 0; font-size: 1.05rem; }
+  .gate-head .where {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .74rem;
+    color: var(--ink-soft);
+  }
+  .gate p { margin: 0 0 10px; }
+  .gate p:last-child { margin: 0; }
+  .catches {
+    font-size: .92rem;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--rule);
+    padding-top: 10px;
+    margin-top: 12px;
+  }
+  .catches b { color: var(--ink); font-weight: 650; }
+
+  /* ── Chip trạng thái ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .74rem;
+    font-weight: 650;
+    letter-spacing: .02em;
+    padding: .2em .6em;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill.done { background: var(--ok-bg); color: var(--ok); }
+  .pill.todo { background: var(--gap-bg); color: var(--gap); }
+
+  .status { display: grid; gap: 20px; margin: 24px 0; }
+  @media (min-width: 640px) { .status { grid-template-columns: 1fr 1fr; } }
+  .status-col h3 { margin: 0 0 12px; }
+  .status-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .status-col li {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .84rem;
+    padding: 7px 12px;
+    border-radius: 3px;
+    background: var(--surface-2);
+  }
+  .status-col li span { color: var(--ink-soft); font-family: "Segoe UI", sans-serif; }
+
+  /* ── Danh sách việc phải làm ── */
+  ol.recipe { padding-left: 1.3rem; display: grid; gap: 10px; margin: 20px 0; }
+  ol.recipe li::marker { color: var(--accent); font-weight: 650; }
+  ol.recipe li { padding-left: .2rem; }
+
+  ul.plain { padding-left: 1.15rem; display: grid; gap: 8px; margin: 16px 0; }
+  ul.plain li::marker { color: var(--accent); }
+
+  .warn {
+    background: var(--gap-bg);
+    border-left: 3px solid var(--gap);
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .warn p:last-child { margin: 0; }
+  .warn .label {
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gap);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  footer.end {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-size: .9rem;
+  }
+
+  /* ── Nút đổi nền sáng/tối ── */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: .78rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<button class="theme-toggle" type="button" aria-label="Đổi nền sáng tối">Sáng / Tối</button>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">CRM Hackathon · giải thích cho cả đội</p>
+    <h1>Ontology vào code như thế nào</h1>
+    <p class="standfirst">
+      Ontology là quyển từ điển của đội. Trang này nói nó biến thành code chạy được bằng cách nào,
+      và đội đang đứng ở đâu trên đường đó.
+    </p>
+  </header>
+
+  <h2>Ontology là cái gì, nói cho gọn</h2>
+  <p class="sub">Một câu thôi.</p>
+
+  <div class="keyline">
+    <p><code>docs/ontology.md</code> quy định <strong>gọi mọi thứ bằng tên gì</strong> và
+    <strong>AI được phép làm gì</strong>. Code không khớp file đó là code sai, không phải file sai.</p>
+  </div>
+
+  <p>
+    Vấn đề của mọi ontology: nó nằm trong một file Markdown, mà file Markdown thì không chặn được ai cả.
+    Viết "AI không được đổi giai đoạn deal" trong file <code>.md</code> đúng bằng dán tờ giấy lên tường —
+    ai đọc thì biết, code thì không.
+  </p>
+  <p>
+    Nên cách cài ontology vào dự án là dựng <strong>bốn cái cửa</strong>. Mỗi cửa chặn một kiểu sai khác nhau.
+    Đi qua hết bốn cửa thì từ điển mới có răng.
+  </p>
+
+  <h2>Trước hết: một tin đi xuyên hệ thống</h2>
+  <p class="sub">Bám theo đúng một ví dụ sẽ dễ hiểu hơn mọi sơ đồ.</p>
+
+  <p>
+    Giả sử website công ty Kanzaki đăng tin họ vừa gọi vốn Series A. Đây là đường đi của tin đó,
+    và cũng chính là bốn cái tên trong ontology.
+  </p>
+
+  <div class="flow">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div>
+        <h4>Observation <span class="vn">— bản lưu</span></h4>
+        <p>Hệ thống chụp lại trang web, lưu nguyên văn kèm giờ chụp. Chưa suy diễn gì cả. Đây là dữ liệu thô.</p>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div>
+        <h4>Claim <span class="vn">— phát hiện</span></h4>
+        <p>AI đọc bản lưu và rút ra: "Kanzaki vừa gọi vốn Series A". Đây là <em>suy luận</em>, không phải dữ liệu —
+        nên bắt buộc phải kèm câu trích nguyên văn lấy từ bản lưu.</p>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div>
+        <h4>Proposal <span class="vn">— gợi ý</span></h4>
+        <p>AI đề xuất: "thêm tin này vào dòng thời gian của Kanzaki". Gợi ý nằm im trong hàng đợi,
+        <strong>không duyệt thì không có gì xảy ra</strong>, vô thời hạn.</p>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div>
+        <h4>Sales bấm Duyệt</h4>
+        <p>Bây giờ dữ liệu chính thức mới thay đổi. Hệ thống ghi lại là người đã duyệt, sửa rồi duyệt, hay bỏ —
+        đó là số liệu để đo AI đang khôn lên hay không.</p>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Hai chỗ Specs cho phép AI tự ghi thẳng, không chờ duyệt: <strong>tự điền Việc tiếp theo</strong>
+    cho cơ hội đang mở (có nút Hoàn tác trong 7 ngày), và <strong>tự thêm mục dòng thời gian</strong>
+    cho công ty Đang theo dõi (có nhãn "do hệ thống thêm", Sales xoá được). Ngoài đúng hai chỗ đó,
+    mọi thứ đều đi qua hàng đợi duyệt.
+  </p>
+
+  <h2>Câu trích là thứ giữ cho tất cả thành thật</h2>
+  <p class="sub">Luật số một của đội: không có nguồn thì không hiển thị.</p>
+
+  <p>
+    Một phát hiện của AI chỉ được lưu nếu nó mang theo <strong>một đoạn cắt nguyên văn</strong> từ bản lưu,
+    kèm vị trí ký tự bắt đầu và kết thúc. Bấm vào phát hiện là highlight đúng đoạn đó trong bản chụp gốc.
+  </p>
+
+  <div class="snippet">
+    …tin tức công ty. <mark>Kanzaki Holdings hoàn tất vòng gọi vốn Series A trị giá 12 triệu USD</mark>
+    do quỹ Beacon dẫn dắt…
+    <span class="meta">quote_start = 412 · quote_end = 488 · hai con số này do <b>code đếm</b>, không hỏi AI</span>
+  </div>
+
+  <p>
+    Đây không phải chi tiết vặt. Nếu để AI tự khai vị trí, nó có thể diễn đạt lại câu văn cho mượt
+    rồi khai bừa một con số — trường dữ liệu vẫn đầy đủ, nhưng bấm vào thì không highlight được gì.
+    Provenance giả còn tệ hơn không có provenance.
+  </p>
+  <p>
+    Cách chặn đã nằm sẵn trong code: kiểu dữ liệu mà AI trả về
+    (<code>ClaimDraft</code> trong <code>packages/contracts</code>) <strong>cố tình không có</strong>
+    trường vị trí. AI không có ô để điền thì không có đường bịa. Code nhận câu trích, tự tìm nó trong bản lưu
+    bằng <code>indexOf</code>; tìm không thấy nghĩa là AI đã diễn đạt lại → vứt cả phát hiện.
+  </p>
+
+  <h2>Bốn cái cửa</h2>
+  <p class="sub">Từ tên gọi đến quyền ghi. Cửa sau chặn được cả khi cửa trước hỏng.</p>
+
+  <div class="gates">
+
+    <div class="gate">
+      <div class="gate-head">
+        <h3>Cửa 1 — Tên</h3>
+        <span class="where">packages/contracts/src/enums.ts</span>
+        <span class="pill done">đã có</span>
+      </div>
+      <p>
+        Mọi giá trị cố định của ontology (giai đoạn deal, loại tín hiệu, mức chắc chắn…) viết đúng một lần ở đây.
+        Khoá là tên trong code, giá trị là nhãn tiếng Việt Sales nhìn thấy.
+      </p>
+      <div class="catches">
+        <b>Chặn được:</b> mỗi người gọi một tên. Có một test đọc thẳng <code>docs/ontology.md</code> và so từng giá trị —
+        sửa ontology mà quên code, hoặc ngược lại, là test đỏ ngay.
+      </div>
+    </div>
+
+    <div class="gate">
+      <div class="gate-head">
+        <h3>Cửa 2 — Kiểu</h3>
+        <span class="where">packages/db/src/schema/</span>
+        <span class="pill done">đã có</span>
+      </div>
+      <p>
+        Các kiểu enum trong Postgres sinh thẳng từ Cửa 1, không gõ lại giá trị nào.
+        Quan hệ giữa các bảng thì lấy từ mục "quan hệ có tên" của ontology.
+      </p>
+      <div class="catches">
+        <b>Chặn được:</b> ghi bậy giá trị lạ vào cột. Cột <code>stage</code> chỉ nhận đúng bảy giá trị ontology cho phép,
+        Postgres từ chối phần còn lại.
+      </div>
+    </div>
+
+    <div class="gate">
+      <div class="gate-head">
+        <h3>Cửa 3 — Luật</h3>
+        <span class="where">apps/api · tầng service</span>
+        <span class="pill todo">chưa có</span>
+      </div>
+      <p>
+        Nơi kiểm câu trích có nguyên văn không, nơi từ chối ghi khi người gửi lệnh là
+        <code>actor = system</code> chạm vùng cấm, nơi ghi vết lại lần từ chối đó.
+      </p>
+      <div class="catches">
+        <b>Chặn được:</b> phần lớn 14 bất biến trong ontology. Đây là mảng việc lớn nhất còn lại.
+      </div>
+    </div>
+
+    <div class="gate">
+      <div class="gate-head">
+        <h3>Cửa 4 — Quyền</h3>
+        <span class="where">packages/db/migrations/0001_grants.sql</span>
+        <span class="pill done">đã có</span>
+      </div>
+      <p>
+        AI kết nối vào cơ sở dữ liệu bằng một tài khoản riêng, <code>crm_system</code>, và tài khoản đó
+        chỉ được cấp quyền ghi trên đúng vài cột đã liệt kê tên.
+      </p>
+      <div class="catches">
+        <b>Chặn được:</b> chính bug của đội. Cửa 3 là code — code có thể sai. Cửa 4 là Postgres:
+        dù service viết nhầm, câu lệnh đổi giai đoạn deal vẫn bị từ chối vì tài khoản đó
+        <em>không hề được cấp</em> quyền đó.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="warn">
+    <span class="label">Bẫy đã tránh</span>
+    <p>
+      Vùng cấm được chặn bằng <strong>việc không cấp quyền</strong>, chứ không phải cấp rồi thu hồi.
+      Cấp <code>UPDATE</code> cả bảng rồi <code>REVOKE</code> riêng cột <code>stage</code> thì
+      <strong>chặn được số không</strong> — quyền mức bảng phủ mọi cột. File grants đã ghi cảnh báo này ở đầu file.
+    </p>
+  </div>
+
+  <h2>Đội đang ở đâu</h2>
+  <p class="sub">Bảy bảng đang chạy trong Postgres, bảy bảng còn nợ.</p>
+
+  <div class="status">
+    <div class="status-col">
+      <h3><span class="pill done">đã có</span></h3>
+      <ul>
+        <li>companies <span>— công ty</span></li>
+        <li>opportunities <span>— cơ hội</span></li>
+        <li>timeline_entries <span>— dòng thời gian</span></li>
+        <li>watch_cycle_runs <span>— nhật ký vòng quét</span></li>
+        <li>system_settings <span>— tham số, nút tắt AI</span></li>
+        <li>audit_events <span>— ghi vết</span></li>
+        <li>users</li>
+      </ul>
+    </div>
+    <div class="status-col">
+      <h3><span class="pill todo">còn nợ</span></h3>
+      <ul>
+        <li>observations <span>— bản lưu</span></li>
+        <li>claims <span>— phát hiện</span></li>
+        <li>proposals <span>— gợi ý</span></li>
+        <li>proposal_decisions <span>— duyệt / bỏ</span></li>
+        <li>auto_next_step_events <span>— lần tự đặt việc</span></li>
+        <li>notifications <span>— thông báo</span></li>
+        <li>contacts <span>— người liên hệ</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <p>
+    Nói cách khác: <strong>phần CRM thuần đã đứng, phần AI chưa có bảng nào.</strong>
+    Cửa 1, 2, 4 đã dựng cho phần đang có; thêm bảng mới thì phải dựng lại cả bốn cửa cho bảng đó.
+  </p>
+
+  <h2>Thêm một bảng mới thì làm gì</h2>
+  <p class="sub">Đúng thứ tự này, không đi tắt.</p>
+
+  <ol class="recipe">
+    <li><strong>Mở ontology trước.</strong> Bảng này là thực thể nào, quan hệ với công ty đọc lên thành câu gì.
+      Không gọi được tên quan hệ nghĩa là chưa hiểu, dừng lại và hỏi.</li>
+    <li><strong>Viết schema</strong> trong <code>packages/db/src/schema/</code>. Mỗi cột soi ngược về đúng một dòng trong ontology.
+      Enum lấy từ contracts, không gõ lại chuỗi.</li>
+    <li><strong>Thêm dòng GRANT</strong> vào cuối file grants — chỉ những cột AI thật sự cần ghi. Không cấp thừa.</li>
+    <li><strong>Viết luật ở tầng service</strong>: cái gì bị từ chối, từ chối thì ghi vết ra sao.</li>
+    <li><strong>Viết test cho luật đó.</strong> Ontology nói thẳng: không có test thì coi như chưa làm.</li>
+  </ol>
+
+  <p>
+    Một món nợ đã ghi biên nhận sẵn: cột <code>source_claim_id</code> trong bảng
+    <code>timeline_entries</code> hiện chưa có khoá ngoại, vì bảng <code>claims</code> chưa tồn tại.
+    Comment trong file đã dặn phải nối lại khi bảng đó ra đời — đừng để nguyên.
+  </p>
+
+  <h2>Còn phải quyết</h2>
+  <ul class="plain">
+    <li>Làm bảy bảng còn thiếu theo thứ tự nào — theo luồng dữ liệu (bản lưu → phát hiện → gợi ý → duyệt),
+      hay theo màn hình demo (dựng hàng đợi duyệt trước)?</li>
+    <li><code>contacts</code> có vào demo vòng 1 không, hay để cột <code>contact_id</code> treo tới sau hackathon?</li>
+    <li>Bản chụp lưu dạng HTML hay text? Câu hỏi này quyết định vị trí ký tự của câu trích đếm trên chuỗi nào.</li>
+    <li>Ontology vẫn <strong>chưa có ai ngoài người viết đọc và duyệt</strong>. Đây là điều kiện bắt buộc trong
+      Definition of Done, và vòng 2 sẽ hỏi random dựa trên nó.</li>
+  </ul>
+
+  <footer class="end">
+    Bản chi tiết hơn (kèm code mẫu, bảng bất biến, sơ đồ quan hệ đầy đủ):
+    <code>plans/visuals/implement-ontology-to-project.md</code> ·
+    Nguồn sự thật luôn là <code>docs/ontology.md</code>.
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var btn = document.querySelector('.theme-toggle');
+    btn.addEventListener('click', function () {
+      var root = document.documentElement;
+      var current = root.getAttribute('data-theme');
+      if (!current) {
+        var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        current = systemDark ? 'dark' : 'light';
+      }
+      root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>

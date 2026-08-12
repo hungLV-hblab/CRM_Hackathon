@@ -1,6 +1,6 @@
 ---
 title: "Base project — walking skeleton (Next.js + NestJS + Drizzle + Postgres)"
-status: pending
+status: done
 created: 2026-08-12 19:12
 mode: tdd
 scope: project
@@ -49,12 +49,20 @@ Test chạy được từ Phase 1 trở đi. Không phase nào coi là xong khi 
 
 | # | Phase | Trạng thái | Ưu tiên | Phụ thuộc | Ước lượng | Người |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | [Workspace + contracts](phase-01-workspace-va-contracts.md) | pending | P1 | — | 30' | 1 người, **cả đội chờ** |
-| 2 | [packages/db — schema, role, seed](phase-02-db-schema-role-seed.md) | pending | P1 | 1 | 75' | A |
-| 3 | [apps/api — actor, 2 pool, auth](phase-03-api-actor-pool-auth.md) | pending | P1 | 1, 2 | 75' | B |
-| 4 | [Worker — vòng quét tự hẹn nhịp](phase-04-worker-vong-quet.md) | pending | P1 | 3 | 40' | B |
-| 5 | [apps/web — login + danh sách công ty](phase-05-web-login-company-list.md) | pending | P2 | 1 | 60' | C |
-| 6 | [Compose, Caddy, nghiệm thu](phase-06-compose-caddy-nghiem-thu.md) | pending | P1 | 2,3,4,5 | 45' | cả đội |
+| 1 | [Workspace + contracts](phase-01-workspace-va-contracts.md) | **done** | P1 | — | 30' | 1 người, **cả đội chờ** |
+| 2 | [packages/db — schema, role, seed](phase-02-db-schema-role-seed.md) | **done** | P1 | 1 | 75' | A |
+| 3 | [apps/api — actor, 2 pool, auth](phase-03-api-actor-pool-auth.md) | **done** | P1 | 1, 2 | 75' | B |
+| 4 | [Worker — vòng quét tự hẹn nhịp](phase-04-worker-vong-quet.md) | **done** | P1 | 3 | 40' | B |
+| 5 | [apps/web — login + danh sách công ty](phase-05-web-login-company-list.md) | **done** | P2 | 1 | 60' | C |
+| 6 | [Compose, Caddy, nghiệm thu](phase-06-compose-caddy-nghiem-thu.md) | **done** | P1 | 2,3,4,5 | 45' | cả đội |
+
+> **Trạng thái 12/08 22:10 — plan đóng, 6/6 điểm nghiệm thu đạt trên stack thật.** Chi tiết + bằng chứng: [báo cáo nghiệm thu](../reports/walking-skeleton-acceptance-260812-2210-sau-diem-nghiem-thu-va-hai-loi-that-report.md).
+> **55 test xanh bằng một lệnh `pnpm test`** — 52 unit/integration (contracts 22 · db 11 · api 19) + 3 e2e Playwright trên bản production build sau Caddy. Lint và typecheck sạch.
+> **Hai nợ đã trả, và cả hai đều lòi ra lỗi thật:**
+> - (a) Phép đo đột biến trên `updateStage` cho thấy **ADR-0004 chỉ có một lớp chứ không phải hai**: hàm ghi cứng `dbApp` nên quyền theo cột của ADR-0010 không bao giờ được chạm tới — bỏ dòng kiểm `actor` thì lệnh chạy lọt hoàn toàn mà test vẫn xanh. Đã sửa (chọn pool theo `actor`), đo lại: `permission denied for table opportunities`.
+> - (b) ADR-0011 verify bằng chạy thật, và phép đo bắt được lỗi `timer.unref()` biến vòng quét worker thành **vòng restart mỗi ~11s** — log trông gần đúng nên đếm dòng là xanh nhầm.
+> **Luật mới của đội, đã áp cho toàn bộ mã nguồn:** code + comment viết tiếng Anh; chỉ chuỗi hiển thị cho người dùng (nhãn enum ontology 3.5, thông báo lỗi Sales đọc) giữ tiếng Việt. **Tên file luôn tiếng Anh**, ngoại lệ duy nhất là thư mục route Next (chính là đoạn URL). Docs và plan vẫn tiếng Việt.
+> **Chưa commit lần nào.** Toàn bộ `apps/`, `packages/`, `infra/` vẫn ở trạng thái untracked — `git add` trước khi rời máy.
 
 ```
         ┌─ P2 (A) ─────────────┐

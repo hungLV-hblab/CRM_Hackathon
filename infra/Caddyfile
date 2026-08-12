@@ -1,0 +1,23 @@
+# ONE port for the judges to remember: :8080 serves the interface and the API alike.
+#
+# That single origin is what makes the httpOnly session cookie work with no CORS setup and
+# no `SameSite=None` — the setting that tends to be silently dropped by a stricter browser
+# and turn "login works on my machine" into "login does nothing on the judge's".
+:8080 {
+	# The `/api` prefix is forwarded UNCHANGED. NestJS carries the same prefix via
+	# `app.setGlobalPrefix('api')`, so exactly one place in the system decides what an API
+	# path looks like. Stripping it here and re-adding it there gives two, which drift.
+	handle /api/* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	# Access logs to stdout so `docker compose logs caddy` shows the request that failed.
+	log {
+		output stdout
+		format console
+	}
+}

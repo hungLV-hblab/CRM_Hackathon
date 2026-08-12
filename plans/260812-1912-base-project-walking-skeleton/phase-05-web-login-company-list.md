@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "apps/web — đăng nhập + danh sách công ty"
-status: pending
+status: done
 priority: P2
 dependencies: [1]
 ---
@@ -66,10 +66,21 @@ Tạo sẵn 3 component rỗng có tên đúng, để nhóm 2/3 không mỗi ng�
 
 ## Success Criteria
 
-- [ ] 6 bước e2e xanh trên bản **production build** (`next build && next start`), không phải `next dev`
-- [ ] Không chuỗi `localhost:3001` nào trong `apps/web`
-- [ ] `output: 'standalone'` có trong `next.config.ts`
-- [ ] Xoá cookie trong DevTools → reload → bị đá về `/dang-nhap`
+- [x] 6 bước e2e xanh trên bản **production build** — chạy trong compose sau Caddy, không phải `next dev`
+- [x] Không chuỗi `localhost:3001` nào trong `apps/web`
+- [x] `output: 'standalone'` có trong `next.config.ts`
+- [x] Xoá cookie → reload → bị đá về `/dang-nhap` (tự động hoá bằng `context.clearCookies()`)
+
+## Chốt lại — khác gì so với lúc viết phase
+
+| Định làm | Làm thật | Vì sao |
+| --- | --- | --- |
+| shadcn/ui init + 5 component | Primitives tự viết ở **đúng** đường dẫn `@/components/ui/*` | `shadcn init` hỏi tương tác và hay xung đột với token Tailwind v4. Giữ nguyên đường import nên đổi sang shadcn thật sau chỉ là thay file, không phải refactor |
+| `badge-do-tin-cay.tsx` · `khoi-cau-trich.tsx` · `nhan-do-he-thong-them.tsx` | Gộp vào `components/provenance/quote-block.tsx`: `QuoteBlock` · `ConfidenceBadge` · `SystemAddedLabel` | Luật mới của đội: **tên file luôn tiếng Anh**. Ba component cùng phục vụ luật 1 (provenance) nên ở chung một file vẫn dưới 200 dòng |
+| `playwright.config.ts` có `webServer` | **Không** có `webServer`, trỏ `:8080` | Môi trường duy nhất đáng chấm là stack production sau Caddy. Cho Playwright tự bật `next dev` là xanh trên thứ không ai ship |
+| 6 bước trong 1 spec | 3 spec: luồng 6 bước · xoá cookie · cờ `HttpOnly` | Hai điểm sau là tiêu chí riêng, tách ra thì khi đỏ biết ngay đỏ ở đâu |
+
+`next build` chạy **trên Windows** gãy ở bước symlink của `standalone` (`EPERM`, cần Developer Mode). Không ảnh hưởng sản phẩm — bước này chạy trong Docker và đã xanh.
 
 ## Risk Assessment
 

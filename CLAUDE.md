@@ -89,16 +89,29 @@ Bắt buộc:
 
 ## 6. Convention
 
-<!-- CHỐT SAU KHI CHỌN STACK NGÀY 12/08 — không bịa, điền thật rồi mới dùng -->
+> **Luật chung của mã nguồn: [docs/code-standards.md](docs/code-standards.md).** Đọc trước khi gõ dòng code đầu tiên trong `apps/` hoặc `packages/`. Mục này chỉ giữ phần tra cứu nhanh.
 
-- **Stack:** TBD
-- **Test:** TBD (yêu cầu: unit + integration + e2e, chạy được bằng 1 lệnh)
-- **Lệnh chuẩn:** `TBD:install` · `TBD:dev` · `TBD:test` · `TBD:lint` · `TBD:build`
+- **Stack:** pnpm monorepo (Node 22, TypeScript 5.7 strict) — `apps/api` NestJS 11 + Drizzle + Postgres 16 · `apps/web` Next 15 App Router (standalone) + React 19 + Tailwind v4 + TanStack Query · `packages/contracts` zod + enum dùng chung · `packages/db` schema/migration/seed. Caddy + docker compose ở `infra/`.
+- **Test:** Vitest (unit + integration) · Playwright (e2e) · `pnpm test` chạy cả hai.
+- **Ngôn ngữ mã nguồn:** code và comment **tiếng Anh**; chỉ chuỗi hiển thị cho người dùng (nhãn enum, thông báo lỗi Sales đọc, đoạn URL) giữ **tiếng Việt**. Docs và plan viết tiếng Việt.
+
+| Việc | Lệnh |
+| --- | --- |
+| install | `pnpm install` |
+| dev (chỉ bật Postgres, app chạy tay) | `pnpm dev` |
+| chạy cả hệ thống bản production (1 cổng `:8080`) | `pnpm start` |
+| tắt · tắt và xoá sạch dữ liệu | `pnpm stop` · `pnpm reset` |
+| test | `pnpm test` · `pnpm test:unit` · `pnpm test:e2e` — `test:e2e` cần stack đang chạy ở `:8080` và `pnpm exec playwright install chromium` một lần |
+| lint · typecheck · build | `pnpm lint` · `pnpm typecheck` · `pnpm build` |
+| CSDL | `pnpm db:generate` · `pnpm db:migrate` · `pnpm seed` |
+
+**Cấm** thêm `db:push` của drizzle-kit vào `package.json` — nó xoá GRANT theo cột của ADR-0010.
 
 Quy tắc không phụ thuộc stack:
 
 - File > 200 dòng thì cân nhắc tách. Kiểm tra module đã có trước khi tạo mới.
 - Đặt tên file **kebab-case, dài và tự mô tả** (JS/TS/shell); tôn trọng convention ngôn ngữ khác (Python/Go snake_case).
+- **Tên file luôn tiếng Anh, không dấu.** Không đặt tên file bằng tiếng Việt kể cả không dấu (`dang-nhap.spec.ts` ❌ → `login.spec.ts` ✅). Ngoại lệ duy nhất: **thư mục route của Next App Router** — nó chính là đoạn URL Sales nhìn thấy nên giữ tiếng Việt (`app/dang-nhap/`, `app/cong-ty/`). Docs và plan trong `docs/`, `plans/` không thuộc luật này.
 - Tên biến/bảng/endpoint dùng đúng từ vựng ontology ở mục 3.
 - Không mock, không fake data để qua test. Sample data demo để riêng `seed/`, đánh dấu rõ là seed.
 - Không commit secret, `.env`, token, key.

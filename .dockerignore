@@ -1,0 +1,20 @@
+# Keeping these out of the build context is not only about speed: a host `node_modules`
+# built on Windows carries platform-specific binaries that break inside an Alpine image,
+# and `.env` must never be baked into a layer (CLAUDE.md section 6).
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.git
+.env
+.env.*
+!.env.example
+.claude
+plans
+docs
+e2e
+test-results
+playwright-report
+*.md

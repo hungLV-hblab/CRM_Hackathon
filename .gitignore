@@ -35,7 +35,8 @@ yarn-error.log*
 # package manager
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
+# pnpm-lock.yaml IS committed. The Docker images install with `--frozen-lockfile`, and a
+# judge cloning this repository has to get the byte-identical dependency tree we tested.
 
 # semantic-release
 .nyc_output
@@ -96,3 +97,10 @@ external/
 
 # Git worktrees (local development only)
 worktrees/
+
+/apps/*/node_modules
+/packages/*/node_modules
+
+/apps/*/dist
+/apps/*/.next
+/packages/*/dist

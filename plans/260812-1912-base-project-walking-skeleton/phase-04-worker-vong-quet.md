@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Worker — vòng quét tự hẹn nhịp"
-status: pending
+status: done
 priority: P1
 dependencies: [3]
 ---

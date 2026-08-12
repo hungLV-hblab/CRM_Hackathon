@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "apps/api — actor context, hai pool, đăng nhập"
-status: pending
+status: done
 priority: P1
 dependencies: [1, 2]
 ---

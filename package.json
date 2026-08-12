@@ -1,0 +1,42 @@
+{
+  "name": "crm-hackathon",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @crm/contracts build && pnpm --filter @crm/db build && pnpm --filter @crm/api build && pnpm --filter @crm/web build",
+    "dev": "docker compose -f infra/docker-compose.yml --env-file .env up -d postgres",
+    "start": "docker compose -f infra/docker-compose.yml --env-file .env up --build",
+    "stop": "docker compose -f infra/docker-compose.yml --env-file .env down",
+    "reset": "docker compose -f infra/docker-compose.yml --env-file .env down -v",
+    "test": "pnpm test:unit && pnpm test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "seed": "pnpm --filter @crm/db seed",
+    "db:generate": "pnpm --filter @crm/db db:generate",
+    "db:migrate": "pnpm --filter @crm/db db:migrate",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "@tailwindcss/oxide",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

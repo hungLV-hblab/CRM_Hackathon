@@ -70,20 +70,22 @@ vòng lặp:
 
 - **Vai trò AI:** sinh phương án, chỉ ra xung đột giữa `@Cron` và ontology 3.4.
 - **AI đề xuất gì mà đội không nghe:** AI mặc định đề xuất `@nestjs/schedule` + `@Cron` vì đó là cách làm phổ biến nhất với NestJS. Bỏ sau khi đối chiếu ontology 3.4 — "phổ biến nhất" ở đây lại là cách duy nhất **không** đáp ứng được yêu cầu chu kỳ cấu hình được.
-- **AI sai ở đâu:** chưa phát hiện sai — nhưng phần này **chưa chạy thử dòng nào**, khác hẳn [ADR-0010](0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) đã đo thật. Đọc mục dưới trước khi tin.
+- **AI sai ở đâu:** lỗi `timer.unref()` mô tả ở mục dưới — code do AI sinh, đội đọc qua mà không bắt được, vì `unref()` trông như một thói quen dọn dẹp tử tế và trong tiến trình `api` thì nó đúng là vô hại. Chỉ chạy thật mới lộ. Đây là ví dụ cụ thể cho luật "output AI vào sản phẩm phải có người verify bằng cách chạy, không phải bằng cách đọc".
 
 ## Đội đã verify bằng cách nào
 
-**Chưa verify bằng chạy thật — đây là nợ, ghi ra để không quên.** Verify được làm ở nghiệm thu skeleton, hai phép đo:
+**Đã verify bằng chạy thật — 12/08, trên stack compose (`pnpm start`), nợ đã trả.**
 
-| # | Cách đo | Kỳ vọng |
-| --- | --- | --- |
-| 1 | `pnpm start`, đọc log worker | 1 dòng `WatchCycleRun` mỗi 60s |
-| 2 | `UPDATE system_settings SET value='10' WHERE key='watch_cycle_seconds'`, **không restart** | Nhịp log đổi sang 10s trong vòng ≤1 chu kỳ |
+| # | Cách đo | Kỳ vọng | Kết quả thật |
+| --- | --- | --- | --- |
+| 1 | `docker compose logs worker` | 1 dòng `WatchCycleRun` mỗi 60s | ✅ `15:03:21` · `15:04:21` · `15:05:21` — đúng 60s, **một tiến trình duy nhất** |
+| 2 | `UPDATE system_settings SET value='10' WHERE key='watch_cycle_seconds'`, **không restart** | Nhịp đổi sang 10s trong ≤1 chu kỳ | ✅ UPDATE lúc `15:05:38`; tick `15:06:21` vẫn theo lịch 60s cũ, rồi `:31 :41 :51 15:07:01` — 10s một dòng. Log **không có** thêm dòng `Starting Nest application` |
 
-Hai phép này chứng minh đúng thứ khiến ta loại `@Cron`. T-9 và I-10 verify sau, cùng lúc code nhóm 5 — không cố chứng minh trước khi có gì để tắt.
+Phép 2 là phép bác bỏ `@Cron`: dưới `@Cron` nhịp sẽ **không bao giờ** đổi nếu không restart. Ở đây nhịp đổi mà tiến trình không khởi động lại — đọc được ngay trên log vì mọi lần khởi động đều in một dòng `Starting Nest application`.
 
-Mức tin hiện tại: quyết định dựa trên **đối chiếu tài liệu** (ontology 3.4 vs cách `@Cron` hoạt động), chưa dựa trên đo đạc. Nếu vòng 2 hỏi "chứng minh đi" mà lúc đó phép đo 2 chưa chạy thì phải trả lời thẳng là chưa chạy.
+**Một lỗi thật do phép đo 1 phát hiện, ghi lại vì nó suýt lọt:** bản hiện thực đầu tiên gọi `timer.unref()` sau `setTimeout`. Trong tiến trình `api` việc đó vô hại (HTTP server giữ event loop sống), nhưng trong worker cái timer **là handle duy nhất** — Node thấy hết việc và thoát ngay sau tick đầu, Docker restart lại, và "vòng quét" biến thành vòng restart mỗi ~11s. Log lúc đó trông *gần đúng*: vẫn có `WatchCycleRun` đều đặn, chỉ là mỗi dòng thuộc một tiến trình khác nhau. Nếu chỉ đếm số dòng log mà không nhìn dòng `Starting Nest application` thì phép đo 1 đã "xanh" nhầm. Đã bỏ `unref()`; dọn tài nguyên vẫn đúng nhờ `onModuleDestroy` (có test số 6 giữ).
+
+T-9 và I-10 đã có test tự động (`self-scheduling-watch-cycle.test.ts` kịch bản 3, 4, 5) chạy trên CSDL thật; nút tắt ở tầng giao diện thì verify cùng nhóm 5.
 
 ## Rollback
 

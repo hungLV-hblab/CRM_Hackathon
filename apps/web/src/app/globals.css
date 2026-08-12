@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+/**
+ * Tailwind v4 keeps the design tokens in CSS, not in a JS config. Only the handful the
+ * walking skeleton actually uses are declared here — the palette that feature groups 1-6
+ * will need belongs with those features, not in a placeholder nobody reads.
+ *
+ * `--color-fact` / `--color-suy-luan` are the exception, and they are deliberate: rule 2 of
+ * CLAUDE.md says a fact and an inference must be distinguishable BY EYE. Fixing the two
+ * colours here, before the first AI screen exists, keeps three people from inventing three
+ * different visual languages for the same distinction.
+ */
+@theme {
+  --color-fact: oklch(0.45 0.03 250);
+  --color-suy-luan: oklch(0.55 0.14 65);
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "packages/db — schema, ba role, seed idempotent"
-status: pending
+status: done
 priority: P1
 dependencies: [1]
 ---

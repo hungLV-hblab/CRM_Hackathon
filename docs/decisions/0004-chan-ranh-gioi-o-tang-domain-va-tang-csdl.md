@@ -57,7 +57,20 @@ Ghi vào [ontology.md](../ontology.md) mục 5, phần "Vùng cấm tuyệt đ�
 1. **Đọc T-10 như một kịch bản tấn công, không như một câu mô tả.** T-10 viết "dưới danh nghĩa hệ thống, không đi qua giao diện người dùng" — dịch sang code nghĩa là bộ test gọi trực tiếp vào một tầng nào đó của ứng dụng với `actor = system`. Tầng thấp nhất mà một bộ test cùng repo gọi tới được là repository/CSDL. Vậy điểm chặn phải nằm ở đó hoặc thấp hơn. Đây là suy dẫn từ chính cách bộ nghiệm thu được chạy, không phải phỏng đoán.
 2. **Đối chiếu chéo:** Specs mục 5 · [ai-native-design-principles.md](../ai-native-design-principles.md) mục 5 ("least privilege + separation of duties áp lên một user kiểu mới là AI agent") · [CLAUDE.md](../../CLAUDE.md) mục 4. Ba nguồn cùng đòi enforce bằng cơ chế, không bằng thiện chí.
 
-**Chưa làm:** chưa chọn stack nên chưa biết lớp CSDL hiện thực bằng gì (trigger, quyền cột, hay check constraint). Việc phải làm ngay sau khi chốt stack: viết T-10 **trước** khi viết tính năng, để nó đỏ từ đầu và chỉ xanh khi hai lớp đã xong.
+**Đã làm — bổ sung 12/08, phép đo đột biến (mutation test) trên `updateStage`:**
+
+3. **Xoá dòng kiểm `actor` trong `updateStage`, chạy lại T-10 mini, xem tầng CSDL có đỡ được không.** Đây là phép đo duy nhất chứng minh được "hai lớp" là thật chứ không phải một lớp viết hai lần. Kết quả **lần đo đầu làm hỏng chính tuyên bố của ADR này**:
+
+   | Lần đo | Mã nguồn | Bỏ dòng kiểm `actor` → chuyện gì xảy ra |
+   | --- | --- | --- |
+   | 1 (trước sửa) | `updateStage` ghi cứng qua `this.dbApp` | Lệnh **chạy lọt hoàn toàn** — không ném lỗi, `stage` đổi thành `won`. Tầng CSDL **không hề chặn** |
+   | 2 (sau sửa) | `updateStage` chọn pool theo `actor` như `updateNextStep` | Postgres từ chối: `permission denied for table opportunities` |
+
+   Nguyên nhân: quyền theo cột chỉ cắn được **role thật sự phát câu lệnh**. Ghi cứng `dbApp` nghĩa là mọi lệnh — kể cả của `actor=system` — đều đi bằng `crm_app`, mà `crm_app` có quyền đổi `stage`. Lớp thứ hai của ADR-0010 chưa bao giờ được chạm tới, và bộ test **vẫn xanh**, nên không ai phát hiện ra.
+
+   Bài học ghi lại vì nó lặp được ở mọi hàm sau này: **chọn pool theo `actor` là một phần của cơ chế chặn, không phải chi tiết hiện thực.** Hàm nào nhận `actor` mà ghi cứng một pool thì hàm đó chỉ có một lớp.
+
+**Chưa làm:** phép đo trên mới chạy cho `updateStage` và `updateNextStep`. Mỗi đường ghi mới mà nhóm 4/5 thêm vào phải chạy lại chính phép đo này, không suy diễn từ hai hàm đã đo.
 
 ## Rollback
 

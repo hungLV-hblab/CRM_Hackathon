@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Compose, Caddy, nghiệm thu 6 điểm"
-status: pending
+status: done
 priority: P1
 dependencies: [2, 3, 4, 5]
 ---
@@ -57,14 +57,24 @@ Một cổng duy nhất giám khảo cần biết. API và worker **cùng một 
 
 ## Success Criteria — 6 điểm nghiệm thu
 
-Chạy tuần tự, ghi kết quả vào `plans/reports/`. Không điểm nào được bỏ qua.
+**Đã chạy đủ 6/6 ngày 12/08 22:10.** Bằng chứng từng điểm: [báo cáo nghiệm thu](../reports/walking-skeleton-acceptance-260812-2210-sau-diem-nghiem-thu-va-hai-loi-that-report.md).
 
-- [ ] **1** — `docker compose down -v && pnpm install && pnpm start` → `:8080` lên. `docker compose logs` không có chuỗi `hot reload`, `webpack-hmr`, `nest start --watch`
-- [ ] **2** — Đăng nhập `sales@` và `admin@` trên trình duyệt thật, cookie có cờ `HttpOnly`, Sales bị 403 ở endpoint chỉ-Admin
-- [ ] **3** — Tạo 1 công ty qua UI → `docker compose restart` → công ty vẫn còn
-- [ ] **4** — `docker compose logs -f worker` thấy 1 dòng mỗi 60s; `UPDATE system_settings SET value='10' WHERE key='watch_cycle_seconds'` → nhịp đổi trong ≤1 chu kỳ, **không restart**
-- [ ] **5** — `pnpm test` xanh, in rõ số test 3 tầng, gồm T-10 mini
-- [ ] **6** — `pnpm seed` lần hai → trạng thái giống hệt lần đầu (kể cả công ty vừa tạo ở điểm 3 bị xoá đi)
+- [x] **1** — `:8080` lên; `/` → 307 → `/dang-nhap`; CSS standalone trả 200. Log không có `hot reload`, `webpack-hmr`, `nest start --watch`, `next dev`
+- [x] **2** — `sales@` + `admin@` 200, sai mật khẩu 401, cookie có cờ `HttpOnly`; `GET /api/settings` Sales **403** · Admin **200**
+- [x] **3** — `Cty Kiem Thu` tạo qua UI còn nguyên sau `docker compose restart`
+- [x] **4** — 60s: `15:03:21 · 15:04:21 · 15:05:21`; sau UPDATE `='10'`: `:31 :41 :51 15:07:01`, **không** thêm dòng `Starting Nest application`
+- [x] **5** — `pnpm test` = 52 unit/integration + 3 e2e, gồm T-10 mini
+- [x] **6** — Hai lần seed cho cùng một chuỗi trạng thái + md5, xoá sạch cả công ty vừa tạo lẫn giá trị `10` sửa tay ở điểm 4
+
+## Khác gì so với lúc viết phase
+
+| Định làm | Làm thật | Vì sao |
+| --- | --- | --- |
+| Migration chạy lúc api khởi động | Service `migrate` riêng, chạy một lần | api và worker cùng `depends_on: service_completed_successfully` → khử hẳn tranh chấp thay vì thu hẹp nó |
+| `seed` chạy trong container api | `pnpm seed` chạy từ máy | Cổng 5432 đã publish sẵn cho test, không cần thêm đường thứ hai |
+| — | Thêm `--env-file .env` vào mọi script compose | Compose đọc `.env` cạnh **file compose** (`infra/`), không phải gốc repo. Thiếu cái này `pnpm start` gãy ngay từ biến đầu tiên |
+| — | Bỏ `pnpm-lock.yaml` khỏi `.gitignore` | Image build bằng `--frozen-lockfile`; giám khảo clone repo phải nhận đúng cây phụ thuộc đã test |
+| — | Thêm `pnpm stop` · `pnpm reset` | `down -v` là thao tác bắt buộc khi volume cũ thiếu 3 role |
 
 ## Risk Assessment
 
