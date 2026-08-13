@@ -1,7 +1,7 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { LogOut, Menu, UserRound } from 'lucide-react'
+import { CircleHelp, LogOut, Menu, Search, UserRound } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -19,6 +19,9 @@ import { api } from '@/lib/api-client'
 import { AiStatusPill } from './ai-status-pill'
 import { Breadcrumbs } from './breadcrumbs'
 import { NavList } from './nav-list'
+import { useProductTour } from '@/components/tour/product-tour'
+
+import { CommandPalette, useCommandPaletteShortcut } from './command-palette'
 
 /**
  * Sticky header: brand, where-you-are, machine status, and the account menu.
@@ -31,6 +34,8 @@ export function AppHeader() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isDrawerOpen, setDrawerOpen] = useState(false)
+  const startTour = useProductTour()
+  const [isPaletteOpen, setPaletteOpen] = useCommandPaletteShortcut()
 
   async function onLogout() {
     await api.logout()
@@ -70,11 +75,32 @@ export function AppHeader() {
 
         <Breadcrumbs />
 
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="ml-2 hidden min-h-11 items-center gap-2 rounded-pill border border-ink-200 px-3 text-sm text-ink-500 transition-colors hover:bg-ink-50 hover:text-ink-900 md:inline-flex"
+        >
+          <Search className="size-4" aria-hidden />
+          Đi nhanh tới
+          <kbd className="rounded bg-ink-100 px-1.5 py-0.5 text-xs text-ink-600">Ctrl K</kbd>
+        </button>
+
         {/* Anchored on the header row, not on the pill: the pill is absent for a Sales
             session (see AiStatusPill), and a tour step anchored to a missing element is
             skipped in silence. */}
         <div data-tour="ai-status" className="ml-auto flex items-center gap-2">
           <AiStatusPill />
+
+          {/* Always available, never automatic: the tour has no first-visit branch, so this
+              button and `?tour=1` are the only two ways it ever opens. */}
+          <button
+            type="button"
+            aria-label="Xem hướng dẫn"
+            onClick={() => void startTour()}
+            className="inline-flex size-11 items-center justify-center rounded-pill text-ink-700 transition-colors hover:bg-ink-100"
+          >
+            <CircleHelp className="size-5" aria-hidden />
+          </button>
 
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -94,6 +120,7 @@ export function AppHeader() {
           </DropdownMenu>
         </div>
       </div>
+      <CommandPalette open={isPaletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   )
 }

@@ -39,6 +39,7 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
             key={item.href}
             href={item.href}
             onClick={onNavigate}
+            data-tour={item.showsPendingCount ? "queue" : undefined}
             // `aria-current` rather than a class a screen reader cannot see. Colour is never
             // the only signal either: the active item gets a filled background AND the amber
             // indicator bar below, so the state survives a greyscale print.

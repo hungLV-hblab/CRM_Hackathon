@@ -21,7 +21,7 @@ export interface QuoteBlockProps {
 
 export function QuoteBlock({ quote, sourceLabel, onOpenSource }: QuoteBlockProps) {
   return (
-    <figure className="border-l-4 border-ink-300 pl-3">
+    <figure data-tour="quote-block" className="border-l-4 border-ink-300 pl-3">
       <blockquote className="text-sm text-fact">“{quote}”</blockquote>
       <figcaption className="mt-1 text-xs text-ink-500">
         <button type="button" onClick={onOpenSource} className="underline underline-offset-2">

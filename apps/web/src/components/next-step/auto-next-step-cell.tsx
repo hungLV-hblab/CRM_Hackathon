@@ -66,6 +66,7 @@ export function AutoNextStepCell({ autoNextStep, opportunityName }: AutoNextStep
   return (
     <div
       data-testid="auto-next-step-cell"
+      data-tour="next-step-cell"
       className="flex flex-col gap-2 rounded-control border border-machine-200 bg-machine-50 p-2"
     >
       <div className="flex flex-wrap items-center gap-2">

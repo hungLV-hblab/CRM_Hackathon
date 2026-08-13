@@ -51,6 +51,7 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
   return (
     <article
       data-testid="proposal-card"
+      data-tour="proposal-card"
       className="flex flex-col gap-3 rounded-control border border-ink-200 bg-card p-4"
     >
       <header className="flex flex-wrap items-center gap-2">
