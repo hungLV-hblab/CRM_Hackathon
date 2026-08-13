@@ -37,6 +37,8 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0027](0027-nut-hoan-tac-nam-tren-the-co-hoi-du-lieu-di-qua-endpoint-rieng.md) | Design | Nút Hoàn tác nằm **trên thẻ cơ hội** (không chỉ trong màn thông báo); dữ liệu qua endpoint riêng, `OpportunityDto` không đổi | Chấp nhận — **chưa hỏi Sales, 4h là ước lượng chưa đo** |
+| [0026](0026-hoan-tac-lan-nguoc-chuoi-event-de-tim-moc-nguoi-go.md) | Design | Hoàn tác **lần ngược chuỗi event** tìm mốc `previous_source ≠ 'system'`, không chép mốc người-gõ sang từng hàng | Chấp nhận — **test I-8 viết trong Phase 6, chưa chạy** |
 | [0025](0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md) | Design | Mốc `seconds_to_decide` đặt lại sau mỗi quyết định, không dùng một mốc chung lúc mở màn hình; **sửa ontology mục 7** | Chấp nhận — chưa có người thật bấm thử |
 | [0024](0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) | Design | Gợi ý sửa ô hồ sơ do LLM đề xuất, code giữ ba cửa chặn (whitelist · `proposedValue` ⊂ câu trích · khác giá trị hiện tại); bản chụp phải có khối dữ kiện | Chấp nhận — **đã đo trên LLM thật**: G2 loại 2/3 → sửa prompt → 0/3, hai lượt lặp lại |
 | [0023](0023-goi-y-viec-tiep-theo-la-proposal-type-thu-ba-kem-cot-opportunity-id.md) | Design | Gợi ý Việc tiếp theo (I-7) là `proposal_type = next_step` kèm cột `opportunity_id`, không ép vào hai loại có sẵn | Chấp nhận — **đã đo** |

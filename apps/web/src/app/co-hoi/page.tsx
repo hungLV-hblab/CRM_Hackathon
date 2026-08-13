@@ -9,6 +9,7 @@ import { STAGE, type CreateOpportunityDto, type Stage, type UpdateStageDto } fro
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input, Select } from '@/components/ui/input'
+import { NotificationStrip } from '@/components/notification/notification-strip'
 import { StageBoard } from './stage-board'
 import { StageTransitionDialog } from './stage-transition-dialog'
 import { api, ApiError } from '@/lib/api-client'
@@ -70,6 +71,14 @@ export default function OpportunityBoardPage() {
         </div>
         <Button onClick={() => setCreateOpen(true)}>Thêm cơ hội</Button>
       </header>
+
+      {/*
+        Autonomy zone 3 announces itself HERE, above the deals it changed. The app has no shared
+        navigation, so a notification route on its own would be a page nobody walks past — and a
+        machine write Sales does not notice is a machine write with no safety mechanism at all
+        (ADR-0027). Renders nothing when there is nothing unread.
+      */}
+      <NotificationStrip show="unread" showLink />
 
       <section className="flex flex-wrap items-end gap-3">
         <Select

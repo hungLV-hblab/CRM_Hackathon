@@ -32,7 +32,7 @@ Sáu nhóm tính năng của Specs mục 4 chạy được trên stack productio
 
 3 người × 2 ngày. Cộng ước lượng: **~27h việc / ~24h năng lực**. Âm đệm.
 
-Đường găng: **P1a (1.5h) → P2 nhóm 2 (3h) → P6 nhóm 4 (3h) → P8 nghiệm thu (4h) = 11.5h**, phần lớn trên vai A. P1b (1.5h) chạy song song nên không vào đường găng, nhưng **phải xanh trước P5/P6/P7**.
+Đường găng: **P1a (1.5h) → P2 nhóm 2 (3h) → P6 nhóm 4 (~~3h~~ 4h) → P8 nghiệm thu (4h) = ~~11.5h~~ 12.5h**, phần lớn trên vai A. **Bốn chặng đầu đã xong, chỉ còn P8.** P1b (1.5h) chạy song song nên không vào đường găng, nhưng **phải xanh trước P5/P6/P7**.
 
 Ước lượng P1 đã sửa từ 60' lên 1.5h + 1.5h sau phiên phản biện 13/08 — cộng thật là ~3h, và 60' là con số đoán.
 
@@ -57,9 +57,9 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | **done** | B | 5h (thực: ~2h45') | 1a |
 | 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | **done** | C | 2h15 (thực: ~1h20') | 1a, (3 cho T-1) |
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | **done** | B | ~~3h~~ 4.5h (thực: ~1h20') | 2, **1b** |
-| 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
+| 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | **done** | A | ~~3h~~ 4h (thực: ~30') | 2, 5, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
-| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h | 5, 6, 7 |
+| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h + 30' (ô sửa nhanh) | 5, 6, 7 |
 
 ```
 P1a (cả đội chờ, 1.5h)
@@ -81,7 +81,7 @@ Ba phụ thuộc cứng:
 | --- | --- |
 | ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
 | 13/08 hết ngày | ~~P2~~ · ~~P3~~ · ~~P4~~ — **cả ba xong 13/08 20:35. P5/P6/P7 mở khoá hết** |
-| ~~14/08 trưa~~ | ~~P5~~ — **xong 13/08 22:07**. P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
+| ~~14/08 trưa~~ | ~~P5~~ · ~~P6~~ — **P6 xong 14/08 00:44**. Còn P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | 14/08 tối | P8, **freeze** |
 
 ## Chủ quyền file — chống đụng nhau
@@ -115,8 +115,8 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 | T-3 | Bấm phát hiện → mở đúng đoạn gốc, có đánh dấu | 2 ✅ e2e |
 | T-4 | Sinh gợi ý rồi không làm gì; sau ≥3 chu kỳ hồ sơ y nguyên | 5 ✅ |
 | T-5 | Duyệt / Sửa-rồi-duyệt / Bỏ đều có bản ghi; *sửa* không cộng vào *duyệt* | 5 ✅ e2e |
-| T-6 | Đổi bản chụp sang bản "sau" → Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống | 6 |
-| T-7 | Hoàn tác một cú bấm, giá trị cũ trở lại; có bản ghi hai chiều | 6 |
+| T-6 | Đổi bản chụp sang bản "sau" → Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống | 6 ✅ e2e |
+| T-7 | Hoàn tác một cú bấm, giá trị cũ trở lại; có bản ghi hai chiều | 6 ✅ e2e |
 | T-8 | 3 công ty Đang theo dõi, đổi nguồn 2 công ty → trong 2 chu kỳ có 2 mục mới, Nhật ký có dòng từng vòng | 7 |
 | T-9 | Tắt AI giữa lúc vòng quét chạy: 2 chu kỳ sau không thêm gì, dữ liệu còn nguyên, Sales thấy banner; bật lại chạy tiếp, cả hai lần có ghi vết | 8 |
 | T-10 | Đổi giai đoạn / đổi giá trị tiền / xoá công ty dưới danh nghĩa hệ thống, không qua UI → cả ba bị từ chối | 8 (mở rộng T-10 mini) |
@@ -244,10 +244,57 @@ Bốn việc mang sang phase khác — **ba trong số đó là bẫy sẽ gặp
 
 **Bài học mang sang P6/P7:** cửa chặn báo *đúng* nhưng con số hàng đợi mới nói cho biết **prompt** đang sai. Không có số đếm theo từng cửa thì lỗi này trông y như "LLM không tìm được gì".
 
+### Phiên 7 — 14/08 00:20, phạm vi Phase 6
+
+Phase 6 cũng viết **trước khi P2/P5 xong**, và lệch theo **hai chiều ngược nhau** ([báo cáo](../reports/from-brainstorm-to-planner-260813-2354-phase-06-nhom-4-tu-dat-viec-tiep-theo-report.md)). Kiểm bằng đọc mã nguồn.
+
+**Hơn nửa backend đã có sẵn:** bảng + GRANT theo cột của `auto_next_step_events`/`notifications` (`0003:52-66`) · bảng độ gấp I-9 ở contracts · `dueDateFor()` đã xử lý bẫy UTC+7 · `BlockedNextStep` + nhánh `next_step` của hàng đợi · `NotificationDto` · chỗ trống chờ nhóm 4 trong `claim-reaction-service.ts:44`. Làm đúng phase file cũ sẽ tạo **bản sao thứ hai** của bảng độ gấp.
+
+**Bù lại, phần web không được tính:** Specs đòi "thông báo trong sản phẩm" mà web **không có nav dùng chung, không có route thông báo**. Ước lượng **3h → 4h**, nằm trên đường găng của A.
+
+**Sáu quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| I-8 lấy mốc người-gõ ở đâu | **Lần ngược chuỗi event lúc hoàn tác**, không chép mốc sang mỗi hàng ([ADR-0026](../../docs/decisions/0026-hoan-tac-lan-nguoc-chuoi-event-de-tim-moc-nguoi-go.md)) | `previous_*` giữ đúng nghĩa "thứ có ngay trước tôi"; chép sang là để lại một cột nói dối cho người đọc sau |
+| Nút Hoàn tác đặt ở đâu | **Trên thẻ cơ hội**, và màn thông báo vẫn phải làm ([ADR-0027](../../docs/decisions/0027-nut-hoan-tac-nam-tren-the-co-hoi-du-lieu-di-qua-endpoint-rieng.md)) | Phương án đắt nhất trong ba, chọn có ý thức — "sửa lại phải dễ hơn cả lúc máy làm" |
+| Thẻ lấy dữ liệu bằng đường nào | **Endpoint riêng + gộp ở client** | `OpportunityDto`/`SELECTION`/`toDto` không đổi ⇒ không đụng file dùng chung của B trước freeze. Đổi lại bảng deal có hai nguồn |
+| Bảng độ gấp I-9 | **Rút `dueDateFor` ra file dùng chung**, không tạo `urgency-table.ts` | "Đổi bảng → ngày hạn đổi theo" đúng ở cả hai đường: tự đặt và duyệt gợi ý |
+| Thông báo khi công ty nhiều cơ hội mở | **Một thông báo / một event** | Giữ được "mỗi cơ hội một nút Hoàn tác riêng" của ADR-0005 B1; gộp ở tầng hiển thị |
+| `on_hold` có phải cơ hội mở không | **Có**, đúng ontology 3.5 | Máy đặt việc cho cả deal tạm dừng. Muốn lệch thì phải có ADR, không sửa ngầm |
+
+**Hai phép đo đột biến, một trong đó là nợ cũ:** ghi cứng `dbApp` → test hoàn tác-dưới-danh-nghĩa-system phải đổi màu · nới GRANT `undo_deadline` cho `crm_system` → test "AI không rút ngắn cửa sổ 7 ngày" phải đổi màu. Cột-list của `0003` chưa từng được đo.
+
+**Một lỗ sản phẩm phát hiện ngoài phạm vi:** **Sales không có chỗ nào tự gõ Việc tiếp theo trên web** — `nextStepText` chỉ xuất hiện ở hai file hiển thị, form tạo cơ hội cũng không có ô. Ca I-7 chạy được vì **seed** đặt sẵn `next_step_source: 'human'`. Đề xuất P8 cân một ô sửa nhanh trên thẻ cơ hội.
+
+### Phiên 8 — 14/08 00:44, P6 đóng
+
+**225 test đơn vị (203 → +22) + 11 e2e (9 → +2) xanh**, lint/typecheck sạch, hai phép đo đột biến đều cắn. T-6 và T-7 đóng, cả ở tầng tích hợp lẫn trên trình duyệt thật.
+
+Phase 6 là phase đầu **không** lệch với code thật — phiên 7 đã đọc lại repo trước khi viết. Đổi lại, ba thứ chỉ lộ ra lúc gõ code:
+
+- **`ADR-0026` có một phản ví dụ không xảy ra được.** Nó mở đầu bằng "ô người gõ → máy đặt lần 1", mà **I-7 cấm đúng bước đó** ⇒ không đường nào của sản phẩm sinh event mang `previous_source = 'human'`; chuỗi thật luôn là `NULL → máy 1 → máy 2`. Quyết định **giữ nguyên** vì phương án D vẫn sai (trả về câu của máy, chỉ khác là giá trị đúng hoá ra là **rỗng**), nhưng nhánh `IS DISTINCT FROM NULL` từ chỗ "phòng xa" thành **nhánh duy nhất chạy thật**. ADR đã sửa mục verify. **Bài học:** một ADR verify bằng "dựng phản ví dụ trên chuỗi thật" mà chuỗi đó chưa từng chạy qua ràng buộc của phase khác thì phản ví dụ mới là giả thiết, không phải số đo.
+- **`timestamptz` micro giây vs `Date` mili giây.** Bản đầu hỏi "có event nào mới hơn không" bằng cách gửi ngược `Date` vừa đọc xuống làm tham số ⇒ `created_at > $1` đúng với **chính hàng đó**, mọi lần Hoàn tác bị từ chối. Sửa: so `id` thay vì so thời gian, và dùng subquery cho mốc thời gian — **không giá trị thời gian nào rời khỏi CSDL rồi quay lại**. P7/P8 đụng `watch_cycle_runs.started_at` sẽ gặp lại nguyên hình dạng này.
+- **Nối nhóm 4 vào làm đỏ 3 test của P5** — không phải hồi quy, mà là ba chỗ mã hoá giả định "nhóm 4 chưa tồn tại". Test 6 của P5 tự dựng `blockedNextSteps` bằng tay, và comment của chính nó đã ghi *"stands in for the I-7 hand-off feature group 4 will make"*; giờ chạy thật. Test 9 và e2e T-5 chọn thẻ không phân loại, nay Sakura có **hai** thẻ.
+
+**Hai quyết định nhỏ chốt lúc code, đã ghi vào phase file:**
+
+| Câu hỏi | Chốt | Vì sao |
+| --- | --- | --- |
+| Sau 7 ngày ô trông thế nào | Nút + đồng hồ biến mất, **dấu hiệu máy ở lại** | Luật 2 không hết hạn. Bỏ dấu hiệu = ô hoá thành ô người gõ sau đúng 7 ngày |
+| Công ty không có người phụ trách | **Không tự ghi**, có `skippedReason` + log | Không có ai để báo thì mất một trong ba thứ mua quyền vùng 3. Hàng đợi vẫn nhận gợi ý |
+
+**P8 mở khoá một nửa** (còn chờ P7). Ba thứ mang sang:
+
+- **`pnpm build` trên máy Windows fail ở bước copy standalone của Next** (`EPERM: symlink`) — **có sẵn từ trước, không phải do P6**: đo bằng cách stash sạch cây rồi build lại, vẫn đúng 8 lỗi EPERM. Bản Linux trong container build xanh và toàn bộ e2e chạy trên nó. Đừng mất thời gian debug lại vào ngày cuối.
+- **Sales vẫn chưa có chỗ tự gõ Việc tiếp theo trên web** (phát hiện phiên 7, vẫn còn). Giờ đáng giá hơn trước: sau khi Hoàn tác, ô về trống và không có đường nào điền lại bằng tay. **Đã nhận vào P8** — phạm vi tối thiểu, `PATCH /opportunities/:id` sẵn có, không endpoint mới.
+- Bảng deal gọi **hai** endpoint và gộp ở client (ADR-0027 B1). Nếu P8 thấy nhấp nháy thì đó là chỗ đã ghi sẵn cách gộp lại.
+
 ## Câu hỏi chưa giải quyết
 
 - **Q-6: Admin có được thao tác CRM không** — chặn ma trận quyền của nhóm 6. P8 tạm làm: Admin xem được tất cả, không sửa dữ liệu Sales.
 - Format bộ dữ liệu BTC — [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) đã quyết không chờ. Khi dữ liệu về thì thay `seed-data.ts`.
 - ~~**Công ty #5 `it_product` của P4**~~ — **đã làm**, không phải cắt. Marlin Product Labs dùng chung hằng số đoạn funding với Sakura.
 - **Ai flip bản chụp lúc demo:** đã có hai đường — `pnpm switch-snapshot "Sakura" after` và `POST /api/demo/companies/:id/snapshot-variant`. Còn treo đúng một câu: có cần **nút** trong `apps/web/src/app/quan-tri/` (P8) hay CLI đủ cho vòng 1? Không chặn gì.
+- ~~**Sales không có chỗ nào tự gõ Việc tiếp theo trên web**~~ — **đã giao cho P8 lúc 14/08 00:48**, không còn là câu treo. Chi tiết + phạm vi tối thiểu ở [mục "Lỗ P6 để lại"](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md#lỗ-p6-để-lại--ô-sửa-nhanh-việc-tiếp-theo). Dùng `PATCH /opportunities/:id` sẵn có, ~30', **cắt cuối cùng** — và cắt thì phải nói thẳng với BGK.
 - Telemetry của thành viên 2 và 3 chưa verify trên Grafana (README mục Telemetry). **Không phải việc của plan này nhưng là điều kiện qua vòng 1** — mỗi người tự kiểm trước khi gõ dòng đầu.

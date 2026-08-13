@@ -1,4 +1,5 @@
 import type {
+  AutoNextStepMap,
   CompanyDto,
   ContactDto,
   CreateCompanyDto,
@@ -12,12 +13,14 @@ import type {
   IngestSnapshotDto,
   ListCompaniesQuery,
   ListOpportunitiesQuery,
+  NotificationDto,
   ObservationWithClaimsDto,
   OpportunityDto,
   OverviewDto,
   TimelineEntryDto,
   UpdateCompanyDto,
   UpdateContactDto,
+  UndoResultDto,
   UpdateOpportunityDto,
   UpdateStageDto,
 } from '@crm/contracts'
@@ -177,4 +180,23 @@ export const api = {
    */
   decideProposal: (proposalId: string, dto: DecideProposalDto) =>
     call<void>(`/proposals/${proposalId}/decide`, { method: 'POST', body: JSON.stringify(dto) }),
+
+  /**
+   * Autonomy zone 3 — what the system wrote into a deal's next step by itself, keyed by
+   * opportunity. Its OWN endpoint rather than fields on `OpportunityDto` (ADR-0027): the deal
+   * board merges the two in the client, and the five screens that never show a machine-written
+   * cell keep the query they already had.
+   */
+  autoNextSteps: () => call<AutoNextStepMap>('/opportunities/auto-next-steps'),
+
+  /** One click, valid for 7 days. Returns what the cell was put back to. */
+  undoAutoNextStep: (eventId: string) =>
+    call<UndoResultDto>(`/auto-next-step-events/${eventId}/undo`, { method: 'POST' }),
+
+  /** In-product notices. Read AND unread — ontology 3.3 forbids one vanishing before it is seen. */
+  listNotifications: () => call<NotificationDto[]>('/notifications'),
+
+  /** "Đã xem", and only pressing it ever writes `read_at`. */
+  markNotificationRead: (notificationId: string) =>
+    call<void>(`/notifications/${notificationId}/read`, { method: 'POST' }),
 }

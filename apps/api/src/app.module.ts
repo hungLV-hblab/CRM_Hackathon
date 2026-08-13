@@ -3,6 +3,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core'
 
 import { ActorInterceptor } from './common/actor/actor.interceptor'
 import { AuditEventService } from './common/audit/audit-event-service'
+import { AutoNextStepController } from './domain/opportunity/auto-next-step.controller'
+import { AutoNextStepService } from './domain/opportunity/auto-next-step-service'
 import { AuthModule } from './auth/auth.module'
 import { ClaimReactionService } from './domain/claim/claim-reaction-service'
 import { ClaimService } from './domain/claim/claim-service'
@@ -14,6 +16,8 @@ import { DbModule } from './common/db/db.module'
 import { DemoController } from './demo/demo.controller'
 import { DemoSnapshotService } from './demo/demo-snapshot-service'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
+import { NotificationController } from './domain/notification/notification.controller'
+import { NotificationService } from './domain/notification/notification-service'
 import { ObservationController } from './domain/observation/observation.controller'
 import { ObservationService } from './domain/observation/observation-service'
 import { claimExtractorProvider } from './ai/claim-extractor.provider'
@@ -37,9 +41,11 @@ import { SystemSettingService } from './settings/system-setting-service'
 @Module({
   imports: [DbModule, AuthModule],
   controllers: [
+    AutoNextStepController,
     CompanyController,
     ContactController,
     DemoController,
+    NotificationController,
     ObservationController,
     OpportunityController,
     OverviewController,
@@ -49,12 +55,14 @@ import { SystemSettingService } from './settings/system-setting-service'
   ],
   providers: [
     AuditEventService,
+    AutoNextStepService,
     ClaimReactionService,
     ClaimService,
     CompanyService,
     ContactService,
     DemoSnapshotService,
     DemoSnapshotSource,
+    NotificationService,
     ObservationService,
     OpportunityService,
     OverviewService,
