@@ -13,6 +13,7 @@ import { FixtureClaimExtractor } from '../../../ai/fixture-claim-extractor'
 import { ObservationService } from '../observation-service'
 import { ProposalService } from '../../proposal/proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
+import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 
 /**
  * Feature group 2 end to end, against a REAL database and with no network: the extractor is
@@ -27,6 +28,8 @@ const SALES_ID = '11111111-1111-4111-8111-111111111111'
 const SAKURA = 'aaaaaaaa-0001-4000-8000-000000000001'
 /** The company with no readable snapshot in either variant — the `failed` path. */
 const OHARA = 'aaaaaaaa-0004-4000-8000-000000000004'
+/** NOT watched. Where "no delegation, no timeline entry" is measured after ADR-0028. */
+const MARLIN = 'aaaaaaaa-0005-4000-8000-000000000005'
 
 const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
@@ -52,6 +55,7 @@ function buildService(extractor: ClaimExtractor): {
       new AuditEventService(appConnection.db, systemConnection.db),
     ),
     new ProposalService(systemConnection.db, appConnection.db),
+    new SystemTimelineEntryService(systemConnection.db),
   )
   const observations = new ObservationService(
     systemConnection.db,
@@ -97,9 +101,10 @@ beforeEach(async () => {
   )
   await owner.query(
     `INSERT INTO companies (id, name, industry, company_type, owner_id, is_watched) VALUES
-       ($1, 'Sakura Manufacturing KK', 'Sản xuất', 'traditional', $3, true),
-       ($2, 'Ohara Retail Group', 'Bán lẻ', 'traditional', $3, true)`,
-    [SAKURA, OHARA, SALES_ID],
+       ($1, 'Sakura Manufacturing KK', 'Sản xuất', 'traditional', $4, true),
+       ($2, 'Ohara Retail Group', 'Bán lẻ', 'traditional', $4, true),
+       ($3, 'Marlin Product Labs', 'Phần mềm', 'it_product', $4, false)`,
+    [SAKURA, OHARA, MARLIN, SALES_ID],
   )
   await setAiEnabled(true)
 })
@@ -221,15 +226,43 @@ describe('I-3 · reading unchanged content costs no row and no LLM call', () => 
 })
 
 describe('I-4 · group 2 never touches official data', () => {
-  it('8 · a manual_ingest finding produces no timeline entry and no field change', async () => {
+  /**
+   * ── This test's meaning was NARROWED on purpose by ADR-0028, it is not a regression ──────
+   *
+   * It used to read "a `manual_ingest` finding produces no timeline entry", measured on SAKURA.
+   * Sakura is a WATCHED company, and ADR-0028 moved the condition for a system entry from
+   * `trigger_context` onto `is_watched`: turning on Đang theo dõi delegates the writing of news
+   * to the machine (ADR-0006), and who pressed the button is not part of that delegation. So the
+   * honest expectation on Sakura is now the OPPOSITE — one system entry, labelled and quoted.
+   *
+   * The old expectation still holds where it always belonged: on a company nobody delegated.
+   * MARLIN carries `is_watched = false`, so it is where "no delegation, no write" is measured.
+   *
+   * Both halves live here rather than one being deleted, because what I-4 is really about is
+   * unchanged either way: GROUP 2 — reading a source and drawing findings — touches no official
+   * data by itself. Whatever official data changes afterwards is group 5 acting under a
+   * delegation a person switched on, and it is visible, labelled and removable.
+   */
+  it('8 · a watched company DOES get the entry, and nothing else about it changes', async () => {
     const { observations } = buildService(new FixtureClaimExtractor())
     const before = await owner.query('SELECT industry FROM companies WHERE id = $1', [SAKURA])
 
-    await observations.ingest(SAKURA, 'after', 'manual_ingest')
+    const result = await observations.ingest(SAKURA, 'after', 'manual_ingest')
 
-    const timeline = await owner.query('SELECT count(*)::int AS total FROM timeline_entries')
-    expect(timeline.rows[0].total).toBe(0)
+    expect(result.systemEntriesAdded).toBeGreaterThan(0)
+    const timeline = await owner.query(
+      `SELECT created_by, entry_type, source_claim_id FROM timeline_entries WHERE company_id = $1`,
+      [SAKURA],
+    )
+    expect(timeline.rows).toHaveLength(result.systemEntriesAdded)
+    for (const row of timeline.rows) {
+      // Zone 4 is bought with the label and the quote, so both are part of the invariant.
+      expect(row.created_by).toBe('system')
+      expect(row.entry_type).toBe('system_entry')
+      expect(row.source_claim_id).not.toBeNull()
+    }
 
+    // The PROFILE is still zone 2 territory — group 5 writes news, never a cell.
     const after = await owner.query('SELECT industry FROM companies WHERE id = $1', [SAKURA])
     expect(after.rows[0].industry).toBe(before.rows[0].industry)
 
@@ -246,6 +279,19 @@ describe('I-4 · group 2 never touches official data', () => {
 
     const decisions = await owner.query('SELECT count(*)::int AS total FROM proposal_decisions')
     expect(decisions.rows[0].total).toBe(0)
+  })
+
+  it('8b · a company nobody watches gets no timeline entry, whoever read it', async () => {
+    const { observations } = buildService(new FixtureClaimExtractor())
+
+    await observations.ingest(MARLIN, 'after', 'manual_ingest')
+    await observations.ingest(MARLIN, 'before', 'watch_cycle')
+
+    const timeline = await owner.query(
+      'SELECT count(*)::int AS total FROM timeline_entries WHERE company_id = $1',
+      [MARLIN],
+    )
+    expect(timeline.rows[0].total).toBe(0)
   })
 })
 

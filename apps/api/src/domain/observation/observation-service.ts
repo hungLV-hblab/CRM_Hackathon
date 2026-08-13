@@ -36,6 +36,7 @@ const EMPTY_RESULT: IngestResultDto = {
   claimsSaved: 0,
   claimsDroppedNoVerbatimQuote: 0,
   claimsDowngradedFromCertain: 0,
+  systemEntriesAdded: 0,
 }
 
 /**
@@ -151,15 +152,20 @@ export class ObservationService {
 
     /**
      * The ONE line that hands findings on to the rest of the product (ADR-0023). Everything
-     * downstream — group 4 setting a next step, group 3 filing suggestions — hangs off
-     * `ClaimReactionService`, so this file does not grow a branch per feature group and the
-     * ORDER between them stays written down in one place (group 4 first: it decides whether
-     * I-7 turns a next step into a suggestion instead of a write).
+     * downstream — group 4 setting a next step, group 3 filing suggestions, group 5 adding its
+     * own timeline entry — hangs off `ClaimReactionService`, so this file does not grow a branch
+     * per feature group and the ORDER between them stays written down in one place (group 4
+     * first: it decides whether I-7 turns a next step into a suggestion instead of a write).
+     *
+     * `capturedAt` comes from the `.returning()` above, so group 5 dates its entry from the
+     * snapshot at no extra query. Reading it back would cost a round trip AND invite the
+     * `timestamptz` rounding trap of feature group 4.
      */
-    await this.reactions.react({
+    const reaction = await this.reactions.react({
       companyId,
       observationId: created.id,
       savedClaims: result.saved,
+      observationCapturedAt: created.capturedAt,
     })
 
     return {
@@ -171,6 +177,7 @@ export class ObservationService {
       claimsSaved: result.saved.length,
       claimsDroppedNoVerbatimQuote: result.droppedNoVerbatimQuote,
       claimsDowngradedFromCertain: result.downgradedFromCertain,
+      systemEntriesAdded: reaction.systemEntriesAdded,
     }
   }
 
@@ -224,6 +231,7 @@ export class ObservationService {
       claimsSaved: 0,
       claimsDroppedNoVerbatimQuote: 0,
       claimsDowngradedFromCertain: 0,
+      systemEntriesAdded: 0,
     }
   }
 
