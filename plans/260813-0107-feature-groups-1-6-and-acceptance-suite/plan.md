@@ -9,7 +9,7 @@ created: 2026-08-13
 mode: tdd
 scope: project
 blockedBy: []
-blocks: []
+blocks: [260814-0056-nang-cap-ui-shadcn-shell-tour]
 source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-critical-path-report.md
 ---
 
