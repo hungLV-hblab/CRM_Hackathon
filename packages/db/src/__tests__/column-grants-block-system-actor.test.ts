@@ -47,6 +47,38 @@ afterAll(async () => {
   await Promise.all([owner?.end(), system?.end()])
 })
 
+/**
+ * A snapshot and one finding drawn from it, created as `crm_owner` so no privilege is involved in
+ * the setup. Needed since ADR-0029: a `system` timeline entry with no `source_claim_id` is refused
+ * by the CHECK regardless of who writes it — an assertion on the official timeline with no source
+ * behind it is the one row rule 1 exists to forbid.
+ */
+async function seedClaim(): Promise<string> {
+  const rawContent = 'Cong ty vua bo nhiem Giam doc Cong nghe moi.'
+  const quote = 'bo nhiem Giam doc Cong nghe moi'
+
+  const observation = await owner.query(
+    `INSERT INTO observations (company_id, source_url, raw_content, extractor_version,
+                               content_hash, fetch_status)
+     VALUES ($1, 'https://example.test/news', $2, 'v1', $3, 'ok') RETURNING id`,
+    [COMPANY_ID, rawContent, `hash-${Date.now()}`],
+  )
+  const claim = await owner.query(
+    `INSERT INTO claims (company_id, observation_id, statement, signal_type, confidence,
+                         quote_text, quote_start, quote_end, trigger_context)
+     VALUES ($1, $2, 'Cong ty co CTO moi', 'leadership_hire', 'likely', $3, $4, $5, 'watch_cycle')
+     RETURNING id`,
+    [
+      COMPANY_ID,
+      observation.rows[0].id,
+      quote,
+      rawContent.indexOf(quote),
+      rawContent.indexOf(quote) + quote.length,
+    ],
+  )
+  return claim.rows[0].id
+}
+
 describe('forbidden direction — crm_system cannot touch the absolute no-go zone (ontology 5)', () => {
   it('1 · setting the stage to won is refused', async () => {
     await expect(
@@ -85,16 +117,42 @@ describe('allowed direction — crm_system can still do its job in autonomy zone
     expect(rows[0].next_step_text).toBe('goi lai')
   })
 
-  it('6 · adding a timeline entry succeeds (zone 4)', async () => {
+  /**
+   * ── NARROWED by ADR-0029, deliberately ──────────────────────────────────────────────────
+   * This used to pass `created_by = 'system'` in the INSERT, which worked because `0001` granted
+   * INSERT at TABLE level here. ADR-0029 took that away: `created_by` is what the "do hệ thống
+   * thêm" label is read from, so an AI holding the column can write a row that reads as something
+   * Sales typed. The label now comes from the DEFAULT instead, and naming the column at all is
+   * refused — which is asserted right below, next to the allowed form so the pair reads together.
+   *
+   * The full matrix for this table (contact_id, the CHECK, the human direction) lives in
+   * `column-grants-block-system-actor-on-timeline-entries.test.ts`.
+   */
+  it('6 · adding a timeline entry succeeds (zone 4), naming only the granted columns', async () => {
+    const claimId = await seedClaim()
+
     await system.query(
-      `INSERT INTO timeline_entries (company_id, entry_type, occurred_at, description, created_by)
-       VALUES ($1, 'system_entry', now(), 'watch cycle added an entry', 'system')`,
-      [COMPANY_ID],
+      `INSERT INTO timeline_entries (company_id, entry_type, occurred_at, description, source_claim_id)
+       VALUES ($1, 'system_entry', now(), 'watch cycle added an entry', $2)`,
+      [COMPANY_ID, claimId],
     )
     const { rows } = await owner.query(
       `SELECT count(*)::int AS total FROM timeline_entries WHERE created_by = 'system'`,
     )
     expect(rows[0].total).toBe(1)
+  })
+
+  it('6b · but naming `created_by` is refused — the label is not the AI to write', async () => {
+    const claimId = await seedClaim()
+
+    await expect(
+      system.query(
+        `INSERT INTO timeline_entries (company_id, entry_type, occurred_at, description,
+                                       source_claim_id, created_by)
+         VALUES ($1, 'system_entry', now(), 'trong nhu nguoi go', $2, 'human')`,
+        [COMPANY_ID, claimId],
+      ),
+    ).rejects.toThrow(/permission denied/i)
   })
 })
 
