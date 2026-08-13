@@ -38,7 +38,7 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
 | [0025](0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md) | Design | Mốc `seconds_to_decide` đặt lại sau mỗi quyết định, không dùng một mốc chung lúc mở màn hình; **sửa ontology mục 7** | Chấp nhận — chưa có người thật bấm thử |
-| [0024](0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) | Design | Gợi ý sửa ô hồ sơ do LLM đề xuất, code giữ ba cửa chặn (whitelist · `proposedValue` ⊂ câu trích · khác giá trị hiện tại); bản chụp phải có khối dữ kiện | Chấp nhận — đã đo đường tất định; **tỉ lệ LLM còn nợ, thiếu API key** |
+| [0024](0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) | Design | Gợi ý sửa ô hồ sơ do LLM đề xuất, code giữ ba cửa chặn (whitelist · `proposedValue` ⊂ câu trích · khác giá trị hiện tại); bản chụp phải có khối dữ kiện | Chấp nhận — **đã đo trên LLM thật**: G2 loại 2/3 → sửa prompt → 0/3, hai lượt lặp lại |
 | [0023](0023-goi-y-viec-tiep-theo-la-proposal-type-thu-ba-kem-cot-opportunity-id.md) | Design | Gợi ý Việc tiếp theo (I-7) là `proposal_type = next_step` kèm cột `opportunity_id`, không ép vào hai loại có sẵn | Chấp nhận — **đã đo** |
 | [0022](0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md) | Design | "Bản chụp hiện tại" là cột `text` + CHECK trên `companies`, không phải enum của ontology | Chấp nhận — **phép đo GRANT còn nợ ở phase 4** |
 | [0021](0021-ban-chup-demo-giu-dang-hang-so-typescript-khong-tach-thanh-file-html.md) | Design | Bản chụp demo giữ dạng hằng số TypeScript trong `apps/api/src/ai/`, không tách thành file HTML | Chấp nhận |

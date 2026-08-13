@@ -240,7 +240,9 @@ Bốn việc mang sang phase khác — **ba trong số đó là bẫy sẽ gặp
 - **Phép đo trên bộ demo tìm ra lỗi thật mà test không thấy:** Kitefin ra hai thẻ y hệt (bản trước + bản sau cùng một dòng website). Luật chống sinh lại chỉ chặn nội dung *đã quyết*; đã sửa để gợi ý *đang chờ* cũng chặn bản trùng. **Chạy trên dữ liệu thật rồi mới tin, kể cả khi test xanh hết.**
 - **Test parity ontology cắn** khi thêm `next_step` vào enum mà chưa sửa `docs/ontology.md` mục 3.5 — lớp chống "ontology trang trí" hoạt động thật.
 
-**Nợ để lại, cần người có key:** tỉ lệ LLM thật trả `fieldSuggestion` **chưa đo được** — máy này và container đều không có `ANTHROPIC_API_KEY`, stack đang chạy `FixtureClaimExtractor`. Số ở trên đo đường tất định, không đo mức tuân thủ của model ([ADR-0024](../../docs/decisions/0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) mục "Chưa làm").
+**Nợ đo LLM thật đã trả, 13/08 22:32** (key do HungLV cấp, `claude-haiku-4-5`, 3 lượt × 10 lần đọc nguồn). Lượt đầu **G2 loại 2/3 đề xuất** — model gắn `fieldSuggestion` vào phát hiện tin tức, mà câu trích của tin không chứa giá trị của ô ⇒ hàng đợi mất thẻ `size` của Sakura. **Sửa prompt (thêm luật "mỗi đề xuất nằm trên một phát hiện riêng, câu trích phải là dòng dữ kiện" + ví dụ đúng/sai), không chạm G2** — đúng điều ADR-0024 đã dặn trước. Hai lượt sau: **G2 loại 0/3**, hàng đợi ra đúng 3 thẻ, hai lượt giống nhau từng dòng. Kèm hai số đo phụ: bộ chặn trùng cắn trên LLM thật (Kitefin đề xuất lại dòng website) và I-5 chặn 4 phát hiện thành `timeline_entry` trên 3 công ty đang theo dõi.
+
+**Bài học mang sang P6/P7:** cửa chặn báo *đúng* nhưng con số hàng đợi mới nói cho biết **prompt** đang sai. Không có số đếm theo từng cửa thì lỗi này trông y như "LLM không tìm được gì".
 
 ## Câu hỏi chưa giải quyết
 

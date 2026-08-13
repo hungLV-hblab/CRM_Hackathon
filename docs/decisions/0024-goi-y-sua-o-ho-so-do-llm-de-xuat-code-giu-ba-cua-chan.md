@@ -61,7 +61,7 @@ Hai điều ghim kèm:
 - Kéo theo: `ClaimDraft` có thêm một field **tuỳ chọn**. Claim không kèm `fieldSuggestion` vẫn hợp lệ y như cũ ⇒ không phá đường nhóm 2 đang xanh.
 - Kéo theo: mỗi lần ingest có thêm một con số quan sát được (số `fieldSuggestion` bị G2/G3 loại), cùng họ với `droppedNoVerbatimQuote` của ADR-0014. **Không có con số này thì không biết prompt có đang làm việc hay không.**
 - Đánh đổi chấp nhận: bản chụp demo được thêm khối dữ kiện *vì* tính năng cần nguồn để trích. Chấp nhận được vì trang giới thiệu công ty thật thường có khối dữ kiện đó; nếu bịa ra một định dạng không trang nào có thì mới là gian.
-- Sẽ phải xem lại nếu: đo trên 5 công ty mà LLM trả **0** `fieldSuggestion`. Khi đó sửa **prompt**, hoặc rơi về parser tất định — **tuyệt đối không hạ G2**.
+- Sẽ phải xem lại nếu: đo trên 5 công ty mà LLM trả **0** `fieldSuggestion`. Khi đó sửa **prompt**, hoặc rơi về parser tất định — **tuyệt đối không hạ G2**. *(Đã xảy ra ở dạng nhẹ hơn ngày 13/08: 2/3 đề xuất bị G2 loại vì model gắn sai chỗ. Sửa prompt, không chạm G2 — chi tiết ở mục "Đội đã verify".)*
 
 ## AI đã tham gia thế nào
 
@@ -82,7 +82,19 @@ Hai điều ghim kèm:
 6. **Đo trên toàn bộ bộ demo qua stack thật** (13/08 22:05, 5 công ty × 2 biến thể, `pnpm seed` trước): hàng đợi ra **đúng 3 gợi ý**, mỗi công ty một thẻ — Sakura `size` `500-1000 → 1000+` (ca ô cũ, công ty **đang theo dõi** ⇒ I-5 chỉ chặn nhánh tin), Kitefin `website` `(trống) → https://kitefin.example.com` (ca ô trống, cũng đang theo dõi), Marlin một `timeline_entry` (không theo dõi). `impact_if_wrong` dài 77–113 ký tự trên cả ba, không có ô nào rỗng. **0 câu trích bị loại vì không nguyên văn.**
 7. **Phép đo này tìm ra một lỗi thật**, không phải để xác nhận cái đã biết: Kitefin ra **hai thẻ y hệt nhau** (một từ bản trước, một từ bản sau — cùng dòng website, cùng ô trống). Luật chống sinh lại lúc đó chỉ chặn nội dung *đã quyết*, không chặn trùng *đang chờ*. Đã sửa: một gợi ý đang chờ **chặn** gợi ý cùng nội dung, bất kể bằng chứng mới cũ; và dedupe cả trong cùng một lượt. Có test 11 giữ chỗ này.
 
-**Chưa làm — điểm yếu của ADR này:** phần đo trên **LLM thật vẫn còn nợ**. Máy đang chạy không có `ANTHROPIC_API_KEY` (kiểm cả `.env` và biến môi trường trong container `crm-hackathon-api-1` → `KEY_ABSENT`, log boot ghi `dùng FixtureClaimExtractor`), nên **tỉ lệ LLM trả `fieldSuggestion` và tỉ lệ bị G2 loại chưa có số nào**. Con số ở mục 6 đo đường tất định, không đo mức tuân thủ của model. Việc phải làm, **người có key** chạy trước 14/08 trưa: `pnpm seed` rồi ingest 5 công ty × 2 biến thể với key thật, ghi lại số đề xuất sinh ra / bị G2 loại / bị G3 loại. 0 đề xuất ⇒ sửa **prompt**, tuyệt đối không hạ G2.
+8. **Đo trên LLM thật — nợ ở trên đã trả, 13/08 22:32** (`claude-haiku-4-5-20251001`, key do HungLV cấp, `pnpm seed` trước mỗi lượt, 5 công ty × 2 biến thể = 10 lần đọc nguồn).
+
+**Lượt 1 — G2 loại 2/3 đề xuất, và đó là lỗi prompt chứ không phải lỗi cửa chặn.** Hàng đợi chỉ ra **2** thẻ thay vì 3; Sakura mất thẻ `size`. Log chỉ đúng nguyên nhân: `Bỏ đề xuất ô size: "1000+" không có nguyên văn trong câu trích`. Đọc claim thật thì thấy model gắn `fieldSuggestion` vào **phát hiện sai** — nó chỉ sinh một claim (tin gọi vốn, câu trích là câu tin) rồi treo đề xuất `size` lên đó. `1000+` không có trong câu tin ⇒ G2 loại, **đúng**. Kitefin cũng vậy ở bản `before` (đề xuất `website` treo trên câu trích `Trụ sở chính: Boston, Hoa Kỳ`), nhưng ở bản `after` model làm đúng — nên đây là lỗi *mơ hồ trong prompt*, không phải model không làm nổi.
+
+**Sửa prompt, không hạ G2** (đúng điều mục "Sẽ phải xem lại nếu" đã dặn): thêm một câu bắt buộc — *mỗi đề xuất phải nằm trên một phát hiện RIÊNG, `quoteText` của chính phát hiện đó phải là dòng dữ kiện chứa giá trị* — kèm một ví dụ ĐÚNG và một ví dụ SAI trong system prompt.
+
+**Lượt 2 và lượt 3 (sau khi sửa prompt): G2 loại 0/3, hàng đợi ra đúng 3 thẻ, hai lượt giống nhau từng dòng** — Sakura `size 500-1000 → 1000+` (Chắc) · Kitefin `website (trống) → https://kitefin.example.com` (Chắc) · Marlin một mục dòng thời gian (Chắc). `impact_if_wrong` 77–113 ký tự. **0 câu trích bị loại vì không nguyên văn** ở cả ba lượt.
+
+Hai thứ đo được thêm, không phải mục tiêu ban đầu:
+- **Bộ chặn trùng cắn với LLM thật:** Kitefin bản `after` đề xuất lại đúng dòng website ⇒ `1 bỏ vì trùng gợi ý đang chờ`. Lỗi ở mục 7 nếu chưa sửa sẽ hiện ra ngay trên LLM thật, không chỉ trên đường tất định.
+- **I-5 đếm được:** Nimbus 2 · Sakura 1 · Kitefin 1 phát hiện bị chặn không thành `timeline_entry` vì công ty đang theo dõi. Trước đây chỉ có test khẳng định; giờ có số trên bộ demo.
+
+**Chưa làm — điểm yếu còn lại:** mẫu vẫn nhỏ (3 lượt × 10 lần đọc, một model). Đổi model hoặc bản chụp dài hơn thì **đo lại**, và chỉ số có sẵn trong mọi response nên đo lại là chuyện chạy một lệnh. Cũng chưa có Sales thật bấm thử hàng đợi — nợ này thuộc [ADR-0008](0008-bo-goi-y-bang-menu-ly-do-tai-cho.md).
 
 ## Rollback
 

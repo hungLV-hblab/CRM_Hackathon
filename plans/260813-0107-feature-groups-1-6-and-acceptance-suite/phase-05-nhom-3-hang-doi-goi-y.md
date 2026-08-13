@@ -74,7 +74,7 @@ Quyết định chi phối: [ADR-0008](../../docs/decisions/0008-bo-goi-y-bang-m
 - [x] Đếm số bước: Bỏ (1) ≤ Duyệt (1); Sửa rồi duyệt (2)
 - [x] Tắt AI → hàng đợi tồn **vẫn duyệt được** (ADR-0009)
 - [x] Gợi ý đã Bỏ không quay lại sau 3 chu kỳ; quay lại **được** khi có bản lưu mới
-- [x] **Nợ đo của ADR-0024 — trả một nửa:** đo đường tất định trên cả bộ demo (3 gợi ý, mỗi công ty một thẻ, `impact_if_wrong` 77–113 ký tự, 0 câu trích bị loại). Phần LLM thật **còn nợ**: máy không có `ANTHROPIC_API_KEY` (container báo `KEY_ABSENT`), người có key chạy trước trưa 14/08. Chi tiết cũ: chạy ingest 5 công ty × 2 biến thể, ghi số `fieldSuggestion` sinh ra / bị G2 loại / bị G3 loại. 0 đề xuất ⇒ sửa **prompt**, tuyệt đối không hạ G2
+- [x] **Nợ đo của ADR-0024 — trả đủ, 13/08 22:32.** Đường tất định: 3 gợi ý, `impact_if_wrong` 77–113 ký tự. **LLM thật** (`claude-haiku-4-5`, 3 lượt × 10 lần đọc): lượt đầu G2 loại **2/3** vì model gắn đề xuất vào phát hiện tin tức ⇒ **sửa prompt, không hạ G2** ⇒ hai lượt sau G2 loại **0/3**, kết quả lặp lại từng dòng
 - [x] **Ba phép đo đột biến — cả ba cắn:** xoá dòng kiểm I-11 → đỏ · `GRANT INSERT (status)` cho `crm_system` → lớp CSDL của T-4 đỏ · bỏ `GRANT INSERT (opportunity_id)` → sinh `next_step` thất bại
 
 ## Risks
