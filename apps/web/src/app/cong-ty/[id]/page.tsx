@@ -146,10 +146,27 @@ function IngestSummary({ result }: { result: IngestResultDto }) {
   }
 
   return (
-    <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
-      Lưu {result.claimsSaved}/{result.claimsProposed} phát hiện ·{' '}
-      {result.claimsDroppedNoVerbatimQuote} bị bỏ vì câu trích không khớp nguyên văn ·{' '}
-      {result.claimsDowngradedFromCertain} bị hạ từ mức Chắc
-    </p>
+    <div className="flex flex-col gap-2">
+      <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
+        Lưu {result.claimsSaved}/{result.claimsProposed} phát hiện ·{' '}
+        {result.claimsDroppedNoVerbatimQuote} bị bỏ vì câu trích không khớp nguyên văn ·{' '}
+        {result.claimsDowngradedFromCertain} bị hạ từ mức Chắc
+      </p>
+
+      {/**
+        * Autonomy zone 4 said out loud, at the moment it happens.
+        *
+        * On a company carrying Đang theo dõi, this read just wrote to the official timeline with
+        * nobody approving it (ADR-0028) — and the person who pressed the button is standing right
+        * here. Saying nothing would mean the only way to notice is to scroll up and spot a new row,
+        * which is not what "máy tự làm thì phải nói" means. The machine hue marks who wrote it.
+        */}
+      {result.systemEntriesAdded > 0 && (
+        <p className="rounded-control bg-machine-50 px-3 py-2 text-sm text-ink-900">
+          Hệ thống đã tự thêm {result.systemEntriesAdded} mục vào dòng thời gian vì công ty này
+          đang được theo dõi. Mỗi mục có câu trích bấm ra được, và bạn xoá được kèm lý do.
+        </p>
+      )}
+    </div>
   )
 }
