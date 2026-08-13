@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Seed bản chụp trước/sau + T-1"
-status: pending
+status: done
 priority: P1
 dependencies: [1]
 owner: C
@@ -92,19 +92,38 @@ Thay bảng của bản cũ. Bản cũ gán tin `funding` cho `tech_startup` r�
 
 ## Validation
 
-- [ ] `pnpm seed` hai lần → trạng thái giống hệt (`seed-idempotent.test.ts` xanh sau khi sửa 6/5)
-- [ ] Seed lần hai sau khi đã chạy demo → sạch vùng AI, mọi công ty về `snapshot_variant = 'before'` (I-14)
-- [ ] 5 công ty; 4 có bản "sau" khác bản trước; Ohara cho `fetch_status = failed`
-- [ ] Công ty #5 `it_product` mang **đúng** đoạn funding của Sakura
-- [ ] 3 công ty `isWatched: true`, cả ba đọc được nguồn
-- [ ] Có cơ hội `qualified` đủ cả bốn ô dấu hiệu (không cờ) **và** cơ hội thiếu (có cờ)
-- [ ] Có cơ hội `lost` có lý do **và** cơ hội `lost` thiếu lý do
-- [ ] ≥2 contact cho một công ty, đúng một `isPrimary`
-- [ ] **`crm_system` UPDATE `snapshot_variant` bị từ chối; `crm_app` thành công** (nợ ADR-0022)
-- [ ] `POST /demo/companies/:id/snapshot-variant` đổi được; `switch-snapshot.ts` chạy được từ CLI
-- [ ] T-1 xanh với `ai_enabled = false`, **không** chức năng nhóm 1 nào hỏng; AI bật lại sau spec
-- [ ] **15 test của P2 vẫn xanh** — bằng chứng không chạm `domain/observation/`, `ai/anthropic-*`, `contracts`
-- [ ] Dữ liệu seed đánh dấu rõ là seed, không lẫn dữ liệu người dùng nhập
+- [x] `pnpm seed` hai lần → trạng thái giống hệt (`seed-idempotent.test.ts` xanh, 6/5)
+- [x] Seed lần hai sau khi đã chạy demo → sạch vùng AI, mọi công ty về `snapshot_variant = 'before'` (I-14) — test riêng: đổi cả 5 công ty sang `'after'` rồi seed lại → 0 công ty còn lệch
+- [x] 5 công ty; 4 có bản "sau" khác bản trước; Ohara cho `fetch_status = failed`
+- [x] Công ty #5 `it_product` mang **đúng** đoạn funding của Sakura — một hằng số `fundingParagraph()` dùng cho cả hai, `demo-snapshots.test.ts` khoá lại (kèm ca "mỗi bản sau đúng một đoạn mới")
+- [x] 3 công ty `isWatched: true`, cả ba đọc được nguồn
+- [x] Có cơ hội `qualified` đủ cả bốn ô dấu hiệu (không cờ) **và** cơ hội thiếu (có cờ)
+- [x] Có cơ hội `lost` có lý do **và** cơ hội `lost` thiếu lý do
+- [x] ≥2 contact cho một công ty, đúng một `isPrimary`
+- [x] **`crm_system` UPDATE `snapshot_variant` bị từ chối; `crm_app` thành công** — nợ ADR-0022 đã trả, kèm phép đo đột biến (GRANT vào thì test đỏ, REVOKE thì xanh lại)
+- [x] `POST /demo/companies/:id/snapshot-variant` đổi được (201, trả `snapshotVariant`; giá trị lạ → 400; không đăng nhập → 401); `switch-snapshot.ts` chạy được từ CLI và từ chối tên khớp nhiều công ty
+- [x] T-1 xanh với `ai_enabled = false`, **không** chức năng nhóm 1 nào hỏng; AI bật lại ở `afterAll` (toàn bộ 7 e2e xanh trong một lượt là bằng chứng)
+- [x] **Toàn bộ test của P2 vẫn xanh** — 0 dòng sửa trong `domain/observation/`, `ai/anthropic-*`, `packages/contracts`
+- [x] Dữ liệu seed đánh dấu rõ là seed, không lẫn dữ liệu người dùng nhập
+
+### Kết quả chạy — 13/08 20:35
+
+`pnpm test` xanh: **170 test đơn vị** (165 trước khi thêm `demo-snapshots.test.ts`) + **7 e2e**. `pnpm lint` · `pnpm typecheck` xanh.
+
+`pnpm build` xanh cho `contracts` · `db` · `api`; `apps/web` gãy ở bước symlink của Next standalone (`EPERM`) — lỗi môi trường Windows đã ghi trong README từ trước, không liên quan thay đổi phase này. Bản web dùng để chấm build trong Docker (Linux) và **đã build lại thành công** — 7 e2e chạy trên đúng ảnh đó.
+
+Hai việc phát sinh, đều là hạ tầng kiểm thử chứ không phải sản phẩm:
+
+- **`pg` + `dotenv` thành devDependency ở gốc.** `e2e/turn-ai-off.ts` cần nói chuyện với Postgres, và pnpm không cho gốc mượn node_modules của `packages/db`. Khoá `ai_enabled` viết thẳng chuỗi thay vì import `@crm/db` — import kéo theo yêu cầu build package trước khi chạy e2e.
+- **T-1 tự nâng timeout lên 180s** (`test.setTimeout`). Mặc định 30s của Playwright là ngân sách cho **một** tương tác; T-1 là chín chặng. Nâng trong spec, không trong config, để các spec khác giữ mức chặt.
+
+**Ba lỗi harness gặp thật khi viết T-1** — đúng loại mà ADR-0020 cảnh báo, ghi lại để phase sau không mất giờ:
+
+| Hiện tượng | Nguyên nhân | Cách chờ/khoá đúng |
+| --- | --- | --- |
+| `Thêm người liên hệ` không tồn tại | Container web đang chạy là bản build **17 giờ trước**, có trước P3 | `docker compose up --build` trước khi tin một kết quả e2e |
+| `Đầu mối chính` khớp 2 phần tử | `getByText` khớp chuỗi con, nên badge và nút *Đặt làm đầu mối chính* đều khớp | `{ exact: true }` |
+| `picked up` không bao giờ khớp | dnd-kit thông báo ngay `moved over droppable area <chính thẻ đó>` khi nhấc | chờ vùng `aria-live` **đổi nội dung**, không chờ một chuỗi cụ thể — mũi tên có thể rơi vào cột hoặc vào một thẻ trong cột, `stageOf()` quy cả hai về một giai đoạn |
 
 ## Risks
 

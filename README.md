@@ -56,7 +56,21 @@ Thứ tự khởi động là tự động: `postgres` (chờ healthy) → `migr
 pnpm seed
 ```
 
-**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Kỳ vọng: `Seed complete: 2 users, 4 companies, 3 opportunities, 2 timeline entries.`
+**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Kỳ vọng:
+
+```text
+Seed complete: 2 users, 5 companies, 3 contacts, 5 opportunities, 2 timeline entries. Every company is back on the "before" snapshot.
+```
+
+Chạy lại `pnpm seed` bất cứ lúc nào để về đúng trạng thái ban đầu — kể cả sau khi đã diễn demo (I-14). Nó xoá luôn mọi thứ AI sinh ra trong lần diễn trước và đưa **mọi công ty về bản chụp "trước"**.
+
+Lúc diễn, để giả tin mới về với một công ty:
+
+```bash
+pnpm switch-snapshot "Sakura" after
+```
+
+Hoặc gọi `POST /api/demo/companies/:id/snapshot-variant` với body `{"variant":"after"}` khi đã đăng nhập. Đây là đường của **người**: `crm_system` chỉ đọc được cột này, không ghi được — AI không tự đổi được nguồn nó đọc ([ADR-0022](docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md)).
 
 ### Bước 4 — mở và đăng nhập
 
@@ -115,6 +129,7 @@ docker compose -f infra/docker-compose.yml --env-file .env logs -f worker
 | Tắt · tắt và xoá sạch dữ liệu | `pnpm stop` · `pnpm reset` |
 | Test | `pnpm test` · `pnpm test:unit` · `pnpm test:e2e` |
 | Nạp dữ liệu demo | `pnpm seed` |
+| Đổi nguồn một công ty sang bản chụp "sau" (diễn tin mới về) | `pnpm switch-snapshot "Sakura" after` |
 | CSDL | `pnpm db:generate` · `pnpm db:migrate` |
 | lint · typecheck · build | `pnpm lint` · `pnpm typecheck` · `pnpm build` |
 | Phản biện yêu cầu (persona) | `/hack:req-challenge <specs hoặc mô tả>` |

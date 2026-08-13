@@ -10,6 +10,8 @@ import { CompanyService } from './domain/company/company-service'
 import { ContactController } from './domain/contact/contact.controller'
 import { ContactService } from './domain/contact/contact-service'
 import { DbModule } from './common/db/db.module'
+import { DemoController } from './demo/demo.controller'
+import { DemoSnapshotService } from './demo/demo-snapshot-service'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
 import { ObservationController } from './domain/observation/observation.controller'
 import { ObservationService } from './domain/observation/observation-service'
@@ -33,6 +35,7 @@ import { SystemSettingService } from './settings/system-setting-service'
   controllers: [
     CompanyController,
     ContactController,
+    DemoController,
     ObservationController,
     OpportunityController,
     OverviewController,
@@ -44,6 +47,7 @@ import { SystemSettingService } from './settings/system-setting-service'
     ClaimService,
     CompanyService,
     ContactService,
+    DemoSnapshotService,
     DemoSnapshotSource,
     ObservationService,
     OpportunityService,

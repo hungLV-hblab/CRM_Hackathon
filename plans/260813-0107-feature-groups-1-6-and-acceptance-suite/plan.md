@@ -54,7 +54,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 1b | [Ma trận chiều-cấm + 3 phép đo đột biến](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1b--song-song-phải-xanh-trước-p5p6p7-15h) | **done** | cùng người, **song song** | 1.5h (thực: gộp vào 1a) | 1a |
 | 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | **done** | A | 3h (thực: ~25') | 1a |
 | 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | **done** | B | 5h (thực: ~2h45') | 1a |
-| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h15 | 1a, (3 cho T-1) |
+| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | **done** | C | 2h15 (thực: ~1h20') | 1a, (3 cho T-1) |
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
@@ -79,7 +79,7 @@ Ba phụ thuộc cứng:
 | Khi | Phải xong |
 | --- | --- |
 | ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
-| 13/08 hết ngày | ~~P2~~ · ~~P3~~ · P4 |
+| 13/08 hết ngày | ~~P2~~ · ~~P3~~ · ~~P4~~ — **cả ba xong 13/08 20:35. P5/P6/P7 mở khoá hết** |
 | 14/08 trưa | P5, P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | 14/08 tối | P8, **freeze** |
 
@@ -109,7 +109,7 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 
 | # | Nội dung | Phase |
 | --- | --- | --- |
-| T-1 | Tắt AI, nhóm 1 chạy đủ: công ty/liên hệ/cơ hội, kéo qua 3 giai đoạn có Đủ điều kiện, bỏ 2 ô dấu hiệu vẫn kéo được + có cờ, ghi hoạt động, tìm/lọc, màn tổng quan. **Một spec, mỗi chặng một `test.step()`**; lái bằng bàn phím, giãn ≥50ms giữa phím (ADR-0020) | 3, 4 |
+| T-1 | Tắt AI, nhóm 1 chạy đủ: công ty/liên hệ/cơ hội, kéo qua 3 giai đoạn có Đủ điều kiện, bỏ 2 ô dấu hiệu vẫn kéo được + có cờ, ghi hoạt động, tìm/lọc, màn tổng quan. **Một spec, mỗi chặng một `test.step()`**; lái bằng bàn phím, giãn ≥50ms giữa phím (ADR-0020) | 3, 4 ✅ e2e |
 | T-2 | Phát hiện thiếu câu trích không lưu được — thử ghi thẳng, phải bị từ chối | 2 ✅ |
 | T-3 | Bấm phát hiện → mở đúng đoạn gốc, có đánh dấu | 2 ✅ e2e |
 | T-4 | Sinh gợi ý rồi không làm gì; sau ≥3 chu kỳ hồ sơ y nguyên | 5 |
@@ -190,10 +190,23 @@ Phase 4 viết **trước khi P2 xong** nên đã lệch với code thật ở 8
 
 **Nợ đo, không phải nợ ADR:** "cột thêm sau được phủ bởi GRANT mức bảng" là suy luận từ ngữ nghĩa `GRANT` của Postgres, chưa đo trên `crm_test`. P4 đóng bằng phép đo: `crm_system` UPDATE `snapshot_variant` → từ chối, `crm_app` → thành công.
 
+### Phiên 4 — 13/08 20:35, P4 đóng
+
+**170 test đơn vị + 7 e2e xanh**, lint/typecheck xanh, T-1 đóng. Nợ đo của [ADR-0022](../../docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md) đã trả kèm phép đo đột biến (GRANT `UPDATE (snapshot_variant)` cho `crm_system` → test đỏ; REVOKE → xanh). **P7 mở khoá:** cột `companies.snapshot_variant` đã có, `POST /demo/companies/:id/snapshot-variant` và `pnpm switch-snapshot` là hai đường đổi.
+
+Bốn việc mang sang phase khác:
+
+- **P7 đọc cột, không đọc body.** `ObservationService.ingest()` và `ingestSnapshotSchema` **không đổi một dòng** — hai nguồn nói "đọc bản nào" là mùi đã chấp nhận có ý thức trong ADR-0022. Vòng quét phải `SELECT snapshot_variant` theo từng công ty.
+- **Vòng quét giờ có 3 công ty theo dõi** (Sakura · Nimbus · Kitefin), tăng từ 1. Đúng yêu cầu T-8, nhưng nhịp 60s × 3 lần gọi LLM là việc P7 phải cân (ADR-0011 đã có luật bỏ nhịp).
+- **Đừng tin một kết quả e2e khi container chưa build lại.** Bản web đang chạy lúc bắt đầu phase là bản 17 giờ trước, không có `ContactSection` của P3 — mất hai lượt chạy để phát hiện. `docker compose up --build` trước, rồi mới đọc kết quả.
+- **`getByText` khớp chuỗi con.** `Đầu mối chính` khớp cả nút `Đặt làm đầu mối chính`; `getByLabel('Dấu hiệu nhu cầu')` khớp cả `Nguồn của dấu hiệu nhu cầu`. Dùng `{ exact: true }` cho mọi nhãn là tiền tố của nhãn khác — P8 gom bộ nghiệm thu sẽ gặp lại.
+
+**Công ty #5 (Marlin Product Labs, `it_product`) đã làm** thay vì cắt: đoạn funding dùng chung một hằng số với Sakura, nên "cùng một tin, hai loại công ty" là số đo được chứ không phải lời kể.
+
 ## Câu hỏi chưa giải quyết
 
 - **Q-6: Admin có được thao tác CRM không** — chặn ma trận quyền của nhóm 6. P8 tạm làm: Admin xem được tất cả, không sửa dữ liệu Sales.
 - Format bộ dữ liệu BTC — [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) đã quyết không chờ. Khi dữ liệu về thì thay `seed-data.ts`.
-- **Công ty #5 `it_product` của P4** không thuộc T-1…T-10 — thuần điểm sản phẩm và câu trả lời vòng 2 ("cùng một tin, hai loại công ty, hai nhận định"). Là hạng mục cắt được đầu tiên nếu trưa 14/08 trượt.
-- **Ai flip bản chụp lúc demo:** CLI `switch-snapshot.ts` đủ cho vòng 1, hay cần nút trong `apps/web/src/app/quan-tri/` (P8)? Không chặn P4.
+- ~~**Công ty #5 `it_product` của P4**~~ — **đã làm**, không phải cắt. Marlin Product Labs dùng chung hằng số đoạn funding với Sakura.
+- **Ai flip bản chụp lúc demo:** đã có hai đường — `pnpm switch-snapshot "Sakura" after` và `POST /api/demo/companies/:id/snapshot-variant`. Còn treo đúng một câu: có cần **nút** trong `apps/web/src/app/quan-tri/` (P8) hay CLI đủ cho vòng 1? Không chặn gì.
 - Telemetry của thành viên 2 và 3 chưa verify trên Grafana (README mục Telemetry). **Không phải việc của plan này nhưng là điều kiện qua vòng 1** — mỗi người tự kiểm trước khi gõ dòng đầu.

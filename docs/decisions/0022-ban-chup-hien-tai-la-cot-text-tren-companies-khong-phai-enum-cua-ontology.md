@@ -80,7 +80,19 @@ Không `pgEnum`. Không vào `ENUMS`. `SnapshotVariant` giữ nguyên chỗ nó 
 - `apps/api/src/watch/watch-cycle-service.ts:106-120` — xác nhận `scan()` chỉ `count()` công ty `isWatched` và **không có đường nào nhận variant**, tức lỗ hổng T-8 là thật.
 - Quét ảnh hưởng khi seed thêm dòng: chỉ `login.test.ts` dùng `SEED_USERS[0..1]`; e2e tham chiếu công ty **theo tên** (`reading-zone-provenance.spec.ts:22-25`), không theo số lượng; duy nhất `seed-idempotent.test.ts` hardcode số đếm 5/4.
 
-**Chưa kiểm bằng cách chạy:** migration chưa viết, nên "cột mới được phủ bởi GRANT mức bảng" là suy luận từ ngữ nghĩa `GRANT` của Postgres, chưa phải số đo trên `crm_test`. **Phase 4 phải đóng bằng một phép đo thật:** `crm_system` UPDATE `snapshot_variant` → phải bị từ chối; `crm_app` UPDATE → phải thành công.
+~~**Chưa kiểm bằng cách chạy:** migration chưa viết, nên "cột mới được phủ bởi GRANT mức bảng" là suy luận từ ngữ nghĩa `GRANT` của Postgres, chưa phải số đo trên `crm_test`.~~
+
+**Đã đo 13/08 20:11, nợ đã trả** — `packages/db/src/__tests__/column-grants-block-system-actor-on-snapshot-variant.test.ts`, 5 ca xanh trên `crm_test`:
+
+| Phép đo | Kết quả |
+| --- | --- |
+| `crm_system` UPDATE `snapshot_variant` | `permission denied for table companies` |
+| `crm_system` SELECT `snapshot_variant` | đọc được (vòng quét cần) |
+| `crm_app` UPDATE `snapshot_variant` | thành công — **không GRANT mới nào được viết**, suy luận "GRANT mức bảng phủ cột thêm sau" đúng |
+| Công ty mới, không ai gán | `'before'` (DEFAULT), nên I-14 tự đúng |
+| Giá trị thứ ba (`'lastweek'`) | `companies_snapshot_variant_check` từ chối, kể cả từ `crm_app` |
+
+**Phép đo đột biến (luật số 2 của plan):** `GRANT UPDATE (snapshot_variant) ON companies TO crm_system` trên `crm_test` → ca "bị từ chối" **đỏ ngay**, và ca đọc cũng đỏ vì AI đã ghi thật `'after'` vào cột. `REVOKE` → xanh lại, và `information_schema.column_privileges` xác nhận `crm_system` chỉ còn SELECT trên cả 13 cột. Test cắn thật, không xanh nhờ pool cấu hình sai.
 
 ## Rollback
 

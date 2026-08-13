@@ -1,0 +1,21 @@
+-- ═══════════════════════════════════════════════════════════════════════════════════════
+-- "Which snapshot is this company's source right now" — one column on `companies`, per
+-- ADR-0022. The watch cycle fires on a timer and receives no arguments, so this column is the
+-- only place it can read the answer from.
+--
+-- NO NEW GRANT, and that is measured rather than assumed:
+--   * `crm_app` already holds `GRANT ALL ON ALL TABLES` (0001_grants.sql). That is a
+--     TABLE-level privilege, so it covers a column added afterwards.
+--   * `crm_system` holds `GRANT SELECT ON companies` and no UPDATE, so it reads the column and
+--     cannot write it. An AI that could switch its own source could manufacture the news it
+--     then draws conclusions from.
+-- Both directions are measured in `column-grants-block-system-actor-on-snapshot-variant.test.ts`.
+--
+-- `DEFAULT 'before'` is what makes I-14 free: TRUNCATE and re-insert put every company back on
+-- the "before" snapshot, with no clean-up code for anyone to forget.
+-- ═══════════════════════════════════════════════════════════════════════════════════════
+ALTER TABLE "companies" ADD COLUMN "snapshot_variant" text DEFAULT 'before' NOT NULL;--> statement-breakpoint
+-- A CHECK, not a pg enum: the ontology enums describe the business and a demo control is not
+-- part of it. The constraint still has to exist — free text means a typo silently reads as
+-- "this company has no source at all".
+ALTER TABLE "companies" ADD CONSTRAINT "companies_snapshot_variant_check" CHECK ("companies"."snapshot_variant" IN ('before', 'after'));
