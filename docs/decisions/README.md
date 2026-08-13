@@ -37,6 +37,8 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0029](0029-grant-insert-theo-cot-tren-timeline-entries-va-check-nhan-he-thong.md) | Design | `timeline_entries` cũng phải `GRANT INSERT` **theo cột** (bỏ `created_by`, `contact_id`) + `DEFAULT 'system'` + `CHECK` bắt mục hệ thống có `source_claim_id` | Chấp nhận — **đã đo, kèm phép đo đột biến**: cấp lại GRANT mức bảng → 2 test đỏ trong khi `CHECK` vẫn xanh |
+| [0028](0028-quyen-ghi-muc-dong-thoi-gian-den-tu-nhan-dang-theo-doi-khong-tu-trigger-context.md) | Design | Quyền tự ghi mục dòng thời gian đến từ `is_watched` của công ty, **không** từ `trigger_context`; sửa I-4 ontology | Chấp nhận — **đã đo bằng bảng hai chiều 4 ô** + đột biến bỏ `is_watched` → 2 test đỏ |
 | [0027](0027-nut-hoan-tac-nam-tren-the-co-hoi-du-lieu-di-qua-endpoint-rieng.md) | Design | Nút Hoàn tác nằm **trên thẻ cơ hội** (không chỉ trong màn thông báo); dữ liệu qua endpoint riêng, `OpportunityDto` không đổi | Chấp nhận — **chưa hỏi Sales, 4h là ước lượng chưa đo** |
 | [0026](0026-hoan-tac-lan-nguoc-chuoi-event-de-tim-moc-nguoi-go.md) | Design | Hoàn tác **lần ngược chuỗi event** tìm mốc `previous_source ≠ 'system'`, không chép mốc người-gõ sang từng hàng | Chấp nhận — **test I-8 viết trong Phase 6, chưa chạy** |
 | [0025](0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md) | Design | Mốc `seconds_to_decide` đặt lại sau mỗi quyết định, không dùng một mốc chung lúc mở màn hình; **sửa ontology mục 7** | Chấp nhận — chưa có người thật bấm thử |
