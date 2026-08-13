@@ -1,10 +1,26 @@
 import { Pool } from 'pg'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { IngestResultDto } from '@crm/contracts'
 import { createConnection, resetTestDatabase } from '@crm/db'
 
+import type { ObservationService } from '../../domain/observation/observation-service'
 import { SystemSettingService } from '../../settings/system-setting-service'
+import type { WatchCycleRollup } from '../watch-cycle-rollup'
 import { WatchCycleService } from '../watch-cycle-service'
+
+/** "Read, nothing there" — the shape `ingest()` returns for an unchanged source. */
+const EMPTY_INGEST: IngestResultDto = {
+  observationId: null,
+  unchanged: true,
+  skippedReason: null,
+  fetchStatus: 'ok',
+  claimsProposed: 0,
+  claimsSaved: 0,
+  claimsDroppedNoVerbatimQuote: 0,
+  claimsDowngradedFromCertain: 0,
+  systemEntriesAdded: 0,
+}
 
 /**
  * Pays off ADR-0011's verification debt — that ADR was written without a single line ever
@@ -37,8 +53,25 @@ const settings = new SystemSettingService(appConnection.db, systemConnection.db)
 
 let worker: WatchCycleService
 
+/**
+ * A worker whose SCAN does nothing. This file is about the CADENCE — ADR-0011's three converging
+ * requirements — and a real reaction chain here would make every assertion below depend on
+ * fixture content and model behaviour as well as on the clock. What a cycle does is measured in
+ * `watch-cycle-scans-and-writes.test.ts`; keeping the two apart is what keeps both readable.
+ */
 function createWorker(): WatchCycleService {
-  worker = new WatchCycleService(settings, systemConnection.db)
+  const noopIngest = {
+    async ingest() {
+      return EMPTY_INGEST
+    },
+  } as unknown as ObservationService
+  const noopRollup = {
+    async maybeWrite() {
+      return false
+    },
+  } as unknown as WatchCycleRollup
+
+  worker = new WatchCycleService(settings, systemConnection.db, noopIngest, noopRollup)
   return worker
 }
 

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
-import { count, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 import {
   SKIP_REASON_AI_DISABLED,
@@ -10,7 +10,10 @@ import {
 } from '@crm/db'
 
 import { DRIZZLE_SYSTEM } from '../common/db/db.module'
+import { ObservationService } from '../domain/observation/observation-service'
 import { SystemSettingService } from '../settings/system-setting-service'
+import { WatchCycleRollup } from './watch-cycle-rollup'
+import type { SnapshotVariant } from '../ai/demo-snapshots'
 
 /**
  * ADR-0011 — a SELF-RESCHEDULING loop, not `@Cron`.
@@ -56,6 +59,8 @@ export class WatchCycleService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly settings: SystemSettingService,
     @Inject(DRIZZLE_SYSTEM) private readonly db: CrmDatabase,
+    private readonly observations: ObservationService,
+    private readonly rollup: WatchCycleRollup,
   ) {}
 
   onModuleInit(): void {
@@ -81,6 +86,23 @@ export class WatchCycleService implements OnModuleInit, OnModuleDestroy {
     const parameters = await this.settings.read()
     this.scheduleNextTick(parameters.watchCycleSeconds)
 
+    await this.runCycle(parameters)
+
+    /**
+     * The rolled-up line is attempted after EVERY recorded cycle, scanned or skipped, and that
+     * placement is the decision rather than a detail. A skipped tick is still a cycle — it
+     * happened and chose not to scan (T-9, I-10) — so ten cycles of a switched-off AI have to
+     * produce their summary too. Put this inside `scan()` instead and a log full of skips never
+     * summarises anything, which is exactly the stretch a reader most needs summarised.
+     *
+     * It is safe to call unconditionally: the statement's own `HAVING count(*) >= 10` means a
+     * batch shorter than ten writes nothing, so no counter has to be kept in step out here.
+     */
+    await this.rollup.maybeWrite()
+  }
+
+  /** One cycle's decision and its log row. Always writes exactly one row. */
+  private async runCycle(parameters: { aiEnabled: boolean }): Promise<void> {
     if (!parameters.aiEnabled) {
       await this.recordSkippedTick(SKIP_REASON_AI_DISABLED)
       return
@@ -102,22 +124,75 @@ export class WatchCycleService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * In the walking skeleton, "scanning" only counts watched companies and writes one log row.
-   * The real content (read snapshot → `Observation` → `Claim` → `TimelineEntry`) belongs to
-   * feature group 5.
+   * One cycle: read every watched company's source and let the reaction chain do the rest.
+   *
+   * Deliberately NOT reimplementing any of it. `ObservationService.ingest()` already compares
+   * hashes (I-3), extracts findings, and hands them to groups 4, 3 and 5 in that order — a
+   * second copy of that logic living in the worker is how the manual path and the automatic path
+   * start behaving differently, which is the exact bug ADR-0028 was written to undo.
+   *
+   * ── PER-COMPANY try/catch, and the cycle never dies ────────────────────────────────────
+   * One unreachable source, one model timeout, one company row missing a snapshot must not stop
+   * the other companies from being read or stop the log row from being written. A cycle that
+   * throws leaves NO row, and a log with a gap in it cannot be told apart from a worker that is
+   * dead — which is the same reason a skipped tick writes a row (ADR-0011).
+   *
+   * ── Which snapshot: the COLUMN, never an argument ──────────────────────────────────────
+   * ADR-0022. The cycle fires on a timer and nobody passes it anything, so `snapshot_variant` on
+   * the company row is the only place "which page is this company's source right now" can come
+   * from. Read per company, inside the same SELECT that finds the watched ones.
    */
   private async scan(startedAt: number): Promise<void> {
-    const [watched] = await this.db
-      .select({ total: count() })
+    const watched = await this.db
+      .select({
+        id: companies.id,
+        name: companies.name,
+        snapshotVariant: companies.snapshotVariant,
+      })
       .from(companies)
       .where(eq(companies.isWatched, true))
+
+    let newContentCount = 0
+    let entriesAdded = 0
+    let errorCount = 0
+    const errors: string[] = []
+
+    for (const company of watched) {
+      try {
+        const result = await this.observations.ingest(
+          company.id,
+          company.snapshotVariant as SnapshotVariant,
+          'watch_cycle',
+        )
+
+        /**
+         * "New content" means a snapshot that actually differed. A failed read is NOT new
+         * content — it produces a row (the attempt is a fact) but no findings, and counting it
+         * would make an outage look like a productive cycle.
+         */
+        if (!result.unchanged && result.fetchStatus === 'ok') newContentCount += 1
+        entriesAdded += result.systemEntriesAdded
+      } catch (error) {
+        errorCount += 1
+        errors.push(`${company.name}: ${(error as Error).message}`)
+        this.logger.error(`Vòng quét lỗi ở công ty ${company.name}: ${(error as Error).message}`)
+      }
+    }
 
     await this.db.insert(watchCycleRuns).values({
       startedAt: new Date(startedAt),
       durationMs: Date.now() - startedAt,
-      companiesScanned: watched?.total ?? 0,
+      companiesScanned: watched.length,
+      newContentCount,
+      entriesAdded,
+      errorCount,
+      errorDetail: errors.length > 0 ? errors.join(' · ') : null,
     })
-    this.logger.log(`WatchCycleRun: scanned ${watched?.total ?? 0} watched companies`)
+
+    this.logger.log(
+      `WatchCycleRun: quét ${watched.length} công ty · ${newContentCount} có nội dung mới · ` +
+        `${entriesAdded} mục dòng thời gian tự thêm · ${errorCount} lỗi`,
+    )
   }
 
   private async recordSkippedTick(reason: string): Promise<void> {
