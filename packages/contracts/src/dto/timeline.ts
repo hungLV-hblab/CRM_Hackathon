@@ -21,6 +21,28 @@ export const createTimelineEntrySchema = z.object({
 
 export type CreateTimelineEntryDto = z.infer<typeof createTimelineEntrySchema>
 
+/**
+ * I-13 — Sales removing an entry the watch cycle added, WITH a short reason.
+ *
+ * The reason is required, and that is the whole design rather than a form nicety: it is the only
+ * error-detection signal feature group 5 produces. Zone 4 writes without asking anyone, so the
+ * one number that says whether it is trustworthy is how often a person had to undo it, and a
+ * deletion with no reason attached is a number with no meaning behind it (ontology section 7
+ * counts these in the numerator of the error-detection rate).
+ *
+ * Kept short on purpose — one line, not an essay. A long mandatory field is a field people learn
+ * to fill with "x", at which point the metric is worse than absent because it looks populated.
+ */
+export const deleteSystemTimelineEntrySchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Cần một lý do ngắn để xoá mục do hệ thống thêm')
+    .max(280, 'Lý do nên ngắn — một dòng là đủ'),
+})
+
+export type DeleteSystemTimelineEntryDto = z.infer<typeof deleteSystemTimelineEntrySchema>
+
 export interface TimelineEntryDto {
   id: string
   companyId: string
