@@ -1,7 +1,13 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
-import { asc, isNull } from 'drizzle-orm'
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { and, asc, eq, ilike, isNull } from 'drizzle-orm'
 
-import type { CompanyDto, CreateCompanyDto } from '@crm/contracts'
+import type {
+  CompanyDto,
+  CompanyType,
+  CreateCompanyDto,
+  ListCompaniesQuery,
+  UpdateCompanyDto,
+} from '@crm/contracts'
 import { type CrmDatabase, companies } from '@crm/db'
 
 import { DRIZZLE_APP } from '../../common/db/db.module'
@@ -36,14 +42,83 @@ export class CompanyService {
     return toDto(created)
   }
 
-  async list(): Promise<CompanyDto[]> {
+  /**
+   * Search by name plus the four filters, combinable. Everything is optional and an absent
+   * filter widens rather than narrows — a screen that starts empty until you pick something
+   * hides the data it exists to show.
+   */
+  async list(query: ListCompaniesQuery = {}): Promise<CompanyDto[]> {
+    const conditions = [isNull(companies.deletedAt)]
+    // `ilike` with wrapping wildcards: Sales types a fragment of the name, not a prefix, and
+    // the Vietnamese name they remember is rarely the one at the start of the legal name.
+    if (query.q) conditions.push(ilike(companies.name, `%${query.q}%`))
+    if (query.industry) conditions.push(eq(companies.industry, query.industry))
+    if (query.companyType) {
+      conditions.push(eq(companies.companyType, query.companyType as CompanyType))
+    }
+    if (query.country) conditions.push(eq(companies.country, query.country))
+    if (query.isWatched !== undefined) conditions.push(eq(companies.isWatched, query.isWatched))
+
     const rows = await this.db
       .select()
       .from(companies)
-      .where(isNull(companies.deletedAt))
+      .where(and(...conditions))
       .orderBy(asc(companies.name))
 
     return rows.map(toDto)
+  }
+
+  async byId(companyId: string): Promise<CompanyDto> {
+    const [row] = await this.db
+      .select()
+      .from(companies)
+      .where(and(eq(companies.id, companyId), isNull(companies.deletedAt)))
+
+    if (!row) throw new NotFoundException('Không tìm thấy công ty')
+    return toDto(row)
+  }
+
+  /**
+   * Every profile cell, `companyType` included. I-11 forbids a `Proposal` from editing the
+   * lens signals are read under; that is a constraint on the AI, not on the person who typed
+   * the value in the first place and now needs to fix a typo.
+   */
+  async update(actor: Actor, companyId: string, dto: UpdateCompanyDto): Promise<CompanyDto> {
+    if (actor.kind === 'system') {
+      await this.audit.recordRefusal(actor, 'update_company', 'company', companyId, {
+        reason: 'the AI edits a company field through the review queue, never directly (I-11)',
+      })
+      throw new ForbiddenException('Hệ thống không được sửa hồ sơ công ty trực tiếp')
+    }
+
+    const [updated] = await this.db
+      .update(companies)
+      .set({ ...dto, updatedAt: new Date() })
+      .where(and(eq(companies.id, companyId), isNull(companies.deletedAt)))
+      .returning()
+
+    if (!updated) throw new NotFoundException('Không tìm thấy công ty')
+    return toDto(updated)
+  }
+
+  /**
+   * SOFT delete, and it stops at the company: opportunities and timeline entries keep their
+   * rows and disappear from every screen because their queries join `companies` and filter
+   * `deletedAt IS NULL`. Cascading the flag downwards would mean a new column on two more
+   * tables, a migration, and an undelete that has to remember what it hid.
+   */
+  async softDelete(actor: Actor, companyId: string): Promise<void> {
+    if (actor.kind === 'system') {
+      await this.audit.recordRefusal(actor, 'delete_company', 'company', companyId, {
+        reason: 'actor=system may never delete human-created data (ontology section 5)',
+      })
+      throw new ForbiddenException('Hệ thống không được xoá công ty')
+    }
+
+    await this.db
+      .update(companies)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(companies.id, companyId))
   }
 }
 
