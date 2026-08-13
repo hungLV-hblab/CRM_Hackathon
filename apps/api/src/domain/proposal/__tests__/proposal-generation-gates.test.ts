@@ -13,6 +13,7 @@ import { FixtureClaimExtractor } from '../../../ai/fixture-claim-extractor'
 import { ObservationService } from '../../observation/observation-service'
 import { ProposalService } from '../proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
+import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 
 /**
  * The generation half of feature group 3: which suggestions come into existence, and which are
@@ -55,6 +56,7 @@ function buildIngest(extractor: ClaimExtractor = new FixtureClaimExtractor()): O
         new AuditEventService(appConnection.db, systemConnection.db),
       ),
       proposals,
+      new SystemTimelineEntryService(systemConnection.db),
     ),
   )
 }
