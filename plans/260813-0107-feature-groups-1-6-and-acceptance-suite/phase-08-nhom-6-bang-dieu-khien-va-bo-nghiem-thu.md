@@ -52,6 +52,8 @@ Phạm vi tối thiểu — **không** làm hơn:
 | Thời gian quyết trung bình | trung vị `seconds_to_decide` — hiện **cạnh** error-detection rate, vì thấp có thể là giao diện tốt mà cũng có thể là bấm mù |
 | Tỉ lệ hoàn tác | `undone / tổng AutoNextStepEvent` |
 
+**"Số lần xoá mục hệ thống" lấy ở đâu** — hợp đồng P7 chốt 14/08 02:35 và **đã chạy thật từ 14/08 03:38** (P7 đóng, có test cho cả bốn nhánh của I-13), đừng suy lại: `SELECT count(*) FROM audit_events WHERE action = 'delete_system_timeline_entry'`. Lý do xoá nằm ở `detail->>'reason'` (P7 bắt buộc Sales gõ), nên phân bố lý do xoá là số **có sẵn** nếu bảng điều khiển muốn hiện cạnh phân bố lý do Bỏ.
+
 ## Files
 
 | Tạo/sửa | Vai trò |

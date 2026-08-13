@@ -31,7 +31,8 @@ app/(app)/co-hoi/…
 app/(app)/hang-doi/…
 app/(app)/tong-quan/…
 app/(app)/thong-bao/…
-app/(app)/quan-tri/…        ← P8 của plan cũ tạo; nếu chưa có thì bỏ qua
+app/(app)/dang-theo-doi/…   ← P7 của plan cũ tạo (14/08 02:35)
+app/(app)/quan-tri/…        ← P7 tạo `quan-tri/nhat-ky-vong-quet/`; P8 thêm bảng điều khiển
 app/dang-nhap/              ← Ở NGOÀI group, không có shell
 app/page.tsx                ← giữ nguyên, chỉ redirect
 ```
@@ -63,8 +64,8 @@ Phương án bị loại: giữ *Đăng xuất* hiện sẵn ở header desktop.
 
 ### Sidebar
 
-- 7 mục: Công ty · Cơ hội · Hàng đợi · Tổng quan · Thông báo · Quản trị · Hướng dẫn.
-- **Icon Lucide kèm nhãn chữ** — icon-only nav vi phạm `nav-label-icon`, và ở đây còn tệ hơn: 7 icon không nhãn thì Sales phải đoán.
+- 8 mục: Công ty · **Đang theo dõi** · Cơ hội · Hàng đợi · Tổng quan · Thông báo · Quản trị · Hướng dẫn. *(Nhật ký vòng quét nằm **trong** Quản trị, không lên cấp 1.)* Con số 7 của bản 14/08 00:56 viết trước khi P7 chốt hai route mới.
+- **Icon Lucide kèm nhãn chữ** — icon-only nav vi phạm `nav-label-icon`, và ở đây còn tệ hơn: 8 icon không nhãn thì Sales phải đoán.
 - Active: `usePathname()` + `aria-current="page"`. Màu không được là kênh duy nhất → active có cả nền `ink-100` **và** thanh chỉ thị.
 - Badge số trên *Hàng đợi*: dùng lại `usePendingProposalCounts()` từ `components/proposal/pending-proposal-marker.tsx`. **Không viết query mới.**
 - `rounded-pill` cho từng mục (token của P1).
@@ -72,7 +73,7 @@ Phương án bị loại: giữ *Đăng xuất* hiện sẵn ở header desktop.
 
 ### Mobile <1024px
 
-Hamburger → `Sheet` drawer. **Không làm bottom nav**: 7 mục vượt trần 5 của `bottom-nav-limit`, và trộn bottom nav với sidebar là vi phạm `avoid-mixed-patterns`.
+Hamburger → `Sheet` drawer. **Không làm bottom nav**: 8 mục vượt trần 5 của `bottom-nav-limit`, và trộn bottom nav với sidebar là vi phạm `avoid-mixed-patterns`.
 
 ### Footer
 
@@ -82,7 +83,7 @@ Một dòng: phiên bản · trạng thái AI · link `/huong-dan`. Giá trị t
 
 - Create: `apps/web/src/app/(app)/layout.tsx`
 - Create: `apps/web/src/components/shell/{app-shell,app-header,app-sidebar,app-footer,nav-items,ai-status-pill,breadcrumbs}.tsx`
-- Move: `app/{cong-ty,co-hoi,hang-doi,tong-quan,thong-bao,quan-tri}/` → `app/(app)/`
+- Move: `app/{cong-ty,dang-theo-doi,co-hoi,hang-doi,tong-quan,thong-bao,quan-tri}/` → `app/(app)/` — 7 thư mục, `dang-theo-doi` là của P7
 - Modify: `apps/web/src/app/layout.tsx` — giữ font + QueryProvider, thêm `Toaster` của Sonner (P4 dùng)
 - Modify: `e2e/login-and-create-company.spec.ts` — **chỉ khi C đồng ý**
 - Đọc: `apps/web/src/middleware.ts` · `components/proposal/pending-proposal-marker.tsx`
@@ -91,7 +92,7 @@ Một dòng: phiên bản · trạng thái AI · link `/huong-dan`. Giá trị t
 ## Tests First
 
 1. **e2e mới `e2e/app-shell-navigation.spec.ts`** — viết trước khi dựng shell, phải đỏ:
-   - Đăng nhập → từ `/cong-ty`, bấm **từng** mục sidebar → tới đúng 6 route còn lại, mỗi mục đúng 1 cú bấm.
+   - Đăng nhập → từ `/cong-ty`, bấm **từng** mục sidebar → tới đúng 7 route còn lại, mỗi mục đúng 1 cú bấm.
    - Mục đang mở có `aria-current="page"`.
    - Ở 375px: sidebar ẩn, mở được bằng hamburger, mục bấm được.
    - `/dang-nhap` **không** có sidebar (khẳng định phủ định — đây là thứ dễ quên nhất).
@@ -100,7 +101,7 @@ Một dòng: phiên bản · trạng thái AI · link `/huong-dan`. Giá trị t
 ## Implementation Steps
 
 1. Viết `app-shell-navigation.spec.ts`, chạy → đỏ.
-2. `git mv` 6 thư mục route vào `(app)/`. Thêm `(app)/layout.tsx` **rỗng** (chỉ `{children}`).
+2. `git mv` 7 thư mục route vào `(app)/`. Thêm `(app)/layout.tsx` **rỗng** (chỉ `{children}`).
 3. **`pnpm test:e2e` ngay** — phải xanh y baseline. Đỏ ở đây nghĩa là có gì bám đường dẫn, dừng lại điều tra trước khi đi tiếp.
 4. Nói với C **một lần** về đủ 5 thay đổi trong `e2e/`: `app-shell-navigation.spec.ts` (mới) · dòng `Đăng xuất` trong `login-and-create-company.spec.ts` · `ui-invariants.spec.ts` (P3) · `tour-does-not-block.spec.ts` + `guide-page.spec.ts` (P5). Không hỏi lắt nhắt từng phase.
 5. Dựng `nav-items.tsx` (một mảng: path, nhãn, icon) rồi `app-sidebar` đọc mảng đó. Một nguồn sự thật cho nav, không rải `<Link>` khắp nơi.
@@ -115,7 +116,7 @@ Một dòng: phiên bản · trạng thái AI · link `/huong-dan`. Giá trị t
 - [ ] `pnpm test` khớp baseline P1 (trừ dòng `Đăng xuất` đã thoả thuận)
 - [ ] Không route nào đổi URL — `middleware.ts` không phải sửa
 - [ ] `/dang-nhap` không có shell
-- [ ] 7 mục nav đều có icon **và** nhãn chữ; active có nền **và** thanh chỉ thị, không chỉ màu
+- [ ] 8 mục nav đều có icon **và** nhãn chữ; active có nền **và** thanh chỉ thị, không chỉ màu
 - [ ] Badge *Hàng đợi* dùng lại `usePendingProposalCounts`, không query mới
 - [ ] Mọi mục nav vùng chạm ≥44px
 - [ ] Tab được hết bằng bàn phím, thứ tự tab khớp thứ tự nhìn

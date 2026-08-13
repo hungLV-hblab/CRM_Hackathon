@@ -63,6 +63,8 @@ Chạy 13/08 03:00–03:25. **113 unit + 6 e2e xanh** (từ 88 + 3), `pnpm typec
 - [x] Ba mức chắc chắn phân biệt được khi chụp đen trắng: mỗi mức có **chữ + ký hiệu chấm** (`●●●` / `●●○` / `●○○`), màu không phải thứ duy nhất mang nghĩa
 - [x] ADR-0014 mục verify có ba con số thật — **3/3**, trả 13/08 11:28 với `claude-haiku-4-5`: 11 draft, **0 bị bỏ vì không nguyên văn**, 7 bị hạ khỏi mức Chắc. Đối chiếu độc lập bằng SQL: 6/6 câu trích là chuỗi con thật **và** offset cắt lại ra đúng chuỗi đó
 
+> **I-4 bị thu hẹp 14/08 02:35 bởi [ADR-0028](../../docs/decisions/) (phạm vi P7).** Điều kiện ghi mục dòng thời gian chuyển từ `trigger_context` sang `is_watched`: claim `manual_ingest` của công ty **đang theo dõi** giờ **có** sinh `TimelineEntry`. Câu "nhóm 2 không chạm dữ liệu chính thức" **vẫn đúng** — đường ghi nằm ở bước nhóm 5 của `ClaimReactionService`, `ObservationService`/`ClaimService` vẫn không có đường nào tới bảng đó. Khẳng định `[x]` ở trên là bản ghi đúng tại thời điểm P2 đóng; P7 sửa test tương ứng, xem [mục "Việc kèm bắt buộc"](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md#việc-kèm-bắt-buộc).
+
 ### Phát sinh ngoài phase file
 
 - **Ba lỗi phép đo LLM thật bắt được ngày 13/08** (chi tiết trong [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) phép đo 3): (1) `docker-compose.yml` không truyền `ANTHROPIC_API_KEY` vào `api`/`worker` → có key vẫn chạy fixture, **đã sửa**; (2) statement trả về tiếng Anh, **đã sửa prompt**; (3) cửa kiểm mức Chắc hạ 5/6 claim chỉ vì tên công ty viết đủ — **chưa sửa, chờ quyết định** ở [ADR-0018](../../docs/decisions/0018-cua-kiem-muc-chac-bo-qua-ten-cua-chinh-cong-ty-dang-doc.md).
