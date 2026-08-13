@@ -38,7 +38,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <form
         onSubmit={onSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-ink-200 bg-white p-6"
       >
         <h1 className="text-xl font-semibold">Đăng nhập</h1>
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
         {/* `role="alert"` so the failure is announced, not just drawn in red. */}
         {error && (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="rounded-control bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
           </p>
         )}

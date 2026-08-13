@@ -59,10 +59,10 @@ export default function CompanyListPage() {
         </div>
       </header>
 
-      {companies.isPending && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {companies.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
 
       {companies.isError && (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p role="alert" className="rounded-control bg-red-50 px-3 py-2 text-sm text-red-700">
           {companies.error instanceof ApiError
             ? companies.error.message
             : 'Không tải được danh sách công ty'}
@@ -76,7 +76,7 @@ export default function CompanyListPage() {
               <Cell>
                 <Link
                   href={`/cong-ty/${company.id}`}
-                  className="underline underline-offset-2 hover:text-slate-600"
+                  className="underline underline-offset-2 hover:text-ink-600"
                 >
                   {company.name}
                 </Link>
@@ -84,7 +84,7 @@ export default function CompanyListPage() {
               <Cell>{company.industry}</Cell>
               <Cell>{COMPANY_TYPE[company.companyType as keyof typeof COMPANY_TYPE]}</Cell>
               {/* Rule 4: an empty cell says it is empty. It never gets a plausible filler. */}
-              <Cell>{company.country ?? <span className="text-slate-400">—</span>}</Cell>
+              <Cell>{company.country ?? <span className="text-ink-400">—</span>}</Cell>
               <Cell>{company.isWatched ? <Badge tone="fact">Đang theo dõi</Badge> : null}</Cell>
             </tr>
           ))}

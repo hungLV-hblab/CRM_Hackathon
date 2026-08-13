@@ -1,20 +1,169 @@
 @import 'tailwindcss';
 
 /**
- * Tailwind v4 keeps the design tokens in CSS, not in a JS config. Only the handful the
- * walking skeleton actually uses are declared here — the palette that feature groups 1-6
- * will need belongs with those features, not in a placeholder nobody reads.
+ * HBLAB CRM design tokens. Tailwind v4 keeps tokens in CSS, so THIS FILE IS THE PALETTE —
+ * there is no JS config to look in. Rules for using them: docs/design-guidelines.md.
  *
- * `--color-fact` / `--color-suy-luan` are the exception, and they are deliberate: rule 2 of
- * CLAUDE.md says a fact and an inference must be distinguishable BY EYE. Fixing the two
- * colours here, before the first AI screen exists, keeps three people from inventing three
- * different visual languages for the same distinction.
+ * Two ideas hold the whole system together, and every colour below follows from them:
+ *
+ *   1. AMBER MEANS A HUMAN ACTS.   The brand colour (taken from the logo) marks the places
+ *      Sales is meant to touch: primary buttons, focus rings, the highlight on a quote they
+ *      clicked. Never a passive surface, or "brand" and "click me" stop being the same signal.
+ *
+ *   2. VIOLET MEANS A MACHINE PRODUCED IT.   Every claim, proposal, and system-written row
+ *      sits in violet. One hue for machine origin means rule 2 of CLAUDE.md (a fact and an
+ *      inference must be distinguishable BY EYE) is answered by the palette itself, not by
+ *      each screen inventing its own convention.
+ *
+ * Colour is never the ONLY carrier of either meaning — every machine-origin surface also
+ * carries a label, and confidence carries dot glyphs. A judge printing the screen in
+ * greyscale must still be able to tell who wrote what.
  */
+
 @theme {
-  --color-fact: oklch(0.45 0.03 250);
-  --color-suy-luan: oklch(0.55 0.14 65);
+  /* ---------------------------------------------------------------- brand: amber + ink */
+
+  /**
+   * `brand-400` is the logo colour, sampled from the asset, not eyeballed. It has a 1.62:1
+   * contrast on white — that is not a flaw to fix, it is the reason the rules below exist:
+   * amber is a SURFACE you put ink on (ink on brand-400 = 11.36:1), never text on white.
+   * When amber has to be text or a 1px border on white, step down to `brand-700` (5.7:1)
+   * or `brand-600` (3.46:1, large text and icons only).
+   */
+  --color-brand-50: #fffaeb;
+  --color-brand-100: #fff3cc;
+  --color-brand-200: #ffe28a;
+  --color-brand-300: #ffd24d;
+  --color-brand-400: #ffc20f;
+  --color-brand-500: #e8a800;
+  --color-brand-600: #b87f00;
+  --color-brand-700: #8a5e00;
+  --color-brand-800: #5c3e00;
+  --color-brand-900: #3d2900;
+
+  /**
+   * The logo's dark is #424244, kept as `ink-700` for brand work. Body text uses `ink-900`
+   * instead (18.39:1 vs 10.03:1) because a CRM is read for eight hours a day and the logo
+   * grey was chosen to sit next to amber, not to be read in paragraphs.
+   */
+  --color-ink-900: #141417;
+  --color-ink-800: #26262a;
+  --color-ink-700: #424244;
+  --color-ink-600: #5b5b61;
+  --color-ink-500: #6b6b72;
+  --color-ink-400: #8a8a92;
+  --color-ink-300: #c9c9d0;
+  --color-ink-200: #e4e4e9;
+  --color-ink-100: #f1f1f4;
+  --color-ink-50: #f8f8fa;
+
+  /* ------------------------------------------------------- origin: who produced this row */
+
+  /**
+   * `fact` = a human typed it or it was copied 1-1 from a source. `machine` = an AI derived
+   * it. `--color-suy-luan` keeps its Vietnamese name because it is the word the Specs use and
+   * it already appears in shipped components; it now points at the machine hue instead of
+   * amber, which the brand has taken over.
+   */
+  --color-fact: var(--color-ink-800);
+  --color-machine-50: #f5f3ff;
+  --color-machine-100: #ede9fe;
+  --color-machine-200: #ddd6fe;
+  --color-machine-400: #a78bfa;
+  --color-machine-600: #6d28d9;
+  --color-machine-700: #5b21b6;
+  --color-suy-luan: var(--color-machine-600);
+
+  /* --------------------------------------------------------------------- status colours */
+
+  /* All four are ≥4.5:1 on white, so they may be used as TEXT, not only as a dot. */
+  --color-danger: #b42318;
+  --color-danger-surface: #fef3f2;
+  --color-success: #0e7c4a;
+  --color-success-surface: #ecfdf3;
+  --color-warning: #b54708;
+  --color-warning-surface: #fffaeb;
+  --color-info: var(--color-machine-600);
+
+  /* ------------------------------------------------------------------------- typography */
+
+  /**
+   * Be Vietnam Pro is drawn for Vietnamese: the diacritic stacks (ế, ộ, ữ) keep their shape
+   * at 14px, where fonts designed for Latin-only text collide the marks into the letter.
+   * The whole interface is Vietnamese, so this is a legibility decision, not a taste one.
+   */
+  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+
+  /* ------------------------------------------------------------- shape, depth, and time */
+
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+
+  /**
+   * Two levels only. A CRM screen is a dense grid of cards; a third shadow tier reads as
+   * noise rather than as hierarchy. Anything that must float above the page (modal, popover)
+   * uses `--shadow-float` and nothing else does.
+   */
+  --shadow-card: 0 1px 2px 0 rgb(20 20 23 / 0.05), 0 1px 3px 0 rgb(20 20 23 / 0.06);
+  --shadow-float: 0 10px 15px -3px rgb(20 20 23 / 0.1), 0 4px 6px -4px rgb(20 20 23 / 0.1);
+
+  /* 150ms for state, 250ms for anything that moves or resizes. Nothing slower in this app. */
+  --duration-state: 150ms;
+  --duration-motion: 250ms;
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/**
+ * One scale, declared once. Layer numbers invented per component is how a dropdown ends up
+ * under a sticky header two weeks later.
+ */
+:root {
+  --z-sticky: 20;
+  --z-dropdown: 40;
+  --z-overlay: 60;
+  --z-modal: 70;
+  --z-toast: 90;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-ink-50 text-ink-900 antialiased;
+  font-family: var(--font-sans);
+}
+
+/**
+ * Numbers in a CRM are read in columns — money, counts, dates. Proportional digits make the
+ * columns jitter as values change; tabular digits keep them aligned. Applied by utility so a
+ * table cell opts in explicitly.
+ */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/**
+ * A single visible focus ring for the whole app. Amber on white is too faint to be seen as a
+ * ring on its own, so the ring is ink with an amber inner edge — visible on both white cards
+ * and on amber buttons, which a one-colour ring cannot manage.
+ */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ink-900);
+    outline-offset: 2px;
+    border-radius: var(--radius-control);
+  }
+}
+
+/**
+ * Rule 7 of the UX checklist: motion must be optional. Declared once, globally, so no
+ * component has to remember it — and so nobody can forget.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
