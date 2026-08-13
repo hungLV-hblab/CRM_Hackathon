@@ -61,7 +61,7 @@ export default function LoginPage() {
 
         {/* `role="alert"` so the failure is announced, not just drawn in red. */}
         {error && (
-          <p role="alert" className="rounded-control bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}

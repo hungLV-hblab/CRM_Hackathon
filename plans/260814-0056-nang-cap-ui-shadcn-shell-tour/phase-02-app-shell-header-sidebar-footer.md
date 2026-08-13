@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "App shell — header, sidebar, footer, drawer"
-status: pending
+status: done
 priority: P1
 effort: "1h20'"
 dependencies: [1]

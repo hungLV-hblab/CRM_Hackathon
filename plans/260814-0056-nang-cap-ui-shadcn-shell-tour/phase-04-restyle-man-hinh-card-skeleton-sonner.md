@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Restyle màn hình — Card, Skeleton, Sonner"
-status: pending
+status: done
 priority: P3
 effort: "1h30'"
 dependencies: [2, 3]

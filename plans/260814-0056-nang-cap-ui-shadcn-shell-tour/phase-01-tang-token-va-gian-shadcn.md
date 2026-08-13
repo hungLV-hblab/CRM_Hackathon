@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Tầng token + giàn shadcn"
-status: pending
+status: done
 priority: P1
 effort: "30'"
 dependencies: []

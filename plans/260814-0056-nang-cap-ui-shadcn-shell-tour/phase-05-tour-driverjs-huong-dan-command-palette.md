@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Tour driver.js + trang hướng dẫn + Command palette"
-status: pending
+status: done
 priority: P3
 effort: "2h"
 dependencies: [2]

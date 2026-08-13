@@ -103,7 +103,7 @@ export default function CompanyDetailPage() {
         </div>
 
         {ingest.isError && (
-          <p role="alert" className="rounded-control bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
             {ingest.error instanceof ApiError ? ingest.error.message : 'Không đọc được nguồn'}
           </p>
         )}

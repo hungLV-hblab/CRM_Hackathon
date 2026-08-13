@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Cửa chốt — checklist giao diện + ADR"
-status: pending
+status: done
 priority: P1
 effort: "30'"
 dependencies: [4, 5]
@@ -26,7 +26,7 @@ Không có ADR = quyết định không tồn tại với BGK ([CLAUDE.md mục 
 
 | # | Kiểm | Cách kiểm |
 | --- | --- | --- |
-| 1 | Không còn class màu thô | `grep -rE "slate-\|amber-\|indigo-\|bg-\[#" apps/web/src` → **rỗng**. Đầu plan có 1 vi phạm: `input.tsx` dùng `text-red-600` |
+| 1 | Không còn class màu thô | Xem [mẫu grep đã sửa](#mẫu-grep-mục-1-đã-sửa-14-08) — mẫu cũ vừa bỏ sót vừa báo động giả |
 | 2 | Chữ thân ≥14px, tương phản ≥4.5:1, thử 375px và 1440px | Tay. DevTools contrast checker cho mọi cặp màu **mới** phát sinh |
 | 3 | Mọi nút có phản hồi khi bấm, vùng chạm ≥44px | `grep -rn "h-9\|h-8\|min-h-9" apps/web/src` → rỗng. **T-A trong `e2e/ui-invariants.spec.ts`** đo `boundingBox().height >= 44` trên stack thật |
 | 4 | Nhận định AI nào cũng bấm ra được nguồn | Tay: mở `/cong-ty/[id]` của công ty có phát hiện, bấm từng câu trích |
@@ -46,6 +46,29 @@ Thêm ba mục riêng của plan này:
 | 13 | Không có dòng trạng thái AI bịa | Đăng nhập bằng tài khoản **Sales** → header **không** có pill nào. `grep -rn "AI đang bật" apps/web/src` không được ra chuỗi hằng nào render vô điều kiện |
 | 14 | Ba bàn giao đã nói, không phải đã nghĩ | Có chỗ ghi lại (chat/issue): C nhận `app/(app)/quan-tri/` · C nhận ranh giới `e2e/` · B nhận việc rebase |
 
+## Mẫu grep mục 1 — đã sửa 14/08
+
+Mẫu cũ `"slate-|amber-|indigo-|bg-\[#"` **sai hai chiều cùng lúc**, và chỉ lộ ra khi chạy thật:
+
+- **Bỏ sót.** Nó không kiểm `red-`, `blue-`, `green-`, `gray-`… Thực tế có **ba** vi phạm chứ không phải một như plan ghi: `input.tsx` dùng `text-red-600` (đã biết), cộng `cong-ty/[id]/page.tsx` và `dang-nhap/page.tsx` cùng dùng `bg-red-50` + `text-red-700` cho khối lỗi. Cả ba đã đổi sang `danger` / `danger-surface`.
+- **Báo động giả.** Chuỗi `slate-` nằm trong tiện ích Tailwind hợp lệ `-translate-y-1/2`, nên mọi phần tử căn giữa đều bị báo. Một checklist kêu oan vài lần là một checklist người ta bắt đầu tick trôi.
+
+Mẫu dùng từ nay — buộc class phải đứng đầu chuỗi hoặc sau dấu cách, và liệt kê đủ họ màu mặc định:
+
+```bash
+grep -rnE "(^|[\"' ])(bg|text|border|ring)-(slate|amber|indigo|red|blue|green|gray|zinc|neutral|stone)-[0-9]|bg-\[#" apps/web/src
+```
+
+Kết quả 14/08: **rỗng**.
+
+Ba mục khác của checklist cũng cần đọc theo nghĩa, không đọc theo số dòng grep: `h-9`, `localStorage` và `quan-tri` đều còn xuất hiện trong **comment giải thích vì sao không dùng chúng**. Đó là bằng chứng của luật 7, không phải vi phạm — kiểm bằng mẫu bám `className=` hoặc `href=` như dưới đây thì hết nhiễu:
+
+```bash
+grep -rnE "className=[^>]*\b(h-9|h-8|min-h-9)\b" apps/web/src          # → rỗng
+grep -rnE "className=[^>]*\b(bg-background|text-primary)\b" apps/web/src/app --include="*.tsx"   # → rỗng
+grep -rnE "href=[\"'][^\"']*quan-tri" apps/web/src                      # → rỗng
+```
+
 ## Bàn giao cho P8
 
 Viết thành **một danh sách gửi C và B**, không phải một đoạn văn. Ba việc P8 phải làm mà trước khi đảo thứ tự thì không tồn tại:
@@ -58,7 +81,7 @@ Cộng một việc P8 **được lợi**, nói ra để khỏi làm lại: pill
 
 ## ADR — nội dung bắt buộc
 
-**ADR-0028** (mới nhất trong `docs/decisions/` là 0027 — đã kiểm 14/08). Phải có đủ:
+**ADR-0030** (0028 và 0029 đã thuộc về vòng quét ghi dòng thời gian — đánh số nối tiếp sau khi rebase lên master). Phải có đủ:
 
 - **Quyết định:** migrate 6 primitive sang shadcn (Radix + cva), giữ nguyên bề mặt API.
 - **Đảo hướng gì:** `button.tsx` đang có comment *"Hand-written rather than pulled from shadcn/ui"*. ADR này đảo nó. Nói rõ vì sao đảo được: đường import đã chừa sẵn từ đầu (`@/components/ui/button`), nên đổi ruột không lan ra call site.
@@ -73,7 +96,7 @@ Cộng một việc P8 **được lợi**, nói ra để khỏi làm lại: pill
 
 ## Related Code Files
 
-- Create: `docs/decisions/0028-migrate-primitive-sang-shadcn-giu-nguyen-be-mat-api.md`
+- Create: `docs/decisions/0030-migrate-primitive-sang-shadcn-giu-nguyen-be-mat-api.md`
 - Modify: `docs/design-guidelines.md` — thang bo góc 3 giá trị (mục 4) · luật alias shadcn · chốt Lucide (xoá khỏi "Câu hỏi chưa giải quyết") · mục 6 ghi `Button` giờ dựa cva nhưng variant không đổi
 - Modify: `plans/260814-0056-nang-cap-ui-shadcn-shell-tour/plan.md` — đánh dấu phase xong, ghi phần đã cắt
 - Modify: `README.md` — chỉ khi có route mới cho người dùng (`/huong-dan`)

@@ -1,7 +1,8 @@
 ---
+status_note: "done 14/08 — 6/6 phase, 26 e2e + 225 unit xanh, ADR-0030"
 title: "Nâng cấp UI toàn diện — shadcn, app shell, tour"
 description: "Migrate 6 primitive sang shadcn giữ nguyên bề mặt API, thêm app shell (header/sidebar/footer/drawer), mở thang bo góc, tour driver.js, trang hướng dẫn, ⌘K"
-status: pending
+status: done
 priority: P2
 effort: large
 branch: "feat/phase-6"
@@ -83,12 +84,34 @@ Không phải đổi thứ tự là xong — hai thành phần của P2/P5 đọ
 
 | # | Phase | Trạng thái | Ước lượng | Phụ thuộc | Cắt được? |
 | --- | --- | --- | --- | --- | --- |
-| 1 | [Tầng token + giàn shadcn](./phase-01-tang-token-va-gian-shadcn.md) | pending | 30' | — | ❌ **phải có** |
-| 2 | [App shell — header, sidebar, footer, drawer](./phase-02-app-shell-header-sidebar-footer.md) | pending | 1h20' | 1 | ❌ **phải có** |
-| 3 | [Migrate primitive sang shadcn](./phase-03-migrate-primitive-sang-shadcn.md) | pending | 1h30' | 1 | ❌ **phải có** |
-| 4 | [Restyle màn hình — Card, Skeleton, Sonner](./phase-04-restyle-man-hinh-card-skeleton-sonner.md) | pending | 1h30' | 2, 3 | ✅ cắt được |
-| 5 | [Tour driver.js + `/huong-dan` + ⌘K](./phase-05-tour-driverjs-huong-dan-command-palette.md) | pending | 2h | 2 | ✅ cắt được |
-| 6 | [Cửa chốt — checklist giao diện](./phase-06-cua-chot-checklist-giao-dien.md) | pending | 30' | 4, 5 | ❌ **phải có** (chạy trên phần đã làm được) |
+| 1 | [Tầng token + giàn shadcn](./phase-01-tang-token-va-gian-shadcn.md) | **done** | 30' | — | ❌ **phải có** |
+| 2 | [App shell — header, sidebar, footer, drawer](./phase-02-app-shell-header-sidebar-footer.md) | **done** | 1h20' | 1 | ❌ **phải có** |
+| 3 | [Migrate primitive sang shadcn](./phase-03-migrate-primitive-sang-shadcn.md) | **done** | 1h30' | 1 | ❌ **phải có** |
+| 4 | [Restyle màn hình — Card, Skeleton, Sonner](./phase-04-restyle-man-hinh-card-skeleton-sonner.md) | **done** (một phần — xem dưới) | 1h30' | 2, 3 | ✅ cắt được |
+| 5 | [Tour driver.js + `/huong-dan` + ⌘K](./phase-05-tour-driverjs-huong-dan-command-palette.md) | **done** | 2h | 2 | ✅ cắt được |
+| 6 | [Cửa chốt — checklist giao diện](./phase-06-cua-chot-checklist-giao-dien.md) | **done** | 30' | 4, 5 | ❌ **phải có** |
+
+### Đã làm và đã cắt — 14/08
+
+**Cả sáu phase chạy hết, không phase nào bị bỏ.** Một phần trong P4 làm hẹp hơn plan, khai ở đây để BGK không phải tự phát hiện:
+
+| Việc | Trạng thái | Lý do |
+| --- | --- | --- |
+| `PageHeader` · `Skeleton` · toast · xoá link `← Công ty` · `bg-white` → token | **xong** | |
+| **Bọc `Card` của shadcn quanh từng section** | **cắt** | `Table` và các section đã mang `rounded-card` + `shadow-card` từ P1, nên bọc thêm một lớp `Card` là lớp sơn thứ hai lên cùng một bề mặt. Đổi lại rủi ro thật: `Card` chèn một tầng DOM giữa sensor của dnd-kit và node kéo thả trên màn cơ hội. Không đáng đánh cược T-1 để lấy một đường viền |
+| **Thu thanh bên về icon rail** (P2) | **cắt** | Rail là điều hướng chỉ có icon, thứ design-guidelines cấm — sáu ký hiệu không nhãn bắt Sales đoán. Chiều rộng tiết kiệm được không bù được việc đó |
+| Mục *Quản trị* trên thanh bên | **hoãn** | `/quan-tri` chưa tồn tại. Một dòng trong `nav-items.tsx` khi P8 ship |
+
+### Kết quả đo được
+
+| | Baseline (trước P1) | Sau P6 |
+| --- | --- | --- |
+| Unit | 225 pass / 21 file | **225 pass / 21 file** — không đổi |
+| e2e | 11 pass | **26 pass** — lệch đúng 15 test của 4 spec mới có chủ đích |
+| `pnpm lint` · `typecheck` | xanh | **xanh** |
+| `docker compose build web` | xanh | **xanh** |
+| Class màu thô | 3 vi phạm (2 chỗ plan không biết) | **0** |
+| Tràn ngang ở 375px và 1440px | — | **0px** trên 4 màn đã kiểm |
 
 ```
 P1 token ──┬── P2 shell ──┬── P4 restyle ──┐
@@ -181,7 +204,7 @@ Verified: `middleware.ts` matcher không bám tên thư mục nên route group a
 
 ### Whole-Plan Consistency Sweep
 
-Đã lan quyết định xuống `phase-02` (Đăng xuất chốt + gộp một lần hỏi C), `phase-03` (Tests First viết lại sang e2e, Related Files, Implementation Steps, Success Criteria, Risk), `phase-05` (bỏ auto-run, ba nhánh spec, Related Files, Steps, Criteria, Risk), `phase-06` (checklist mục 3 và 10, ADR-0028, năm quyết định phụ, `diff` 4 spec), `plan.md` (tiêu chí, luật chung, chủ quyền, câu hỏi mở).
+Đã lan quyết định xuống `phase-02` (Đăng xuất chốt + gộp một lần hỏi C), `phase-03` (Tests First viết lại sang e2e, Related Files, Implementation Steps, Success Criteria, Risk), `phase-05` (bỏ auto-run, ba nhánh spec, Related Files, Steps, Criteria, Risk), `phase-06` (checklist mục 3 và 10, ADR-0030, năm quyết định phụ, `diff` 4 spec), `plan.md` (tiêu chí, luật chung, chủ quyền, câu hỏi mở).
 
 Rà từ khoá cũ: `__tests__` · `crm.tour.seen` · `storage state` · `T-A…T-F` dạng unit test · `00XX` → **0 mâu thuẫn còn lại**.
 
