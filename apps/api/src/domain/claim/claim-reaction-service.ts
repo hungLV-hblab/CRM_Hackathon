@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 
 import { AutoNextStepService } from '../opportunity/auto-next-step-service'
 import { ProposalService } from '../proposal/proposal-service'
 import { SYSTEM_ACTOR } from '../../common/actor/actor-context'
+import { SystemTimelineEntryService } from '../../watch/system-timeline-entry-service'
 import type { SavedClaim } from './claim-service'
 
 /**
@@ -21,6 +22,13 @@ import type { SavedClaim } from './claim-service'
  *      next step was typed by a human it refuses (I-7) and hands the case back as a suggestion.
  *   2. group 3 second, so those refusals arrive in the same call and become `next_step`
  *      proposals in the same transaction-shaped unit of work as the rest of the queue.
+ *   3. group 5 last, and last for three separate reasons. It is the mirror of group 3's
+ *      timeline branch (I-5: a finding is news for review OR news the system writes, never
+ *      both), so the pair is only provable when both have run. Its failure must not undo the
+ *      writes groups 4 and 3 already made, hence the try/catch below rather than a throw. And
+ *      putting it here rather than in `WatchCycleService` is what ADR-0028 requires: the write
+ *      is conditional on the COMPANY being watched, so a person re-reading a watched company's
+ *      source has to reach it too, and that call never goes near the worker.
  *
  * Deliberately a plain sequential call rather than an event emitter: fire-and-forget would make
  * the order above unobservable, and a test that cannot observe the order cannot prove I-7.
@@ -36,17 +44,31 @@ export interface ClaimReactionInput {
   companyId: string
   observationId: string
   savedClaims: SavedClaim[]
+  /**
+   * When the snapshot behind these findings was captured. Group 5 dates its timeline entries
+   * from it, so the row carries the moment the evidence describes rather than the moment the
+   * cycle happened to run. `ObservationService` already has it from its own `.returning()`.
+   */
+  observationCapturedAt: Date
+}
+
+export interface ClaimReactionResult {
+  /** How many `system_entry` rows group 5 wrote. One of the four numbers a cycle logs. */
+  systemEntriesAdded: number
 }
 
 @Injectable()
 export class ClaimReactionService {
+  private readonly logger = new Logger('ClaimReaction')
+
   constructor(
     private readonly autoNextSteps: AutoNextStepService,
     private readonly proposals: ProposalService,
+    private readonly systemTimelineEntries: SystemTimelineEntryService,
   ) {}
 
-  async react(input: ClaimReactionInput): Promise<void> {
-    if (input.savedClaims.length === 0) return
+  async react(input: ClaimReactionInput): Promise<ClaimReactionResult> {
+    if (input.savedClaims.length === 0) return { systemEntriesAdded: 0 }
 
     // ── step 1: feature group 4 (auto next step), autonomy zone 3 ───────────────────────────
     const autoNextStep = await this.autoNextSteps.react(SYSTEM_ACTOR, {
@@ -62,5 +84,29 @@ export class ClaimReactionService {
       savedClaims: input.savedClaims,
       blockedNextSteps: autoNextStep.blocked,
     })
+
+    // ── step 3: feature group 5 (the watch cycle's own entry), autonomy zone 4 ──────────────
+    /**
+     * Wrapped, and the swallow is the decision rather than laziness. Steps 1 and 2 have already
+     * committed by now; letting a zone-4 failure propagate would abort `ingest()` after those
+     * writes landed, so the caller would report "reading the source failed" about a read that
+     * largely succeeded. The count returned is the honest signal: `entries_added = 0` while
+     * `new_content_count > 0` is exactly the shape the watch log is built to make visible.
+     */
+    let systemEntriesAdded = 0
+    try {
+      systemEntriesAdded = await this.systemTimelineEntries.react({
+        companyId: input.companyId,
+        savedClaims: input.savedClaims,
+        observationCapturedAt: input.observationCapturedAt,
+      })
+    } catch (error) {
+      this.logger.error(
+        `Không thêm được mục dòng thời gian cho công ty ${input.companyId}: ` +
+          `${(error as Error).message} — nhóm 3 và nhóm 4 vẫn giữ nguyên kết quả`,
+      )
+    }
+
+    return { systemEntriesAdded }
   }
 }
