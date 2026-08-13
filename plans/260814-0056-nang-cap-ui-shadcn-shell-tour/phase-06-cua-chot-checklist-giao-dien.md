@@ -1,0 +1,94 @@
+---
+phase: 6
+title: "Cửa chốt — checklist giao diện + ADR"
+status: pending
+priority: P1
+effort: "30'"
+dependencies: [4, 5]
+---
+
+# Phase 6: Cửa chốt — checklist giao diện + ADR
+
+## Overview
+
+Chạy checklist mục 7 của [design-guidelines](../../docs/design-guidelines.md) trên **phần đã làm được**, đối chiếu baseline, viết ADR. Phase này chạy dù P4/P5 có bị cắt hay không — chỉ phạm vi kiểm thu nhỏ lại.
+
+Không có ADR = quyết định không tồn tại với BGK ([CLAUDE.md mục 5](../../CLAUDE.md#5-quy-trình-làm-việc-với-ai-áp-dụng-cho-cả-5-giai-đoạn)).
+
+## Requirements
+
+- Functional: ADR ghi lại việc đảo hướng sang shadcn **kèm phương án bị loại** · design-guidelines khớp với code thật.
+- Non-functional: `pnpm test` khớp baseline P1 · `lint`/`typecheck`/`build` xanh · 375px và 1440px không tràn ngang.
+
+## Checklist mục 7 — chạy từng dòng, không đọc trôi
+
+| # | Kiểm | Cách kiểm |
+| --- | --- | --- |
+| 1 | Không còn class màu thô | `grep -rE "slate-\|amber-\|indigo-\|bg-\[#" apps/web/src` → **rỗng**. Đầu plan có 1 vi phạm: `input.tsx` dùng `text-red-600` |
+| 2 | Chữ thân ≥14px, tương phản ≥4.5:1, thử 375px và 1440px | Tay. DevTools contrast checker cho mọi cặp màu **mới** phát sinh |
+| 3 | Mọi nút có phản hồi khi bấm, vùng chạm ≥44px | `grep -rn "h-9\|h-8\|min-h-9" apps/web/src` → rỗng. **T-A trong `e2e/ui-invariants.spec.ts`** đo `boundingBox().height >= 44` trên stack thật |
+| 4 | Nhận định AI nào cũng bấm ra được nguồn | Tay: mở `/cong-ty/[id]` của công ty có phát hiện, bấm từng câu trích |
+| 5 | Máy tự ghi chỗ nào thì có nhãn + đường lùi | Tay: ô Việc tiếp theo do máy điền có viền tím + nhãn + **nút Hoàn tác cấp 1** (không nằm trong toast) |
+| 6 | Không dùng màu làm kênh thông tin duy nhất | Tay: **in một màn ra PDF đen trắng**, còn phân biệt được ai viết gì không. Đây là phép thử design-guidelines mô tả, làm đúng nó |
+| 7 | Tab được hết bằng bàn phím, thứ tự tab khớp thứ tự nhìn | Tay: Tab từ đầu trang qua shell → nội dung. Kiểm cả `Sheet` mobile |
+| 8 | `pnpm build` xanh | Tailwind v4 lỗi token là lỗi lúc build |
+
+Thêm ba mục riêng của plan này:
+
+| # | Kiểm | Cách |
+| --- | --- | --- |
+| 9 | Không có nền tối lọt vào | `grep -rn "\.dark\|data-theme\|prefers-color-scheme" apps/web/src` → chỉ được thấy `prefers-reduced-motion`, không thấy `color-scheme` |
+| 10 | Tour không tự chạy | `tour-does-not-block.spec.ts` xanh cả ba nhánh (nếu P5 làm) · `grep -rn "localStorage" apps/web/src/components/tour/` rỗng · `e2e/global-setup.ts` không bị sửa |
+| 11 | Từ vựng alias shadcn không tràn ra app | `grep -rn "bg-background\|text-primary\|text-muted-foreground" apps/web/src/app` → **rỗng**. Chỉ `components/ui/` được dùng |
+
+## ADR — nội dung bắt buộc
+
+**ADR-0028** (mới nhất trong `docs/decisions/` là 0027 — đã kiểm 14/08). Phải có đủ:
+
+- **Quyết định:** migrate 6 primitive sang shadcn (Radix + cva), giữ nguyên bề mặt API.
+- **Đảo hướng gì:** `button.tsx` đang có comment *"Hand-written rather than pulled from shadcn/ui"*. ADR này đảo nó. Nói rõ vì sao đảo được: đường import đã chừa sẵn từ đầu (`@/components/ui/button`), nên đổi ruột không lan ra call site.
+- **Phương án bị loại, kèm lý do:**
+  - **A · shell-only** (2–3h, rủi ro e2e ~0) — bịt đúng lỗ thật, nhưng không đạt yêu cầu shadcn toàn diện.
+  - **B · shadcn map-token chọn lọc** (5–7h) — **đây là phương án người brainstorm khuyến nghị**; giữ `Button`/`Badge`/`Table`/`Input` viết tay vì chúng cõng luật 1–3. Bị loại theo quyết định của người dùng.
+- **Năm quyết định phụ:** không oval hoá toàn cục (nâng `radius-card` + thêm `radius-pill`) · `driver.js` thay vì react-joyride (5KB, không peer dep React) · `shadcn add` thay vì `shadcn init` (init ghi đè `@theme` + thêm `.dark`) · **bất biến khoá bằng e2e computed-style, không bằng unit test** (`apps/web` không nằm trong `vitest.config.mts` projects, repo không có testing-library) · **tour không auto-run** (`playwright.config.ts` không có `storageState`, `global-setup.ts` chỉ `pnpm seed` → `localStorage` rỗng mọi spec nên cờ "lần đầu" không chặn được gì).
+- **Cách verify:** `e2e/ui-invariants.spec.ts` T-A…T-F của P3 + `tour-does-not-block.spec.ts` ba nhánh của P5 + baseline P1. Nêu tên test cụ thể, không nói "đã test".
+- **Tái khẳng định:** chỉ nền sáng, không đổi.
+
+## Related Code Files
+
+- Create: `docs/decisions/0028-migrate-primitive-sang-shadcn-giu-nguyen-be-mat-api.md`
+- Modify: `docs/design-guidelines.md` — thang bo góc 3 giá trị (mục 4) · luật alias shadcn · chốt Lucide (xoá khỏi "Câu hỏi chưa giải quyết") · mục 6 ghi `Button` giờ dựa cva nhưng variant không đổi
+- Modify: `plans/260814-0056-nang-cap-ui-shadcn-shell-tour/plan.md` — đánh dấu phase xong, ghi phần đã cắt
+- Modify: `README.md` — chỉ khi có route mới cho người dùng (`/huong-dan`)
+
+## Tests First
+
+Không có code mới ở phase này. "Tests-first" ở đây là **chạy đủ trước khi kết luận**, đúng thứ tự:
+
+```bash
+pnpm lint && pnpm typecheck && pnpm build
+pnpm test 2>&1 | tee plans/260814-0056-nang-cap-ui-shadcn-shell-tour/final-test-output.txt
+diff <(grep -E "passed|failed" baseline-test-output.txt) <(grep -E "passed|failed" final-test-output.txt)
+```
+
+`diff` phải rỗng, hoặc lệch **đúng** 4 spec mới đã thêm có chủ đích (`ui-invariants`, `app-shell-navigation`, `tour-does-not-block`, `guide-page`) cộng dòng `Đăng xuất` đã thoả thuận. Lệch khác thế là chưa xong, không phải "gần xong".
+
+## Success Criteria
+
+- [ ] 11 mục checklist trên đều đã chạy, mỗi mục có kết quả ghi lại (không phải tick trôi)
+- [ ] `diff` baseline vs final rỗng hoặc lệch đúng phần có chủ đích
+- [ ] `pnpm lint` · `typecheck` · `build` xanh
+- [ ] ADR có đủ: quyết định · đảo hướng gì · **hai phương án bị loại kèm lý do** · cách verify nêu tên test · tái khẳng định nền sáng
+- [ ] design-guidelines không còn chỗ nào lệch code thật (thang bo góc, Lucide, luật alias)
+- [ ] Đã in một màn ra đen trắng và còn phân biệt được ai viết gì
+- [ ] `plan.md` ghi rõ **phần nào đã cắt**, để BGK không tự phát hiện
+- [ ] Có ít nhất 1 người ngoài người viết hiểu và giải thích lại được ([DoD mục 7](../../CLAUDE.md#7-definition-of-done))
+
+## Risk Assessment
+
+| Rủi ro | Đối sách |
+| --- | --- |
+| Tick checklist trôi cho xong vì sắp hết giờ | Mỗi mục có lệnh `grep` hoặc bước tay cụ thể. Mục 6 (in đen trắng) là mục dễ bỏ nhất và cũng là mục rubric chấm — làm thật |
+| Không kịp viết ADR | ADR là điều kiện, không phải phần thưởng. Nếu hết giờ thì **cắt P5 ⌘K** để có 20' viết ADR, đừng cắt ADR |
+| Phần đã cắt không được ghi lại | Success criteria có dòng riêng cho nó. BGK tự phát hiện lỗ thì tệ hơn ta tự khai |
+| `diff` lệch mà bỏ qua vì "chắc không sao" | Lệch nào cũng phải giải thích được bằng một dòng. Không giải thích được nghĩa là có hồi quy |
