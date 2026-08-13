@@ -7,6 +7,8 @@ import { STAGE, type OverviewDto } from '@crm/contracts'
 
 import { Cell, Table } from '@/components/ui/table'
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
+import { PageHeader } from '@/components/shell/page-header'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -24,14 +26,17 @@ export default function OverviewPage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-      <header>
-        <Link href="/cong-ty" className="text-sm text-ink-600 underline underline-offset-2">
-          ← Công ty
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Tổng quan</h1>
-      </header>
+      <PageHeader title="Tổng quan" />
 
-      {overview.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {/* Skeletons shaped like the four blocks that are coming, so the page does not jump
+          when they arrive. A single line of "Đang tải…" reflows the whole screen. */}
+      {overview.isPending && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="h-28 w-full rounded-card" />
+          ))}
+        </div>
+      )}
       {overview.isError && (
         <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
           {overview.error instanceof ApiError
@@ -123,7 +128,7 @@ function PipelineBlock({ data }: { data: OverviewDto }) {
         ))}
       </Table>
 
-      <div className="rounded-card border border-ink-200 bg-white p-4">
+      <div className="rounded-card border border-ink-200 bg-card p-4">
         <p className="text-sm font-medium text-ink-900">
           Pipeline đang chạy:{' '}
           <span className="tabular">{runningTotal.toLocaleString('vi-VN')} ₫</span>
@@ -182,7 +187,7 @@ function LostReasonBlock({ data }: { data: OverviewDto }) {
       )}
 
       {data.lostWithoutReason > 0 && (
-        <p className="rounded-card border border-ink-200 bg-white p-4 text-sm text-ink-700">
+        <p className="rounded-card border border-ink-200 bg-card p-4 text-sm text-ink-700">
           <span className="tabular">{data.lostWithoutReason}</span> cơ hội Thua chưa ghi lý do —
           đứng ngoài bảng trên, không được cộng vào bất kỳ dòng nào.
         </p>

@@ -124,6 +124,24 @@ test('T-7 · Hoàn tác một cú bấm, giá trị cũ trở lại, thông báo
     await expect(cell).toContainText(/Còn \d+ ngày để hoàn tác|ngày cuối để hoàn tác/)
   })
 
+  await test.step('nút Hoàn tác là nút cấp 1 trên thẻ, không phải một cái toast tự tắt', async () => {
+    /**
+     * Written when toasts were introduced, and pointed at the thing toasts are most likely to
+     * eat. A toast lives about five seconds; this undo window is SEVEN DAYS. If somebody later
+     * decides the toast's action is "enough" and drops the button, this assertion is what says
+     * no — the button has to still be there and still be pressable long after any toast from
+     * the same event has gone.
+     */
+    const undo = cell.getByTestId('undo-auto-next-step')
+    await expect(undo).toBeVisible()
+    await expect(undo).toBeEnabled()
+
+    // Past any toast's lifetime, then check the button is still a real control on the card.
+    await page.waitForTimeout(6000)
+    await expect(undo).toBeVisible()
+    await expect(undo).toBeEnabled()
+  })
+
   await test.step('Hoàn tác = MỘT bước, ngay trên thẻ đang nhìn', async () => {
     /**
      * The button is a first-class control on the card, not an item in a ⋯ menu and not a link

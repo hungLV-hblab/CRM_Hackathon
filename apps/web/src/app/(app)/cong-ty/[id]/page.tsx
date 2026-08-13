@@ -16,6 +16,7 @@ import { CompanyProfileSection } from './company-profile-section'
 import { ContactSection } from './contact-section'
 import { ReadingZone } from '@/components/provenance/reading-zone'
 import { TimelineSection } from './timeline-section'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -77,7 +78,7 @@ export default function CompanyDetailPage() {
       </header>
 
       {company && <CompanyProfileSection company={company} />}
-      {!company && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {!company && <Skeleton className="h-40 w-full rounded-card" />}
 
       <ContactSection companyId={companyId} />
       <TimelineSection companyId={companyId} />
@@ -108,7 +109,7 @@ export default function CompanyDetailPage() {
         )}
         {ingest.data && <IngestSummary result={ingest.data} />}
 
-        {readingZone.isPending && <p className="text-sm text-ink-500">Đang tải vùng đọc…</p>}
+        {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
         {readingZone.data && <ReadingZone observations={readingZone.data} />}
       </section>
     </main>

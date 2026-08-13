@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -58,7 +59,7 @@ export function ContactSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-white p-4">
+    <section className="rounded-card border border-ink-200 bg-card p-4">
       <header className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
           Người liên hệ
@@ -68,7 +69,7 @@ export function ContactSection({ companyId }: { companyId: string }) {
         </Button>
       </header>
 
-      {contacts.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {contacts.isPending && <Skeleton className="h-40 w-full rounded-card" />}
 
       {contacts.data?.length === 0 && (
         <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">

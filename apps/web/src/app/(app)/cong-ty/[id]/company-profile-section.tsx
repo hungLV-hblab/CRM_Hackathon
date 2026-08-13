@@ -52,7 +52,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
 
   if (!isEditing) {
     return (
-      <section className="rounded-card border border-ink-200 bg-white p-4">
+      <section className="rounded-card border border-ink-200 bg-card p-4">
         <header className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">Hồ sơ</h2>
           <Button variant="secondary" onClick={startEditing}>
@@ -75,7 +75,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-white p-4">
+    <section className="rounded-card border border-ink-200 bg-card p-4">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
         Sửa hồ sơ
       </h2>

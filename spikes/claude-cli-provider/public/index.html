@@ -196,7 +196,7 @@
             `Giữ lại <b>${data.kept.length}</b> · loại <b>${data.dropped.length}</b>`,
             `Tổng thời gian <b>${(run.elapsedMs / 1000).toFixed(1)}s</b>`,
             `Trong đó gọi mô hình <b>${(run.apiMs / 1000).toFixed(1)}s</b>`,
-            `Chi phí <b>$${run.costUsd.toFixed(4)}</b>`,
+            `Tiêu thụ quy đổi <b>$${run.costUsd.toFixed(4)}</b>`,
             `Token vào/ra <b>${run.inputTokens}</b>/<b>${run.outputTokens}</b>`,
             `Model <b>${escapeHtml(run.model)}</b>`,
             `Phiên <b>${escapeHtml(run.sessionId.slice(0, 8))}</b>`,

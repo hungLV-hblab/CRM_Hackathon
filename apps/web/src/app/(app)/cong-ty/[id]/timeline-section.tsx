@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input, Select } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { api, ApiError } from '@/lib/api-client'
 
@@ -91,7 +92,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-white p-4">
+    <section className="rounded-card border border-ink-200 bg-card p-4">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
         Dòng thời gian
       </h2>
@@ -136,7 +137,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
         </p>
       )}
 
-      {timeline.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {timeline.isPending && <Skeleton className="h-40 w-full rounded-card" />}
 
       {timeline.data?.length === 0 && (
         <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">
@@ -182,7 +183,7 @@ function TimelineRow({
   return (
     <li
       className={`rounded-card border p-3 ${
-        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-white'
+        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-card'
       }`}
     >
       <div className="mb-1 flex flex-wrap items-center gap-2">

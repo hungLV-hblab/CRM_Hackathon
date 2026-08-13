@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { ConfidenceBadge } from '@/components/provenance/quote-block'
 import { Dialog } from '@/components/ui/dialog'
 import { SourceViewer } from '@/components/provenance/source-viewer'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api-client'
 
 /**
@@ -166,7 +167,7 @@ function SourceDialog({
     <Dialog open title={`Nguồn của Việc tiếp theo — ${opportunityName}`} onClose={onClose}>
       <div className="flex flex-col gap-3">
         <p className="text-sm text-ink-700">{autoNextStep.claim.statement}</p>
-        {zone.isLoading ? <p className="text-sm text-ink-500">Đang tải nguồn…</p> : null}
+        {zone.isLoading ? <Skeleton className="h-24 w-full rounded-control" /> : null}
         {observation ? (
           <SourceViewer
             observation={observation}

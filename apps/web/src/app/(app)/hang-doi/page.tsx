@@ -1,14 +1,17 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
 import { useRef, useState } from 'react'
 
 import type { Decision, ProposalDto, RejectReason } from '@crm/contracts'
 
+import { toast } from 'sonner'
+
+import { PageHeader } from '@/components/shell/page-header'
 import { Dialog } from '@/components/ui/dialog'
 import { ProposalCard } from './proposal-card'
 import { SourceViewer } from '@/components/provenance/source-viewer'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api-client'
 
 /**
@@ -49,7 +52,7 @@ export default function ProposalQueuePage() {
         ...extra,
         secondsToDecide: Math.max(0, Math.round((Date.now() - clockStartedAt.current) / 1000)),
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       // The next card is timed from here, not from when the page opened.
       clockStartedAt.current = Date.now()
 
@@ -66,6 +69,22 @@ export default function ProposalQueuePage() {
         queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
         queryClient.invalidateQueries({ queryKey: ['timeline'] }),
       ])
+
+      /**
+       * Confirms the decision that was just recorded. It carries NO action of its own — a
+       * proposal decision is already logged and measured, and an "undo" hidden in a toast
+       * would be a second, weaker path to something the queue itself should own.
+       */
+      toast.success(
+        variables.decision === 'accept'
+          ? 'Đã duyệt gợi ý'
+          : variables.decision === 'edit'
+            ? 'Đã lưu giá trị bạn sửa'
+            : 'Đã bỏ gợi ý',
+      )
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Không ghi được quyết định')
     },
   })
 
@@ -73,16 +92,10 @@ export default function ProposalQueuePage() {
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
-      <header>
-        <Link href="/cong-ty" className="text-sm text-ink-600 underline underline-offset-2">
-          ← Công ty
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold">Hàng đợi gợi ý</h1>
-        <p className="mt-1 text-sm text-ink-600">
-          Máy chuẩn bị sẵn, bạn là người quyết. Không duyệt thì hồ sơ giữ nguyên — gợi ý không tự
-          hết hạn thành hành động.
-        </p>
-      </header>
+      <PageHeader
+        title="Hàng đợi gợi ý"
+        description="Máy chuẩn bị sẵn, bạn là người quyết. Không duyệt thì hồ sơ giữ nguyên — gợi ý không tự hết hạn thành hành động."
+      />
 
       {decide.isError ? (
         <p role="alert" className="rounded-control bg-danger-surface p-3 text-sm text-danger">
@@ -90,7 +103,7 @@ export default function ProposalQueuePage() {
         </p>
       ) : null}
 
-      {proposals.isLoading ? <p className="text-sm text-ink-500">Đang tải…</p> : null}
+      {proposals.isLoading ? <Skeleton className="h-40 w-full rounded-card" /> : null}
 
       {!proposals.isLoading && rows.length === 0 ? (
         <p className="rounded-control bg-ink-50 p-4 text-sm text-ink-600" data-testid="queue-empty">
@@ -136,7 +149,7 @@ function SourceDialog({ proposal, onClose }: { proposal: ProposalDto; onClose: (
     <Dialog open title={`Nguồn của gợi ý — ${proposal.companyName}`} onClose={onClose}>
       <div className="flex flex-col gap-3">
         <p className="text-sm text-ink-700">{proposal.claim.statement}</p>
-        {zone.isLoading ? <p className="text-sm text-ink-500">Đang tải nguồn…</p> : null}
+        {zone.isLoading ? <Skeleton className="h-24 w-full rounded-control" /> : null}
         {observation ? (
           <SourceViewer
             observation={observation}

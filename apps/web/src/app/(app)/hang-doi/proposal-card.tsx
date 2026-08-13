@@ -51,7 +51,7 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
   return (
     <article
       data-testid="proposal-card"
-      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-white p-4"
+      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-card p-4"
     >
       <header className="flex flex-wrap items-center gap-2">
         <Badge tone="inference">{PROPOSAL_TYPE[proposal.proposalType]}</Badge>
@@ -135,7 +135,7 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
             {reasonsOpen ? (
               <ul
                 data-testid="reject-reasons"
-                className="absolute left-0 top-full z-10 mt-1 w-64 rounded-control border border-ink-200 bg-white p-1 shadow-lg"
+                className="absolute left-0 top-full z-10 mt-1 w-64 rounded-control border border-ink-200 bg-card p-1 shadow-lg"
               >
                 {(Object.keys(REJECT_REASON) as RejectReason[]).map((reason) => (
                   <li key={reason}>

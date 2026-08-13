@@ -6,7 +6,11 @@ import { useMemo, useState, type FormEvent } from 'react'
 
 import { COMPANY_TYPE, type CreateCompanyDto, type ListCompaniesQuery } from '@crm/contracts'
 
+import { toast } from 'sonner'
+
+import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   PendingProposalMarker,
   usePendingProposalCounts,
@@ -62,6 +66,12 @@ export default function CompanyListPage() {
       await queryClient.invalidateQueries({ queryKey: ['companies'] })
       setDialogOpen(false)
       setForm(EMPTY_FORM)
+      // Confirms what already happened. The row is in the table either way — this only saves
+      // the reader from scanning for it.
+      toast.success(`Đã thêm công ty ${form.name}`)
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : 'Không lưu được công ty')
     },
   })
 
@@ -72,15 +82,13 @@ export default function CompanyListPage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold">Công ty</h1>
-        {/* The three cross-screen links and the logout button that used to sit here are the
-            shell's job now — the sidebar reaches every screen and the account menu holds the
-            logout. Leaving a second "Đăng xuất" on the page would give the app two of them. */}
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>
-        </div>
-      </header>
+      {/* The three cross-screen links and the logout button that used to sit here are the
+          shell's job now — the sidebar reaches every screen and the account menu holds the
+          logout. Leaving a second "Đăng xuất" on the page would give the app two of them. */}
+      <PageHeader
+        title="Công ty"
+        actions={<Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>}
+      />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Input
@@ -144,7 +152,7 @@ export default function CompanyListPage() {
         </Select>
       </section>
 
-      {companies.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {companies.isPending && <Skeleton className="h-64 w-full rounded-card" />}
 
       {companies.isError && (
         <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">

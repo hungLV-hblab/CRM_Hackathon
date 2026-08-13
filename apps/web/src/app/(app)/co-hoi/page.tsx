@@ -1,17 +1,18 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 
 import { STAGE, type CreateOpportunityDto, type Stage, type UpdateStageDto } from '@crm/contracts'
 
+import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input, Select } from '@/components/ui/input'
 import { NotificationStrip } from '@/components/notification/notification-strip'
 import { StageBoard } from './stage-board'
 import { StageTransitionDialog } from './stage-transition-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api, ApiError } from '@/lib/api-client'
 
 /** The two stages the Specs want extra cells for. Everything else moves with no questions. */
@@ -62,15 +63,13 @@ export default function OpportunityBoardPage() {
 
   return (
     <main className="mx-auto flex max-w-[100rem] flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link href="/cong-ty" className="text-sm text-ink-600 underline underline-offset-2">
-            ← Công ty
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold">Cơ hội</h1>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}>Thêm cơ hội</Button>
-      </header>
+      {/* The hand-rolled "← Công ty" link is gone: the shell's breadcrumb says where this
+          screen sits, and three screens each inventing their own idea of "up" is how they
+          came to disagree about it. */}
+      <PageHeader
+        title="Cơ hội"
+        actions={<Button onClick={() => setCreateOpen(true)}>Thêm cơ hội</Button>}
+      />
 
       {/*
         Autonomy zone 3 announces itself HERE, above the deals it changed. The app has no shared
@@ -104,7 +103,7 @@ export default function OpportunityBoardPage() {
         </label>
       </section>
 
-      {opportunities.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
+      {opportunities.isPending && <Skeleton className="h-40 w-full rounded-card" />}
       {opportunities.isError && (
         <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
           {opportunities.error instanceof ApiError

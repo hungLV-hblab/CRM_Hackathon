@@ -31,6 +31,30 @@ cái sai mà màn hình này sinh ra để phơi bày.
 Nói cách khác: đổi đường truyền từ API key sang tiến trình con **không** đổi việc ai được tin. Mô hình
 chọn nhận định và chọn đoạn trích; code quyết định đoạn trích đó có thật không.
 
+## Hai kiểu nói chuyện với CLI
+
+Spike có hai màn hình vì có hai cách gọi, và chúng khác nhau ở chỗ đáng quan tâm nhất là chi phí khởi động.
+
+| | `/` — rút phát hiện | `/chat` — đối thoại |
+| --- | --- | --- |
+| Tiến trình | spawn mới mỗi request, xong là chết | **một tiến trình sống suốt cuộc trò chuyện** |
+| Cách nói | `-p` + `--output-format json`, một phát ăn ngay | `--input-format stream-json` — JSON từng dòng vào stdin, sự kiện ra stdout |
+| Nhớ lượt trước | không | có, cùng `session_id` |
+| Đo được (14/08) | 10,6s | **lượt 1: 9,1s · lượt 2: 2,1s · lượt 3: 2,9s** |
+
+Chênh lệch lượt 1 với lượt 2 chính là ~3,4s khởi động biến mất. Kiểm chứng ngữ cảnh bằng cách hỏi
+"tôi vừa hỏi gì?" ở lượt sau — nó trả lời đúng, tức là cùng một tiến trình chứ không phải spawn lại.
+
+Màn hình `/chat` stream từng chữ nhờ `--include-partial-messages`: sự kiện
+`stream_event` → `content_block_delta` → `delta.text_delta` được server đẩy thẳng ra trình duyệt qua SSE.
+
+**Hai trường đọc dễ sai:** `total_cost_usd` và `duration_api_ms` trong sự kiện `result` là **cộng dồn cả
+phiên**, không phải của riêng lượt vừa rồi. Lấy thẳng ra hiển thị thì lượt nào cũng trông đắt hơn và chậm
+hơn lượt trước. `claude-channel.ts` trừ đi lượt trước để ra số thật của từng lượt.
+
+`/chat` chỉ là **bằng chứng về đường truyền, không phải một tính năng sản phẩm** — luật 8 của đội cấm đính
+chatbot cạnh CRUD rồi gọi đó là AI-native.
+
 ## Cấu hình gọi CLI, và vì sao từng cờ có mặt
 
 | Cờ | Lý do |
@@ -52,11 +76,28 @@ request, nên vòng quét fan-out qua nhiều công ty sẽ đốt sạch quota 
 Bản chụp ~470 ký tự, 4 phát hiện, không cái nào bị loại:
 
 - tổng thời gian **10,6s** — trong đó gọi mô hình 7,2s, còn lại **~3,4s là chi phí khởi động tiến trình**
-- **1.023 token vào / 432 token ra**, **$0,025** một lần gọi
+- **1.023 token vào / 432 token ra**, **$0,025** lần gọi đó
 
-Đo trước đó khi *chưa* tách sandbox cwd và chưa `--strict-mcp-config`: **30.988 token vào, $0,19** cho một
-câu hỏi ba chữ. Phần chênh là context dự án + schema MCP bị nạp kèm. Con số này là lý do mấy cái cờ ở
-bảng trên không phải trang trí.
+**Trước hết: mấy con số `$` dưới đây không phải hoá đơn.** Máy đang chạy đăng nhập OAuth gói **Max**
+(`~/.claude/.credentials.json` → `claudeAiOauth`, `subscriptionType = max`), không có `ANTHROPIC_API_KEY`.
+Không có API key thì không có đường tính tiền theo token. Trường `total_cost_usd` mà CLI trả về là
+**quy đổi tham chiếu** — "số token này nếu trả theo giá API list thì tốn bấy nhiêu" — và CLI luôn điền nó
+bất kể đăng nhập kiểu gì. Với người dùng API key đó là tiền thật; với gói thuê bao đó là **thước đo mức
+tiêu thụ**, và cái nó ăn vào là **hạn mức phiên** (mục 4 phần "cái giá phải trả"), không phải ví tiền.
+
+Đọc mọi con số `$` trong file này theo nghĩa đó.
+
+**Cẩn thận với con số $0,025 — nó là một lần trúng cache, không phải mức thường.** Đo kỹ hơn sau đó:
+CLI luôn nhét sẵn **~15,9k token preamble** của chính nó, và `--allowed-tools none` **không** bỏ được
+phần này (sự kiện `init` vẫn liệt kê `Task`, `Bash`, `Read`, `Edit`… — cờ đó chặn *gọi* tool chứ không
+chặn *khai báo* tool). Lần gọi nguội trả đủ 15,9k token ghi cache ≈ **$0,10**; lần gọi trong vòng 5 phút
+sau đó đọc lại cache với giá ~10% nên mới xuống $0,01–0,03.
+
+Nói ngắn: **~$0,10 cho lần gọi nguội, ~$0,01–0,02 mỗi lượt khi còn ấm.** Đừng dựng dự toán trên $0,025.
+
+Còn con số **30.988 token / $0,19** đo lúc chạy CLI ngay trong repo thì vẫn đúng và vẫn đáng nhớ: phần
+vượt trên 15,9k là `CLAUDE.md` + schema MCP bị nạp kèm. Sandbox cwd và `--strict-mcp-config` cắt được
+phần đó, nhưng không cắt được 15,9k preamble.
 
 ## Cái giá phải trả — đọc trước khi quyết định đưa vào sản phẩm
 
@@ -66,7 +107,9 @@ bảng trên không phải trang trí.
 2. **Auth sống trên máy chạy BE.** CLI đọc credential từ `~/.claude`. Container sạch là gọi phát chết ngay.
 3. **~3,4s chi phí spawn mỗi lần**, cộng vào thời gian gọi mô hình. Luồng nghiệp vụ phải bất đồng bộ.
 4. **Rate limit theo phiên.** Phải có hàng đợi; spike này giới hạn thô ở mức 1 request đồng thời.
-5. **Không rẻ hơn API.** Nó chỉ đổi *cách trả tiền*, không đổi *số tiền*.
+5. **Không "miễn phí", chỉ là đã trả trước.** Gói Max không tính tiền theo lần gọi, nên demo không phát
+   sinh hoá đơn. Nhưng thứ bị tiêu là hạn mức phiên, và hạn mức đó gắn với **tài khoản một con người**,
+   không co giãn theo số end user. Đó là lý do hướng này không lên production được — không phải vì đắt.
 
 ## Nếu quyết định dùng
 
