@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common'
 
+import { AutoNextStepService } from '../opportunity/auto-next-step-service'
 import { ProposalService } from '../proposal/proposal-service'
+import { SYSTEM_ACTOR } from '../../common/actor/actor-context'
 import type { SavedClaim } from './claim-service'
 
 /**
@@ -23,9 +25,11 @@ import type { SavedClaim } from './claim-service'
  * Deliberately a plain sequential call rather than an event emitter: fire-and-forget would make
  * the order above unobservable, and a test that cannot observe the order cannot prove I-7.
  *
- * Group 4 is NOT wired in yet — phase 6 adds its step here, above the proposals call. Nothing
- * is stubbed for it in the meantime: an empty interface waiting for an implementation is a
- * guess about a design that has not been written.
+ * Group 4 runs under `SYSTEM_ACTOR`, hard-coded here rather than passed in from the caller, and
+ * that is the honest identity: setting a next step off the back of a source read is the AI
+ * acting, whether a person pressed "Đọc lại nguồn" or the watch cycle came round. Passing the
+ * clicking user's identity down would hand the write `crm_app`'s privileges — every column of
+ * every table — for an act no person asked for.
  */
 
 export interface ClaimReactionInput {
@@ -36,19 +40,27 @@ export interface ClaimReactionInput {
 
 @Injectable()
 export class ClaimReactionService {
-  constructor(private readonly proposals: ProposalService) {}
+  constructor(
+    private readonly autoNextSteps: AutoNextStepService,
+    private readonly proposals: ProposalService,
+  ) {}
 
   async react(input: ClaimReactionInput): Promise<void> {
     if (input.savedClaims.length === 0) return
 
-    // ── step 1: feature group 4 (auto next step) — added in phase 6 ─────────────────────────
-    // Its refusals (I-7) will be passed to `generate` below as `blockedNextSteps`.
+    // ── step 1: feature group 4 (auto next step), autonomy zone 3 ───────────────────────────
+    const autoNextStep = await this.autoNextSteps.react(SYSTEM_ACTOR, {
+      companyId: input.companyId,
+      savedClaims: input.savedClaims,
+    })
 
-    // ── step 2: feature group 3 (the review queue) ──────────────────────────────────────────
+    // ── step 2: feature group 3 (the review queue), autonomy zone 2 ─────────────────────────
+    // I-7 refusals arrive here as `next_step` suggestions, in the same unit of work.
     await this.proposals.generate({
       companyId: input.companyId,
       observationId: input.observationId,
       savedClaims: input.savedClaims,
+      blockedNextSteps: autoNextStep.blocked,
     })
   }
 }

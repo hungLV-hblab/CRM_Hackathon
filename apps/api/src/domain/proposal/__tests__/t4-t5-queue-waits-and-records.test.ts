@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { createConnection, resetTestDatabase } from '@crm/db'
 
 import { AuditEventService } from '../../../common/audit/audit-event-service'
+import { AutoNextStepService } from '../../opportunity/auto-next-step-service'
 import { ClaimReactionService } from '../../claim/claim-reaction-service'
 import { ClaimService } from '../../claim/claim-service'
 import { DemoSnapshotSource } from '../../../ai/demo-snapshots'
@@ -54,7 +55,14 @@ function buildIngest(): ObservationService {
     new ClaimService(systemConnection.db, appConnection.db),
     snapshots,
     settings,
-    new ClaimReactionService(proposalService),
+    new ClaimReactionService(
+      new AutoNextStepService(
+        systemConnection.db,
+        appConnection.db,
+        new AuditEventService(appConnection.db, systemConnection.db),
+      ),
+      proposalService,
+    ),
   )
 }
 
@@ -248,27 +256,15 @@ describe('T-5 · every decision is recorded, and `edit` is not `accept`', () => 
   })
 
   it('6 · a `next_step` suggestion, once accepted, is a HUMAN next step with an I-9 due date', async () => {
-    // Stands in for the I-7 hand-off feature group 4 will make (ADR-0023): the system refused to
-    // overwrite a human-typed next step and filed this instead.
+    /**
+     * The I-7 hand-off, end to end and no longer simulated. Sakura's deal carries a next step a
+     * person typed, so reading its `after` page has feature group 4 REFUSE to write and file
+     * this suggestion instead (ADR-0023). Until phase 6 this test built the row by hand.
+     */
     await buildIngest().ingest(SAKURA, 'after', 'watch_cycle')
-    const claim = await owner.query(
-      `SELECT id FROM claims WHERE signal_type = 'funding' LIMIT 1`,
-    )
-    await proposalService.generate({
-      companyId: SAKURA,
-      observationId: (await owner.query('SELECT id FROM observations LIMIT 1')).rows[0].id,
-      savedClaims: [],
-      blockedNextSteps: [
-        {
-          claim: { id: claim.rows[0].id } as never,
-          opportunityId: OPPORTUNITY_ID,
-          currentNextStepText: 'Gửi lại báo giá sau buổi họp kỹ thuật',
-          proposedNextStepText: 'Gọi lại trong tuần này về vòng Series B vừa công bố',
-        },
-      ],
-    })
 
     const id = await pendingIdByType('next_step')
+    const proposed = await owner.query('SELECT proposed_value FROM proposals WHERE id = $1', [id])
     await decisions.decide(sales, id, { decision: 'accept' })
 
     const { rows } = await owner.query(
@@ -276,7 +272,9 @@ describe('T-5 · every decision is recorded, and `edit` is not `accept`', () => 
        FROM opportunities WHERE id = $1`,
       [OPPORTUNITY_ID],
     )
-    expect(rows[0].next_step_text).toBe('Gọi lại trong tuần này về vòng Series B vừa công bố')
+    expect(rows[0].next_step_text).toBe(proposed.rows[0].proposed_value)
+    // The human-typed sentence is gone only because a PERSON pressed Duyệt on its replacement.
+    expect(rows[0].next_step_text).not.toBe('Gửi lại báo giá sau buổi họp kỹ thuật')
     // `human`: a person decided. `system` would drop this cell into zone 3 and drag the
     // notification and the 7-day undo along with it.
     expect(rows[0].next_step_source).toBe('human')
@@ -345,8 +343,14 @@ describe('Specs · a decided suggestion does not come back with the same content
       const result = await ingest.ingest(SAKURA, 'after', 'watch_cycle')
       expect(result.unchanged).toBe(true)
     }
+    /**
+     * Scoped to `field_update`, which is the kind this test decided. Sakura's deal also carries
+     * a human-typed next step, so the same read hands feature group 4 an I-7 refusal and the
+     * queue legitimately holds a `next_step` suggestion nobody has looked at.
+     */
     let pending = await owner.query(
-      `SELECT count(*)::int AS total FROM proposals WHERE status = 'pending'`,
+      `SELECT count(*)::int AS total FROM proposals
+       WHERE status = 'pending' AND proposal_type = 'field_update'`,
     )
     expect(pending.rows[0].total).toBe(0)
 

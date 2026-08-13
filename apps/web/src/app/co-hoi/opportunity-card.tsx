@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { STAGE, type OpportunityDto } from '@crm/contracts'
 
+import { AutoNextStepCell, useAutoNextSteps } from '@/components/next-step/auto-next-step-cell'
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
 import {
   PendingProposalMarker,
@@ -25,6 +26,12 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
    * does not have to carry a prop it has no use for.
    */
   const pendingProposals = usePendingProposalCounts()
+  /**
+   * Read the same way, and from its own endpoint (ADR-0027): `OpportunityDto` stays exactly as
+   * feature group 1 shaped it, so the overview screen reading the same query carries nothing it
+   * does not use. Absent for every deal Sales owns outright, which is most of them.
+   */
+  const autoNextStep = useAutoNextSteps()[opportunity.id]
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: opportunity.id,
   })
@@ -64,7 +71,16 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
         <p className="text-xs text-ink-500">Chưa có giá trị dự kiến</p>
       )}
 
-      <NextStep opportunity={opportunity} />
+      {/*
+        A machine-written next step replaces the plain one rather than sitting beside it: two
+        renderings of the same cell would make the reader work out which one is live, and rule 2
+        exists so they never have to.
+      */}
+      {autoNextStep ? (
+        <AutoNextStepCell autoNextStep={autoNextStep} opportunityName={opportunity.name} />
+      ) : (
+        <NextStep opportunity={opportunity} />
+      )}
       <WarningFlags warnings={opportunity.warnings} />
 
       <Link

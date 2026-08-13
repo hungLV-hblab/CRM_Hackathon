@@ -225,9 +225,18 @@ export class OpportunityService {
   /**
    * Autonomy zone 3 — the system MAY set the next step, but I-7 forbids overwriting one a
    * human typed, even when it is overdue ("an overdue human-typed cell is a debt Sales is
-   * holding, not a junk cell"). The correct path in that case is to raise a `Proposal`,
-   * which belongs to feature group 4 and does not exist in the skeleton yet — so this
-   * refuses explicitly instead of silently overwriting.
+   * holding, not a junk cell"). This refuses explicitly rather than overwriting quietly.
+   *
+   * TWO PATHS WRITE `next_step_*` AS THE SYSTEM, and the split is deliberate rather than
+   * leftover. Feature group 4 does NOT come through here: it needs the cell, the
+   * `AutoNextStepEvent` and the notification in ONE transaction, which is a shape this
+   * method cannot offer without growing the trail and the notice as parameters. So it lives
+   * in `auto-next-step-service.ts`, which repeats the I-7 check on its own rows.
+   *
+   * What keeps that safe is that BOTH paths pick their pool by actor, so `crm_system`'s
+   * three-column grant applies to either. This method stays as the shared guard for any
+   * caller setting a next step from outside group 4 — a future importer, a script — and
+   * deleting it would leave that case with no domain-level check at all.
    */
   async updateNextStep(
     actor: Actor,

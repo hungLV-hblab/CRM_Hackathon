@@ -1,11 +1,7 @@
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 
-import {
-  SIGNAL_DUE_DAYS,
-  type DecideProposalDto,
-  type ProposalTargetField,
-} from '@crm/contracts'
+import { type DecideProposalDto, type ProposalTargetField } from '@crm/contracts'
 import {
   type CrmDatabase,
   claims,
@@ -19,6 +15,7 @@ import {
 import type { Actor } from '../../common/actor/actor-context'
 import { AuditEventService } from '../../common/audit/audit-event-service'
 import { DRIZZLE_APP } from '../../common/db/db.module'
+import { dueDateFor } from '../opportunity/next-step-due-date'
 
 /**
  * Where autonomy zone 2 ends: a PERSON decides, and only that decision changes official data.
@@ -170,24 +167,4 @@ interface PendingProposal {
   targetField: string | null
   proposedValue: string
   signalType: string
-}
-
-/**
- * `YYYY-MM-DD` in the LOCAL calendar, which is the calendar Sales works in.
- *
- * Not `toISOString().slice(0, 10)`: that reports the UTC day, and Vietnam is UTC+7, so every
- * decision made after 17:00 local would get a due date one day early — silently, and only in
- * the evening. A next step that appears to be due sooner than the urgency table says is exactly
- * the kind of wrong data rule 4 ranks below no data at all.
- */
-function dueDateFor(signalType: string): string {
-  const days = SIGNAL_DUE_DAYS[signalType as keyof typeof SIGNAL_DUE_DAYS] ?? 14
-  const due = new Date()
-  due.setDate(due.getDate() + days)
-
-  return [
-    due.getFullYear(),
-    String(due.getMonth() + 1).padStart(2, '0'),
-    String(due.getDate()).padStart(2, '0'),
-  ].join('-')
 }

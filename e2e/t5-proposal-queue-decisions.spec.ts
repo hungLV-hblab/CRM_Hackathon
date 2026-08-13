@@ -110,7 +110,17 @@ test('T-5 · Sửa rồi duyệt ghi giá trị người gõ, không ghi giá tr
   await readSource(page, EDIT_COMPANY)
   await page.goto('/hang-doi')
 
-  const card = page.getByTestId('proposal-card').filter({ hasText: EDIT_COMPANY }).first()
+  /**
+   * Filtered by KIND as well as by company. Reading Sakura's page now produces two cards: the
+   * stale `size` cell this test edits, and a `next_step` suggestion, because feature group 4
+   * refuses to overwrite Sakura's human-typed next step and hands the case to the queue (I-7,
+   * ADR-0023). Taking `.first()` of the company's cards picked whichever came back newest.
+   */
+  const card = page
+    .getByTestId('proposal-card')
+    .filter({ hasText: EDIT_COMPANY })
+    .filter({ hasText: 'sửa ô hồ sơ' })
+    .first()
   await expect(card).toBeVisible()
 
   // The two-step branch, and honestly two steps: open the field, then approve.

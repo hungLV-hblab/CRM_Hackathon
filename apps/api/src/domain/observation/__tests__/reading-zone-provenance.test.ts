@@ -4,6 +4,8 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ClaimDraft, ClaimExtractor, ObservationInput } from '@crm/contracts'
 import { createConnection, resetTestDatabase } from '@crm/db'
 
+import { AuditEventService } from '../../../common/audit/audit-event-service'
+import { AutoNextStepService } from '../../opportunity/auto-next-step-service'
 import { ClaimReactionService } from '../../claim/claim-reaction-service'
 import { ClaimService } from '../../claim/claim-service'
 import { DemoSnapshotSource } from '../../../ai/demo-snapshots'
@@ -44,6 +46,11 @@ function buildService(extractor: ClaimExtractor): {
    * actually runs (phase 5).
    */
   const reactions = new ClaimReactionService(
+    new AutoNextStepService(
+      systemConnection.db,
+      appConnection.db,
+      new AuditEventService(appConnection.db, systemConnection.db),
+    ),
     new ProposalService(systemConnection.db, appConnection.db),
   )
   const observations = new ObservationService(

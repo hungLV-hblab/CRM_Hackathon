@@ -4,6 +4,8 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import type { ClaimDraft, ClaimExtractor } from '@crm/contracts'
 import { createConnection, resetTestDatabase } from '@crm/db'
 
+import { AuditEventService } from '../../../common/audit/audit-event-service'
+import { AutoNextStepService } from '../../opportunity/auto-next-step-service'
 import { ClaimReactionService } from '../../claim/claim-reaction-service'
 import { ClaimService } from '../../claim/claim-service'
 import { DemoSnapshotSource } from '../../../ai/demo-snapshots'
@@ -46,7 +48,14 @@ function buildIngest(extractor: ClaimExtractor = new FixtureClaimExtractor()): O
     claims,
     snapshots,
     settings,
-    new ClaimReactionService(proposals),
+    new ClaimReactionService(
+      new AutoNextStepService(
+        systemConnection.db,
+        appConnection.db,
+        new AuditEventService(appConnection.db, systemConnection.db),
+      ),
+      proposals,
+    ),
   )
 }
 
