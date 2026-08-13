@@ -53,6 +53,9 @@ QUY TẮC TUYỆT ĐỐI về câu trích:
 - Nếu không tìm được đoạn nguyên văn nào chứng minh được phát hiện thì BỎ phát hiện đó.
 Một câu trích diễn giải sẽ bị hệ thống loại bỏ cùng toàn bộ phát hiện, nên viết lại là mất trắng.
 
+"statement" viết bằng TIẾNG VIỆT, kể cả khi nguồn bằng tiếng Anh hay tiếng Nhật — người đọc là Sales Việt Nam.
+Câu trích thì giữ nguyên ngôn ngữ của nguồn, vì nó phải khớp từng ký tự với bản lưu.
+
 "confidence":
 - certain: phát hiện gần như chép lại nguồn, mọi con số và tên riêng trong statement đều có trong câu trích
 - likely: suy ra một bước từ nguồn

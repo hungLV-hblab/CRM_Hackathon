@@ -9,6 +9,7 @@ import {
   SETTING_KEY_AI_ENABLED,
   SETTING_KEY_WATCH_CYCLE_SECONDS,
   companies,
+  contacts,
   opportunities,
   systemSettings,
   timelineEntries,
@@ -16,6 +17,7 @@ import {
 } from '../schema'
 import {
   SEED_COMPANIES,
+  SEED_CONTACTS,
   SEED_OPPORTUNITIES,
   SEED_TIMELINE_ENTRIES,
   SEED_USERS,
@@ -47,6 +49,7 @@ export async function seed(connectionString: string): Promise<void> {
 
       await tx.insert(users).values(SEED_USERS)
       await tx.insert(companies).values(SEED_COMPANIES)
+      await tx.insert(contacts).values(SEED_CONTACTS)
       await tx.insert(opportunities).values(SEED_OPPORTUNITIES)
       await tx.insert(timelineEntries).values(SEED_TIMELINE_ENTRIES)
 
@@ -74,7 +77,9 @@ async function runFromCli(): Promise<void> {
   await seed(url)
   console.log(
     `Seed complete: ${SEED_USERS.length} users, ${SEED_COMPANIES.length} companies, ` +
-      `${SEED_OPPORTUNITIES.length} opportunities, ${SEED_TIMELINE_ENTRIES.length} timeline entries.`,
+      `${SEED_CONTACTS.length} contacts, ${SEED_OPPORTUNITIES.length} opportunities, ` +
+      `${SEED_TIMELINE_ENTRIES.length} timeline entries. Every company is back on the ` +
+      `"before" snapshot.`,
   )
 }
 

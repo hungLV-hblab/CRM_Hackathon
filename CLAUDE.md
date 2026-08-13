@@ -20,6 +20,7 @@ Context bắt buộc đọc trước khi làm bất cứ việc gì:
 | [docs/sales-ito-crm-domain.md](docs/sales-ito-crm-domain.md) | Mọi quyết định sản phẩm: hiển thị gì, ưu tiên gì |
 | [docs/ai-native-design-principles.md](docs/ai-native-design-principles.md) | Kiến trúc & data model |
 | [docs/ontology.md](docs/ontology.md) | **Đặt tên & ràng buộc.** Thực thể, quan hệ có tên, trần tự chủ, enum, chỉ số đo |
+| [docs/design-guidelines.md](docs/design-guidelines.md) | **Bắt buộc trước mọi việc chạm giao diện.** Design token, luật màu, và chỗ giao diện gánh bảy luật |
 
 ## 2. Bảy luật bất di bất dịch
 
@@ -90,6 +91,8 @@ Bắt buộc:
 ## 6. Convention
 
 > **Luật chung của mã nguồn: [docs/code-standards.md](docs/code-standards.md).** Đọc trước khi gõ dòng code đầu tiên trong `apps/` hoặc `packages/`. Mục này chỉ giữ phần tra cứu nhanh.
+>
+> **Việc chạm giao diện thì đọc thêm [docs/design-guidelines.md](docs/design-guidelines.md) trước — không có ngoại lệ.** Token nằm trong [`apps/web/src/app/globals.css`](apps/web/src/app/globals.css); dùng `ink-*` · `brand-*` · `machine-*` và bốn màu trạng thái, **không** dùng `slate-*` / `amber-*` mặc định của Tailwind. Hai câu phải nhớ: **cam = người sắp bấm · tím = máy sinh ra**.
 
 - **Stack:** pnpm monorepo (Node 22, TypeScript 5.7 strict) — `apps/api` NestJS 11 + Drizzle + Postgres 16 · `apps/web` Next 15 App Router (standalone) + React 19 + Tailwind v4 + TanStack Query · `packages/contracts` zod + enum dùng chung · `packages/db` schema/migration/seed. Caddy + docker compose ở `infra/`.
 - **Test:** Vitest (unit + integration) · Playwright (e2e) · `pnpm test` chạy cả hai.
@@ -131,6 +134,7 @@ Một thay đổi chỉ xong khi:
 - [ ] Có test cho hành vi vừa thêm, chạy xanh
 - [ ] Nếu hiển thị nhận định của AI: có provenance bấm ra được nguồn
 - [ ] Nếu là proposal: có chỗ accept/reject và có ghi nhận vào metric
+- [ ] Nếu chạm giao diện: qua checklist mục 7 của [design-guidelines](docs/design-guidelines.md) — không class màu thô, vùng chạm ≥44px, tương phản đủ
 - [ ] Quyết định kiến trúc/nghiệp vụ phát sinh đã có ADR
 - [ ] **Có ít nhất 1 người ngoài người viết hiểu và giải thích lại được**
 

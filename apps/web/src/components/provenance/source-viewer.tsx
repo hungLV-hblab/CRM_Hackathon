@@ -37,7 +37,7 @@ export function SourceViewer({ observation, highlight }: SourceViewerProps) {
         <TabButton active={tab === 'source'} onClick={() => setTab('source')}>
           Bản gốc
         </TabButton>
-        <span className="ml-auto text-slate-500">
+        <span className="ml-auto text-ink-500">
           Chụp lúc {new Date(observation.capturedAt).toLocaleString('vi-VN')}
         </span>
       </div>
@@ -45,7 +45,7 @@ export function SourceViewer({ observation, highlight }: SourceViewerProps) {
       {tab === 'text' ? (
         <HighlightedText content={observation.rawContent} highlight={highlight} />
       ) : (
-        <pre className="max-h-80 overflow-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">
+        <pre className="max-h-80 overflow-auto rounded-control bg-ink-900 p-3 text-xs leading-relaxed text-ink-100">
           {observation.rawHtml ?? 'Không đọc được nguồn — không có bản gốc để hiển thị.'}
         </pre>
       )}
@@ -70,7 +70,7 @@ function HighlightedText({
 }) {
   if (content.length === 0) {
     return (
-      <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-500">
+      <p className="rounded-control bg-ink-50 p-3 text-sm text-ink-500">
         Nguồn không đọc được nên không có nội dung. Hệ thống không đoán nội dung thay nguồn.
       </p>
     )
@@ -85,14 +85,14 @@ function HighlightedText({
   return (
     <div
       data-testid="source-text"
-      className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-3 text-sm leading-relaxed text-fact"
+      className="max-h-80 overflow-auto whitespace-pre-wrap rounded-control bg-ink-50 p-3 text-sm leading-relaxed text-fact"
     >
       {isUsable ? (
         <>
           {content.slice(0, highlight.quoteStart)}
           <mark
             data-testid="quote-highlight"
-            className="rounded bg-amber-200 px-0.5 font-medium text-slate-900 underline decoration-amber-600 decoration-2"
+            className="rounded bg-brand-200 px-0.5 font-medium text-ink-900 underline decoration-brand-600 decoration-2"
           >
             {content.slice(highlight.quoteStart, highlight.quoteEnd)}
           </mark>
@@ -121,8 +121,8 @@ function TabButton({
       aria-pressed={active}
       className={
         active
-          ? 'rounded-md bg-slate-800 px-2 py-1 font-medium text-white'
-          : 'rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100'
+          ? 'rounded-control bg-ink-800 px-2 py-1 font-medium text-white'
+          : 'rounded-control px-2 py-1 text-ink-600 hover:bg-ink-100'
       }
     >
       {children}

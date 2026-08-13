@@ -34,7 +34,7 @@ export function Dialog({
       // Escape and the backdrop close the dialog without React knowing, so the parent's
       // `open` state has to be told, or reopening it silently stops working.
       onClose={onClose}
-      className="m-auto w-full max-w-md rounded-lg p-0 backdrop:bg-slate-900/40"
+      className="m-auto w-full max-w-md rounded-card p-0 backdrop:bg-ink-900/50"
     >
       <div className="flex flex-col gap-4 p-6">
         <h2 className="text-lg font-semibold">{title}</h2>

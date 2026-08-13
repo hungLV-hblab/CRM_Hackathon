@@ -25,6 +25,18 @@ Mở `.env` và điền **ba** biến bắt buộc, thiếu một cái là `pnpm
 | `CRM_DB_PASSWORD` | Mật khẩu chung của 3 role `crm_*`. **Đổi ở đây thì phải đổi cả 6 URL `DATABASE_URL_*` bên dưới** — 6 URL đó là đường đi của các lệnh chạy từ máy (`pnpm seed`, `pnpm test:unit`), không phải của container |
 | `JWT_SECRET` | `openssl rand -hex 32` |
 
+`ANTHROPIC_API_KEY` **không bắt buộc** và cố ý như vậy: bỏ trống thì lớp rút phát hiện chạy bằng `FixtureClaimExtractor` — đọc đúng bộ bản chụp trong repo, câu trích vẫn nguyên văn, vẫn qua đủ cửa kiểm, nên **bộ nghiệm thu 10 điểm chạy được khi không có key** ([ADR-0014](docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md)). Điền key thì gọi LLM thật, `ANTHROPIC_MODEL` chọn model.
+
+Đang chạy bằng cái nào thì **đọc log lúc khởi động**, đừng đoán từ hành vi:
+
+```bash
+docker compose -f infra/docker-compose.yml logs api | grep ClaimExtractor
+# Dùng AnthropicClaimExtractor (model ...)   ← LLM thật
+# ANTHROPIC_API_KEY trống → dùng FixtureClaimExtractor
+```
+
+Đổi key trong `.env` thì phải `docker compose ... up -d api worker` lại — container đọc biến môi trường một lần lúc khởi động.
+
 ### Bước 2 — bật hệ thống (terminal 1)
 
 ```bash
@@ -44,7 +56,21 @@ Thứ tự khởi động là tự động: `postgres` (chờ healthy) → `migr
 pnpm seed
 ```
 
-**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Kỳ vọng: `Seed complete: 2 users, 4 companies, 3 opportunities, 2 timeline entries.`
+**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Kỳ vọng:
+
+```text
+Seed complete: 2 users, 5 companies, 3 contacts, 5 opportunities, 2 timeline entries. Every company is back on the "before" snapshot.
+```
+
+Chạy lại `pnpm seed` bất cứ lúc nào để về đúng trạng thái ban đầu — kể cả sau khi đã diễn demo (I-14). Nó xoá luôn mọi thứ AI sinh ra trong lần diễn trước và đưa **mọi công ty về bản chụp "trước"**.
+
+Lúc diễn, để giả tin mới về với một công ty:
+
+```bash
+pnpm switch-snapshot "Sakura" after
+```
+
+Hoặc gọi `POST /api/demo/companies/:id/snapshot-variant` với body `{"variant":"after"}` khi đã đăng nhập. Đây là đường của **người**: `crm_system` chỉ đọc được cột này, không ghi được — AI không tự đổi được nguồn nó đọc ([ADR-0022](docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md)).
 
 ### Bước 4 — mở và đăng nhập
 
@@ -103,6 +129,7 @@ docker compose -f infra/docker-compose.yml --env-file .env logs -f worker
 | Tắt · tắt và xoá sạch dữ liệu | `pnpm stop` · `pnpm reset` |
 | Test | `pnpm test` · `pnpm test:unit` · `pnpm test:e2e` |
 | Nạp dữ liệu demo | `pnpm seed` |
+| Đổi nguồn một công ty sang bản chụp "sau" (diễn tin mới về) | `pnpm switch-snapshot "Sakura" after` |
 | CSDL | `pnpm db:generate` · `pnpm db:migrate` |
 | lint · typecheck · build | `pnpm lint` · `pnpm typecheck` · `pnpm build` |
 | Phản biện yêu cầu (persona) | `/hack:req-challenge <specs hoặc mô tả>` |

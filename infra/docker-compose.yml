@@ -10,6 +10,15 @@ x-database-urls: &database-urls
   DATABASE_URL_APP: postgres://crm_app:${CRM_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-crm}
   DATABASE_URL_SYSTEM: postgres://crm_system:${CRM_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-crm}
 
+# Both the API (Sales presses ingest) and the worker (watch cycle) reach the LLM, so the key
+# belongs to both or the same snapshot gets read by a real model on one path and by the fixture
+# on the other. Deliberately `:-` and not `:?`: with no key the provider falls back to the
+# fixture adapter, which is the documented rollback and the reason a judge who was never given
+# a key can still run the acceptance suite. Boot logs say which adapter won — do not guess.
+x-llm-access: &llm-access
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+
 x-api-image: &api-image
   build:
     # Repository root: a pnpm workspace package cannot build from its own directory.
@@ -56,7 +65,7 @@ services:
   api:
     <<: *api-image
     environment:
-      <<: *database-urls
+      <<: [*database-urls, *llm-access]
       APP_ROLE: api
       API_PORT: 3001
       JWT_SECRET: '${JWT_SECRET:?JWT_SECRET is missing from .env — generate one with openssl rand -hex 32}'
@@ -73,7 +82,7 @@ services:
   worker:
     <<: *api-image
     environment:
-      <<: *database-urls
+      <<: [*database-urls, *llm-access]
       APP_ROLE: worker
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is missing from .env}
     depends_on:

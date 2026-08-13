@@ -40,10 +40,16 @@ test('đăng nhập, giữ phiên qua reload, tạo công ty, đăng xuất', as
 
   // 5 — a new company written through the UI shows up in the table it was written into.
   await page.getByRole('button', { name: 'Thêm công ty' }).click()
-  await page.getByLabel('Tên công ty').fill(NEW_COMPANY)
-  await page.getByLabel('Ngành').fill('Kiểm thử')
-  await page.getByLabel('Loại hình').selectOption('it_solution')
-  await page.getByRole('button', { name: 'Lưu' }).click()
+  /**
+   * Scoped to the dialog. The list screen behind it now carries its own "Lọc theo ngành" and
+   * "Lọc theo loại hình" controls, and `getByLabel` matches a substring case-insensitively —
+   * so an unscoped lookup finds the filter and the form field alike.
+   */
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Tên công ty').fill(NEW_COMPANY)
+  await dialog.getByLabel('Ngành').fill('Kiểm thử')
+  await dialog.getByLabel('Loại hình').selectOption('it_solution')
+  await dialog.getByRole('button', { name: 'Lưu' }).click()
   await expect(page.getByRole('cell', { name: NEW_COMPANY })).toBeVisible()
 
   // 6 — logging out returns to the login screen.

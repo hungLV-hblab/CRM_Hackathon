@@ -29,6 +29,20 @@ const SAKURA = 'aaaaaaaa-0001-4000-8000-000000000001'
 const NIMBUS = 'aaaaaaaa-0002-4000-8000-000000000002'
 const KITEFIN = 'aaaaaaaa-0003-4000-8000-000000000003'
 const OHARA = 'aaaaaaaa-0004-4000-8000-000000000004'
+const MARLIN = 'aaaaaaaa-0005-4000-8000-000000000005'
+
+/**
+ * The funding paragraph, once, used by TWO companies of different types.
+ *
+ * Only the company name differs between the two pages, so `company_type` is the ONLY variable
+ * left: the same funding news read under `traditional` (Sakura) and under `it_product`
+ * (Marlin) has to produce different findings, and if it does not, the lens is decoration.
+ * Keeping the sentence in one constant is what makes that comparison honest — two hand-typed
+ * paragraphs would drift and the difference could then come from the wording.
+ */
+function fundingParagraph(companyName: string): string {
+  return `<p>${companyName} vừa hoàn tất vòng Series B huy động 20 triệu USD do Mizuho Capital dẫn dắt.</p>`
+}
 
 const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
   [SAKURA]: {
@@ -47,7 +61,7 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <body><div class="news">
         <h1>Sakura Manufacturing KK</h1>
         <p>Chúng tôi là nhà sản xuất linh kiện chính xác phục vụ ngành ô tô từ năm 1978.</p>
-        <p>Sakura vừa hoàn tất vòng Series B huy động 20 triệu USD do Mizuho Capital dẫn dắt.</p>
+        ${fundingParagraph('Sakura')}
         <p>Nhà máy tại Aichi hiện vận hành ba dây chuyền&nbsp;lắp ráp.</p>
         </div></body></html>`,
     },
@@ -83,6 +97,32 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <p>Kitefin Analytics giúp doanh nghiệp đo lường hiệu quả vận hành.</p>
         <p>Kitefin mở rộng sang thị trường Nhật Bản với văn phòng đầu tiên tại Tokyo.</p>
         </body></html>`,
+    },
+  },
+
+  /**
+   * Marlin exists for ONE comparison: its `after` carries the same funding paragraph as
+   * Sakura's, and the two companies are `it_product` and `traditional`. Read the two findings
+   * side by side and the company-type lens either changed the reading or it did not.
+   *
+   * It is deliberately NOT watched and NOT part of T-1…T-10 — it is a product point, so it is
+   * also the first thing to cut if the schedule slips.
+   */
+  [MARLIN]: {
+    before: {
+      sourceUrl: 'https://marlin-labs.example.com/news',
+      rawHtml: `<html><body><section>
+        <h1>Marlin Product Labs</h1>
+        <p>Marlin phát triển bộ công cụ quản lý kho theo mô hình thuê bao cho ngành bán lẻ.</p>
+        </section></body></html>`,
+    },
+    after: {
+      sourceUrl: 'https://marlin-labs.example.com/news',
+      rawHtml: `<html><body><section>
+        <h1>Marlin Product Labs</h1>
+        <p>Marlin phát triển bộ công cụ quản lý kho theo mô hình thuê bao cho ngành bán lẻ.</p>
+        ${fundingParagraph('Marlin')}
+        </section></body></html>`,
     },
   },
 

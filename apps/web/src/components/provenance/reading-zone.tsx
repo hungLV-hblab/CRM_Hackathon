@@ -20,7 +20,7 @@ import { SourceViewer } from '@/components/provenance/source-viewer'
 export function ReadingZone({ observations }: { observations: ObservationWithClaimsDto[] }) {
   if (observations.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+      <p className="rounded-control border border-dashed border-ink-300 p-4 text-sm text-ink-500">
         Chưa đọc nguồn nào cho công ty này. Bấm “Đọc lại nguồn” để hệ thống đọc bản chụp.
       </p>
     )
@@ -40,7 +40,7 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
   const [openClaim, setOpenClaim] = useState<ClaimDto | null>(null)
 
   return (
-    <article className="rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+    <article className="rounded-card border border-machine-200 bg-machine-50 p-4">
       <header className="mb-3 flex flex-wrap items-center gap-2">
         <Badge tone="inference">Vùng đọc — do AI sinh</Badge>
         {observation.fetchStatus === 'failed' ? (
@@ -50,14 +50,14 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
           href={observation.sourceUrl}
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-slate-600 underline underline-offset-2"
+          className="text-xs text-ink-600 underline underline-offset-2"
         >
           {observation.sourceUrl}
         </a>
       </header>
 
       {observation.claims.length === 0 ? (
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-ink-500">
           {observation.fetchStatus === 'failed'
             ? 'Nguồn không đọc được nên không có phát hiện nào. Hệ thống không đoán.'
             : 'Đã đọc nguồn, không có phát hiện nào đáng chú ý.'}
@@ -67,7 +67,7 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
           {observation.claims.map((claim) => (
             <li
               key={claim.id}
-              className="rounded-md border border-amber-200 bg-white p-3 text-sm"
+              className="rounded-control border border-machine-200 bg-white p-3 text-sm"
             >
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <ConfidenceBadge confidence={claim.confidence} />
@@ -86,7 +86,7 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
               <button
                 type="button"
                 onClick={() => setOpenClaim(openClaim?.id === claim.id ? null : claim)}
-                className="mt-1 text-xs text-slate-600 underline underline-offset-2"
+                className="mt-1 text-xs text-ink-600 underline underline-offset-2"
               >
                 {openClaim?.id === claim.id ? 'Đóng nguồn' : 'Xem câu trích trong nguồn'}
               </button>

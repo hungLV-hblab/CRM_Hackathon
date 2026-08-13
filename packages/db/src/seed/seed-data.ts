@@ -65,7 +65,12 @@ export const SEED_COMPANIES = [
     country: 'Hoa Kỳ',
     size: '50-100',
     website: 'https://kitefin.example.com',
-    isWatched: false,
+    /**
+     * Watched, so the demo has THREE watched companies with a readable source — the exact
+     * count acceptance check 8 counts. Ohara stays unwatched: it is the unreadable source,
+     * and inside the watch set it would blur the "two flipped → two new entries" arithmetic.
+     */
+    isWatched: true,
     ownerId: SALES_ID,
   },
   {
@@ -78,6 +83,58 @@ export const SEED_COMPANIES = [
     website: null,
     isWatched: false,
     ownerId: SALES_ID,
+  },
+  /**
+   * The company-type lens made visible: Marlin's `after` snapshot carries the SAME funding
+   * paragraph as Sakura's, and the two are `it_product` and `traditional`. Whatever feature
+   * group 2 reads out of the two pages differs by the lens or by nothing.
+   */
+  {
+    id: 'aaaaaaaa-0005-4000-8000-000000000005',
+    name: 'Marlin Product Labs',
+    industry: 'Phần mềm đóng gói',
+    companyType: 'it_product' as const,
+    country: 'Singapore',
+    size: '50-100',
+    website: 'https://marlin-labs.example.com',
+    isWatched: false,
+    ownerId: SALES_ID,
+  },
+]
+
+/**
+ * Two contacts on ONE company, exactly one of them the đầu mối chính.
+ *
+ * The second one is not padding: promoting it is what demonstrates that the previous PIC is
+ * demoted in the same request, and with a single contact the partial unique index on
+ * `(company_id) WHERE is_primary` is never actually exercised by the demo.
+ */
+export const SEED_CONTACTS = [
+  {
+    id: 'dddddddd-0001-4000-8000-000000000001',
+    companyId: SEED_COMPANIES[0].id,
+    name: 'Takahashi Kenji',
+    title: 'Trưởng phòng sản xuất',
+    email: 'takahashi@sakura-mfg.example.jp',
+    isPrimary: true,
+  },
+  {
+    id: 'dddddddd-0002-4000-8000-000000000002',
+    companyId: SEED_COMPANIES[0].id,
+    name: 'Ishida Mari',
+    title: 'Điều phối mua hàng',
+    email: 'ishida@sakura-mfg.example.jp',
+    isPrimary: false,
+  },
+  {
+    id: 'dddddddd-0003-4000-8000-000000000003',
+    companyId: SEED_COMPANIES[1].id,
+    // NOT the CTO named in Nimbus' `after` snapshot: that appointment is news the demo has
+    // not read yet, and seeding the person in advance would make the news look already known.
+    name: 'Lim Boon Hock',
+    title: 'Giám đốc Kinh doanh',
+    email: 'boonhock@nimbus.example.sg',
+    isPrimary: true,
   },
 ]
 
@@ -98,6 +155,15 @@ export const SEED_OPPORTUNITIES = [
     nextStepText: 'Gửi lại báo giá sau buổi họp kỹ thuật',
     nextStepDueDate: '2026-08-20',
     nextStepSource: 'human' as const,
+    /**
+     * All FOUR cells filled, so this is the one deal past the qualification gate that carries
+     * NO warning flag. Without it every card on the board wears the same flag and the screen
+     * shows a single state — which reads as "the flag is always on" rather than as a rule.
+     */
+    needSignal: 'Đội bảo trì MES nội bộ thiếu 6 kỹ sư, đang phải chạy ca đêm.',
+    needSignalSource: 'Họp kỹ thuật 05/08/2026 với trưởng phòng sản xuất',
+    budgetSignal: 'Đã duyệt ngân sách thuê ngoài cho năm tài chính 2026.',
+    budgetSignalSource: 'Email phòng mua hàng ngày 07/08/2026',
   },
   {
     id: 'bbbbbbbb-0002-4000-8000-000000000002',
@@ -120,6 +186,35 @@ export const SEED_OPPORTUNITIES = [
     nextStepText: null,
     nextStepDueDate: null,
     nextStepSource: null,
+  },
+  /**
+   * Two lost deals, one WITH a reason and one without, because the overview splits them: the
+   * reasons go in the table, the deal with no reason stands on its own line outside it. Seed
+   * only the first kind and that separation never appears on screen.
+   */
+  {
+    id: 'bbbbbbbb-0004-4000-8000-000000000004',
+    companyId: SEED_COMPANIES[3].id,
+    name: 'Thuê ngoài đội vận hành cửa hàng',
+    expectedValue: '90000.00',
+    expectedCloseMonth: '2026-07',
+    stage: 'lost' as const,
+    nextStepText: null,
+    nextStepDueDate: null,
+    nextStepSource: null,
+    lostReason: 'Khách chọn đối tác đã có đội tại chỗ',
+  },
+  {
+    id: 'bbbbbbbb-0005-4000-8000-000000000005',
+    companyId: SEED_COMPANIES[4].id,
+    name: 'Đội kiểm thử cho bản phát hành mùa thu',
+    expectedValue: '60000.00',
+    expectedCloseMonth: '2026-06',
+    stage: 'lost' as const,
+    nextStepText: null,
+    nextStepDueDate: null,
+    nextStepSource: null,
+    lostReason: null,
   },
 ]
 
