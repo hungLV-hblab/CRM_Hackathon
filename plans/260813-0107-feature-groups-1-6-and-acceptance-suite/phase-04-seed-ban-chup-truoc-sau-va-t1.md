@@ -49,9 +49,12 @@ Cùng một tin `funding` ở công ty 1 (`tech_startup`) và một công ty `it
 
 1. Viết bản chụp HTML — văn bản thật, đọc lên như trang công ty thật, mỗi bản "sau" có **đúng một** đoạn tin mới để câu trích chỉ được vào một chỗ.
 2. Mở rộng `seed-data.ts` + loader; **chạy lại `seed-idempotent.test.ts` sau mỗi lần sửa** — test này là bằng chứng cho hạng mục nộp bài số 5.
+   - **Ít nhất một cơ hội `qualified` phải đủ cả bốn ô dấu hiệu** (`needSignal` · `needSignalSource` · `budgetSignal` · `budgetSignalSource`) và **ít nhất một cơ hội thiếu**, để demo thấy cả hai trạng thái. P3 chốt "đủ = cả bốn ô" ([định nghĩa cờ](phase-03-nhom-1-crm-lam-tay.md#định-nghĩa-cờ-và-quá-hạn--một-chỗ-duy-nhất)); `SEED_OPPORTUNITIES` hiện **không có ô dấu hiệu nào** nên cả ba cơ hội seed sẽ mang cờ, màn hình chỉ hiện một trạng thái.
+   - Tương tự với `lostReason`: cần một cơ hội `lost` có lý do và một cơ hội `lost` thiếu lý do, để khối thống kê lý do thua ở màn tổng quan có cả bảng lẫn dòng đứng ngoài bảng.
 3. Bổ sung dọn dẹp I-14: seed lần hai xoá `observations`, `claims`, `proposals`, `proposal_decisions`, `auto_next_step_events`, `notifications`, `watch_cycle_runs` và đưa công ty về bản "trước".
 4. `switch-snapshot.ts`: đổi nguồn của một công ty, để T-6/T-8 gọi được từ e2e mà không sửa mã.
 5. **T-1 e2e**: đặt `ai_enabled = false`, đi hết luồng nhóm 1 (tạo công ty/liên hệ/cơ hội, kéo qua ba giai đoạn có Đủ điều kiện + bỏ hai ô dấu hiệu, ghi hoạt động, tìm/lọc, mở tổng quan). Chờ P3 xong mới chạy xanh được — viết trước, để đỏ.
+   - **Kéo thả lái bằng bàn phím, không bằng chuột.** P3 dùng dnd-kit không kèm Select ([thiết kế P3](phase-03-nhom-1-crm-lam-tay.md#quyết-định-đã-chốt)); đường `KeyboardSensor` (`Tab` → `Space` nhấc → `ArrowRight` × n → `Space` thả) xác định và không chờ animation, còn `mouse.move` thì giòn. Nếu bàn phím vẫn không ổn, tách làm hai: một spec gọi thẳng `PATCH /opportunities/:id/stage` chứng minh luật không chặn, một spec riêng cho cơ chế kéo — hỏng cái nào biết ngay cái đó.
 
 ## Validation
 
@@ -61,6 +64,8 @@ Cùng một tin `funding` ở công ty 1 (`tech_startup`) và một công ty `it
 - [ ] Công ty 5 nạp vào cho `fetch_status = failed`
 - [ ] T-1 xanh với `ai_enabled = false`, **không** chức năng nhóm 1 nào hỏng
 - [ ] Dữ liệu seed đánh dấu rõ là seed, không lẫn dữ liệu người dùng nhập
+- [ ] Có cơ hội `qualified` đủ cả bốn ô dấu hiệu (không cờ) **và** cơ hội thiếu (có cờ)
+- [ ] Có cơ hội `lost` có lý do **và** cơ hội `lost` thiếu lý do
 
 ## Risks
 

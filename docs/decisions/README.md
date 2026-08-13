@@ -37,6 +37,8 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0020](0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md) | Design + Build | Đổi giai đoạn chỉ bằng kéo thả dnd-kit, không kèm Select; đường bàn phím là đường lái của T-1 | Chấp nhận — **đã đo** |
+| [0019](0019-co-canh-bao-suy-ra-tu-cot-null-khong-luu-thanh-cot.md) | Design | Cờ cảnh báo của cơ hội suy ra từ cột null, không lưu thành cột | Chấp nhận |
 | [0018](0018-cua-kiem-muc-chac-bo-qua-ten-cua-chinh-cong-ty-dang-doc.md) | Implementation | Cửa kiểm mức Chắc bỏ qua tên của chính công ty đang đọc; vẫn kiểm số và tên bên thứ ba | **Đề xuất — chờ quyết định** |
 | [0017](0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) | Design | I-3 enforce ở service, không `UNIQUE`; ràng buộc CSDL chỉ dành cho ranh giới, luật hành vi thuộc service | Chấp nhận |
 | [0016](0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) | Design | `Proposal.status` chỉ `pending \| decided`; mọi con số đo lấy từ `ProposalDecision` | Chấp nhận |

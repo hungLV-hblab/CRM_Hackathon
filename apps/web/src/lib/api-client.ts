@@ -1,9 +1,22 @@
 import type {
   CompanyDto,
+  ContactDto,
   CreateCompanyDto,
+  CreateContactDto,
+  CreateOpportunityDto,
+  CreateTimelineEntryDto,
   IngestResultDto,
   IngestSnapshotDto,
+  ListCompaniesQuery,
+  ListOpportunitiesQuery,
   ObservationWithClaimsDto,
+  OpportunityDto,
+  OverviewDto,
+  TimelineEntryDto,
+  UpdateCompanyDto,
+  UpdateContactDto,
+  UpdateOpportunityDto,
+  UpdateStageDto,
 } from '@crm/contracts'
 
 /**
@@ -51,6 +64,20 @@ async function readErrorMessage(res: Response): Promise<string> {
   }
 }
 
+/**
+ * Only the keys the caller actually set. An empty filter must not become `?q=` — the API
+ * reads that as "search for the empty string", which is a different request.
+ */
+function toQueryString(query: object): string {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === '') continue
+    params.set(key, String(value))
+  }
+  const encoded = params.toString()
+  return encoded ? `?${encoded}` : ''
+}
+
 export const api = {
   login: (email: string, password: string) =>
     call<{ user: { id: string; email: string; name: string; role: string } }>('/auth/login', {
@@ -62,10 +89,62 @@ export const api = {
 
   me: () => call<{ userId: string; role: string }>('/auth/me'),
 
-  listCompanies: () => call<CompanyDto[]>('/companies'),
+  listCompanies: (query: ListCompaniesQuery = {}) =>
+    call<CompanyDto[]>(`/companies${toQueryString(query)}`),
+
+  getCompany: (companyId: string) => call<CompanyDto>(`/companies/${companyId}`),
 
   createCompany: (dto: CreateCompanyDto) =>
     call<CompanyDto>('/companies', { method: 'POST', body: JSON.stringify(dto) }),
+
+  updateCompany: (companyId: string, dto: UpdateCompanyDto) =>
+    call<CompanyDto>(`/companies/${companyId}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+
+  deleteCompany: (companyId: string) =>
+    call<void>(`/companies/${companyId}`, { method: 'DELETE' }),
+
+  listContacts: (companyId: string) => call<ContactDto[]>(`/companies/${companyId}/contacts`),
+
+  createContact: (dto: CreateContactDto) =>
+    call<ContactDto>('/contacts', { method: 'POST', body: JSON.stringify(dto) }),
+
+  updateContact: (contactId: string, dto: UpdateContactDto) =>
+    call<ContactDto>(`/contacts/${contactId}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+
+  deleteContact: (contactId: string) => call<void>(`/contacts/${contactId}`, { method: 'DELETE' }),
+
+  listOpportunities: (query: ListOpportunitiesQuery = {}) =>
+    call<OpportunityDto[]>(`/opportunities${toQueryString(query)}`),
+
+  createOpportunity: (dto: CreateOpportunityDto) =>
+    call<OpportunityDto>('/opportunities', { method: 'POST', body: JSON.stringify(dto) }),
+
+  updateOpportunity: (opportunityId: string, dto: UpdateOpportunityDto) =>
+    call<OpportunityDto>(`/opportunities/${opportunityId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+
+  /**
+   * Its own endpoint, and it never fails for missing cells: sending only `{ stage }` is the
+   * "Để trống, bổ sung sau" path and the response comes back carrying the warning flags.
+   */
+  updateOpportunityStage: (opportunityId: string, dto: UpdateStageDto) =>
+    call<OpportunityDto>(`/opportunities/${opportunityId}/stage`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+
+  listTimeline: (companyId: string) =>
+    call<TimelineEntryDto[]>(`/companies/${companyId}/timeline`),
+
+  addTimelineEntry: (companyId: string, dto: CreateTimelineEntryDto) =>
+    call<TimelineEntryDto>(`/companies/${companyId}/timeline`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    }),
+
+  overview: () => call<OverviewDto>('/overview'),
 
   /** The read zone: snapshots newest first, each carrying the findings drawn from it. */
   readingZone: (companyId: string) =>

@@ -7,12 +7,19 @@ import { AuthModule } from './auth/auth.module'
 import { ClaimService } from './domain/claim/claim-service'
 import { CompanyController } from './domain/company/company.controller'
 import { CompanyService } from './domain/company/company-service'
+import { ContactController } from './domain/contact/contact.controller'
+import { ContactService } from './domain/contact/contact-service'
 import { DbModule } from './common/db/db.module'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
 import { ObservationController } from './domain/observation/observation.controller'
 import { ObservationService } from './domain/observation/observation-service'
 import { claimExtractorProvider } from './ai/claim-extractor.provider'
+import { OpportunityController } from './domain/opportunity/opportunity.controller'
 import { OpportunityService } from './domain/opportunity/opportunity-service'
+import { OverviewController } from './domain/overview/overview.controller'
+import { OverviewService } from './domain/overview/overview-service'
+import { TimelineController } from './domain/timeline/timeline.controller'
+import { TimelineService } from './domain/timeline/timeline-service'
 import { SettingsController } from './settings/settings.controller'
 import { SystemSettingService } from './settings/system-setting-service'
 
@@ -23,15 +30,26 @@ import { SystemSettingService } from './settings/system-setting-service'
  */
 @Module({
   imports: [DbModule, AuthModule],
-  controllers: [CompanyController, ObservationController, SettingsController],
+  controllers: [
+    CompanyController,
+    ContactController,
+    ObservationController,
+    OpportunityController,
+    OverviewController,
+    SettingsController,
+    TimelineController,
+  ],
   providers: [
     AuditEventService,
     ClaimService,
     CompanyService,
+    ContactService,
     DemoSnapshotSource,
     ObservationService,
     OpportunityService,
+    OverviewService,
     SystemSettingService,
+    TimelineService,
     claimExtractorProvider,
     { provide: APP_INTERCEPTOR, useClass: ActorInterceptor },
   ],

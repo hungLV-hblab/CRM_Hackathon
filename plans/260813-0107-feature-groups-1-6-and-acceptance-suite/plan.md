@@ -18,6 +18,7 @@ source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-cr
 > Nối tiếp [plan skeleton](../260812-1912-base-project-walking-skeleton/plan.md) (đã đóng, 6/6 điểm nghiệm thu).
 > Quyết định chi phối: [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) (LLM thật + code kiểm chuỗi con) · [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) (seed tự đặt) · [ADR-0010](../../docs/decisions/0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) + [ADR-0004](../../docs/decisions/0004-chan-ranh-gioi-o-tang-domain-va-tang-csdl.md) (chặn hai lớp).
 > Ba quyết định mới từ phiên phản biện P1 ngày 13/08 ([báo cáo](../reports/from-brainstorm-to-planner-260813-0127-phase-01-grant-insert-theo-cot-va-ba-quyet-dinh-report.md)): [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) (`GRANT INSERT` theo cột) · [ADR-0016](../../docs/decisions/0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) (`status = pending|decided`) · [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) (I-3 ở service, không `UNIQUE`).
+> Thiết kế P3 chốt 13/08 12:15 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1215-phase-03-nhom-1-crm-lam-tay-report.md)): cờ cảnh báo suy ra không lưu cột · kéo thả dnd-kit không kèm Select, KeyboardSensor làm đường lái T-1 · đầu mối chính tự hạ người cũ · tổng quan thêm khối lý do thua. **Hai quyết định đầu còn nợ ADR.**
 
 ## Mục tiêu
 
@@ -37,7 +38,7 @@ Sáu nhóm tính năng của Specs mục 4 chạy được trên stack productio
 
 Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xong:
 
-1. Kéo thả giai đoạn → dropdown (nhóm 1). Specs đòi kéo thả, nhưng T-1 chỉ đòi kéo được qua ba giai đoạn — mất điểm sản phẩm, không mất điểm nghiệm thu.
+1. Kéo thả giai đoạn → **chỉ giữ đường bàn phím của dnd-kit** (nhóm 1). Specs đòi kéo thả, nhưng T-1 chỉ đòi đổi được qua ba giai đoạn — mất điểm sản phẩm, không mất điểm nghiệm thu. Không quay về dropdown: [P3 đã loại phương án Select](phase-03-nhom-1-crm-lam-tay.md#quyết-định-đã-chốt), thêm lại là hai đường đổi giai đoạn cho cùng một việc.
 2. Dòng tổng hợp cộng dồn mỗi 10 vòng (nhóm 5).
 3. Màn tổng quan còn 3 con số (nhóm 1).
 4. Nhóm 6 gộp còn một trang số liệu thô, không biểu đồ.
@@ -51,7 +52,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 1a | [Seam — 7 bảng, GRANT theo cột, contracts](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1a--mở-khoá-đội-15h) | **done** | 1 người, **cả đội chờ** | 1.5h (thực: ~20') | — |
 | 1b | [Ma trận chiều-cấm + 3 phép đo đột biến](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1b--song-song-phải-xanh-trước-p5p6p7-15h) | **done** | cùng người, **song song** | 1.5h (thực: gộp vào 1a) | 1a |
 | 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | **done** | A | 3h (thực: ~25') | 1a |
-| 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | pending | B | 5h | 1a |
+| 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | **done** | B | 5h (thực: ~2h45') | 1a |
 | 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h | 1a, (3 cho T-1) |
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
@@ -76,7 +77,7 @@ Hai phụ thuộc cứng:
 | Khi | Phải xong |
 | --- | --- |
 | ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
-| 13/08 hết ngày | P2, P3, P4 |
+| 13/08 hết ngày | ~~P2~~ · ~~P3~~ · P4 |
 | 14/08 trưa | P5, P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | 14/08 tối | P8, **freeze** |
 
@@ -132,6 +133,37 @@ CI/CD · triển khai đám mây · phân quyền theo người sở hữu (mộ
 | Nhóm 1 phình ra ăn hết ngày 13 | Cắt kéo thả trước, cắt màn tổng quan sau. Ranh giới cắt ghi ở mục Ngân sách |
 | Vòng quét gọi LLM chậm hơn nhịp 60s | Đã có luật bỏ nhịp + `skipped_reason` của ADR-0011. P7 test đúng kịch bản này |
 | Ba phép đo đột biến còn nợ từ plan skeleton | P1b trả nợ GRANT + enum (cộng một phép đo mới cho ADR-0015); `@Cron` trả trong P7 |
+
+## Validation Log
+
+### Phiên 1 — 13/08 12:15, phạm vi Phase 3
+
+**Verification Results** — Claims checked: 9 · Verified: 9 · Failed: 0 · Unverified: 0 · Tier: Full (giới hạn Phase 3)
+
+Xác minh đáng ghi lại: FK `timeline_entries.contact_id` **`ON DELETE no action`** (`0002_closed_cyclops.sql:112`) — bẫy xoá người liên hệ là thật, không phải giả thiết. Partial unique index đầu mối chính có trong migration (`:108`). Token `--color-warning` + `--color-warning-surface` có sẵn (`globals.css:84-85`).
+
+**Phát hiện ngoài danh sách claim:** `vitest.config.mts` chỉ collect `packages/*` và `apps/api` — **`apps/web` không có project nào**, nên mọi màn hình đều không có test đơn vị.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| "Đã qua qualified" nghĩa là gì | Tập cố định `{qualified, drafting, negotiation, won}`, không đọc dòng thời gian | Chấp nhận: deal qualified rồi tạm dừng mất cờ. Đổi lại hàm suy cờ vẫn thuần, không JOIN |
+| Ô nguồn của hai dấu hiệu | **Đủ = cả bốn ô** (chọn chặt hơn khuyến nghị) | P4: seed phải có cơ hội đủ bốn ô, không thì mọi cơ hội đều mang cờ và demo chỉ thấy một trạng thái |
+| Web P3 không có test trong phase | Dựa vào T-1 e2e của P4, ghi là nợ có chủ ý | Luật số 4 cấm dồn sang **P8**, không cấm đặt ở P4. Điều kiện: chạy tay đủ checklist trước khi đóng phase |
+| `PATCH /companies/:id` sửa ô nào | Mọi ô, kể cả `companyType` — I-11 chỉ ràng buộc Proposal | Đóng một câu hỏi treo của P3, không còn đẩy sang P5 |
+
+**Whole-Plan Consistency Sweep** — quét `plan.md` + 8 phase file. Hai mâu thuẫn phát hiện, cả hai đã hoà giải: (1) T-1 e2e của P4 mô tả kéo thả bằng chuột, sửa sang đường bàn phím theo quyết định dnd-kit của P3; (2) `SEED_OPPORTUNITIES` không có ô dấu hiệu nào trong khi P3 chốt "đủ = cả bốn ô", đã thành yêu cầu của P4. **Không còn mâu thuẫn tồn đọng.**
+
+~~**Còn nợ ADR:** cờ suy ra không lưu cột · dnd-kit không kèm Select~~ — **đã trả 13/08 17:20**: [ADR-0019](../../docs/decisions/0019-co-canh-bao-suy-ra-tu-cot-null-khong-luu-thanh-cot.md) · [ADR-0020](../../docs/decisions/0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md).
+
+### Phiên 2 — 13/08 17:20, P3 đóng
+
+**158 test đơn vị + 6 e2e xanh**, typecheck/lint/build xanh, ba phép đo đột biến đều cắn. Ba việc đáng mang sang phase khác:
+
+- **P4 đọc [ADR-0020](../../docs/decisions/0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md) trước khi viết T-1.** Đường bàn phím cần khoảng cách giữa các phím (0ms không chuyển, ≥50ms chuyển). Bấm liền nhau thì T-1 đỏ vì harness, không vì sản phẩm — đúng loại lỗi tốn nhiều giờ nhất vào ngày cuối.
+- **P3 đã sửa 3 dòng trong `e2e/login-and-create-company.spec.ts`** (file của C): bộ lọc mới làm `getByLabel('Ngành')` khớp 2 phần tử, đã giới hạn vào `getByRole('dialog')`.
+- **Seed vẫn chưa có cơ hội `qualified` đủ bốn ô dấu hiệu**, nên hiện mọi cơ hội trên bảng đều mang cờ — demo chỉ thấy một trạng thái. Yêu cầu này thuộc P4 và giờ **nhìn thấy được trên màn hình**, không còn là suy đoán.
 
 ## Câu hỏi chưa giải quyết
 
