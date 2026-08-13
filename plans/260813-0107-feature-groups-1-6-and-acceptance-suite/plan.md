@@ -18,7 +18,8 @@ source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-cr
 > Nối tiếp [plan skeleton](../260812-1912-base-project-walking-skeleton/plan.md) (đã đóng, 6/6 điểm nghiệm thu).
 > Quyết định chi phối: [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) (LLM thật + code kiểm chuỗi con) · [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) (seed tự đặt) · [ADR-0010](../../docs/decisions/0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) + [ADR-0004](../../docs/decisions/0004-chan-ranh-gioi-o-tang-domain-va-tang-csdl.md) (chặn hai lớp).
 > Ba quyết định mới từ phiên phản biện P1 ngày 13/08 ([báo cáo](../reports/from-brainstorm-to-planner-260813-0127-phase-01-grant-insert-theo-cot-va-ba-quyet-dinh-report.md)): [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) (`GRANT INSERT` theo cột) · [ADR-0016](../../docs/decisions/0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) (`status = pending|decided`) · [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) (I-3 ở service, không `UNIQUE`).
-> Thiết kế P3 chốt 13/08 12:15 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1215-phase-03-nhom-1-crm-lam-tay-report.md)): cờ cảnh báo suy ra không lưu cột · kéo thả dnd-kit không kèm Select, KeyboardSensor làm đường lái T-1 · đầu mối chính tự hạ người cũ · tổng quan thêm khối lý do thua. **Hai quyết định đầu còn nợ ADR.**
+> Thiết kế P3 chốt 13/08 12:15 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1215-phase-03-nhom-1-crm-lam-tay-report.md)): cờ cảnh báo suy ra không lưu cột · kéo thả dnd-kit không kèm Select, KeyboardSensor làm đường lái T-1 · đầu mối chính tự hạ người cũ · tổng quan thêm khối lý do thua. ADR trả 13/08 17:20: [ADR-0019](../../docs/decisions/0019-co-canh-bao-suy-ra-tu-cot-null-khong-luu-thanh-cot.md) · [ADR-0020](../../docs/decisions/0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md).
+> Thiết kế P4 chốt 13/08 19:56 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1956-GH-3-phase-04-seed-ban-chup-va-t1-report.md)): [ADR-0021](../../docs/decisions/0021-ban-chup-demo-giu-dang-hang-so-typescript-khong-tach-thanh-file-html.md) (bản chụp giữ dạng hằng số TS, không tách HTML) · [ADR-0022](../../docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md) (cột `snapshot_variant` — **P4 làm thay P7, không có nó T-8 không đóng được**).
 
 ## Mục tiêu
 
@@ -53,7 +54,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 1b | [Ma trận chiều-cấm + 3 phép đo đột biến](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1b--song-song-phải-xanh-trước-p5p6p7-15h) | **done** | cùng người, **song song** | 1.5h (thực: gộp vào 1a) | 1a |
 | 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | **done** | A | 3h (thực: ~25') | 1a |
 | 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | **done** | B | 5h (thực: ~2h45') | 1a |
-| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h | 1a, (3 cho T-1) |
+| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h15 | 1a, (3 cho T-1) |
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
@@ -67,9 +68,10 @@ P1a (cả đội chờ, 1.5h)
  └── C: P4 seed fixture ─────── P7 nhóm 5 ──┘
 ```
 
-Hai phụ thuộc cứng:
+Ba phụ thuộc cứng:
 
 - **P5, P6, P7 đều cần `Claim` của P2.** P3 và P4 không cần.
+- **P7 cần cột `companies.snapshot_variant` của P4.** Vòng quét tự chạy nên không nhận tham số từ ai; không có chỗ lưu bản chụp hiện tại thì nó không biết đọc bản nào và **T-8 không đóng được như đề bài viết** ([ADR-0022](../../docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md)). P4 tạo cột + đường đổi, P7 tiêu thụ.
 - **P5, P6, P7 đều cần P1b xanh**, không phải P8. P6 (Hoàn tác) và P5 (duyệt) ăn trực tiếp `undo_deadline` và `status` — hai cột mà GRANT theo cột của [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) đang bảo vệ. Dồn ma trận chiều-cấm sang P8 là để hở đúng chỗ rubric chấm.
 
 ### Mốc thời gian
@@ -107,7 +109,7 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 
 | # | Nội dung | Phase |
 | --- | --- | --- |
-| T-1 | Tắt AI, nhóm 1 chạy đủ: công ty/liên hệ/cơ hội, kéo qua 3 giai đoạn có Đủ điều kiện, bỏ 2 ô dấu hiệu vẫn kéo được + có cờ, ghi hoạt động, tìm/lọc, màn tổng quan | 3, 4 |
+| T-1 | Tắt AI, nhóm 1 chạy đủ: công ty/liên hệ/cơ hội, kéo qua 3 giai đoạn có Đủ điều kiện, bỏ 2 ô dấu hiệu vẫn kéo được + có cờ, ghi hoạt động, tìm/lọc, màn tổng quan. **Một spec, mỗi chặng một `test.step()`**; lái bằng bàn phím, giãn ≥50ms giữa phím (ADR-0020) | 3, 4 |
 | T-2 | Phát hiện thiếu câu trích không lưu được — thử ghi thẳng, phải bị từ chối | 2 ✅ |
 | T-3 | Bấm phát hiện → mở đúng đoạn gốc, có đánh dấu | 2 ✅ e2e |
 | T-4 | Sinh gợi ý rồi không làm gì; sau ≥3 chu kỳ hồ sơ y nguyên | 5 |
@@ -165,8 +167,33 @@ Xác minh đáng ghi lại: FK `timeline_entries.contact_id` **`ON DELETE no act
 - **P3 đã sửa 3 dòng trong `e2e/login-and-create-company.spec.ts`** (file của C): bộ lọc mới làm `getByLabel('Ngành')` khớp 2 phần tử, đã giới hạn vào `getByRole('dialog')`.
 - **Seed vẫn chưa có cơ hội `qualified` đủ bốn ô dấu hiệu**, nên hiện mọi cơ hội trên bảng đều mang cờ — demo chỉ thấy một trạng thái. Yêu cầu này thuộc P4 và giờ **nhìn thấy được trên màn hình**, không còn là suy đoán.
 
+### Phiên 3 — 13/08 19:56, phạm vi Phase 4
+
+Phase 4 viết **trước khi P2 xong** nên đã lệch với code thật ở 8 chỗ ([báo cáo](../reports/from-brainstorm-to-planner-260813-1956-GH-3-phase-04-seed-ban-chup-va-t1-report.md)). Kiểm bằng đọc mã nguồn, không phải chạy đo.
+
+**Bốn hạng mục bỏ vì đã có sẵn:** bản chụp đã tồn tại (`apps/api/src/ai/demo-snapshots.ts`, 4 công ty × before/after) · dọn I-14 đã xong (`seed()` TRUNCATE đủ 15 bảng của `ALL_TABLES`) · I-3 đã có test 6 + test 7 nên bỏ yêu cầu "bản sau byte-identical" · ca `fetch_status = failed` đã có (Ohara `rawHtml: ''`).
+
+**Một lỗ hổng bịt lại:** `variant` là **tham số request**, vòng quét không nhận tham số ⇒ **T-8 không đóng được**. P4 thêm cột `companies.snapshot_variant` + module `apps/api/src/demo/`, P7 tiêu thụ.
+
+**Một sai sót thật trong bản phase cũ:** bảng bản chụp gán tin `funding` cho `tech_startup` rồi mong nó tự đặt Việc tiếp theo. Sai — I-6 không đọc loại công ty, nó đọc `signal_type` + có cơ hội mở. Phân bố hiện tại của P2 mới đúng: Sakura (có next step người gõ) + funding → **Proposal** theo I-7; Nimbus (next step trống) + leadership_hire → **tự đặt** = T-6/T-7; Kitefin + expansion → hàng đợi.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| Bản chụp ở đâu, dạng gì | Giữ hằng số TS, mở rộng `demo-snapshots.ts` ([ADR-0021](../../docs/decisions/0021-ban-chup-demo-giu-dang-hang-so-typescript-khong-tach-thanh-file-html.md)) | ADR-0013 thành "thay **2** file" khi dữ liệu BTC về. P4 (C) sửa một file của A — ngoại lệ có ý thức với bảng chủ quyền |
+| "Bản chụp hiện tại" lưu ở đâu | Cột `companies.snapshot_variant`, `text` + CHECK, **không** vào `ENUMS` ([ADR-0022](../../docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md)) | 0 GRANT mới; I-14 tự đúng; `crm_system` không đổi được nguồn nó đọc → **phép đo GRANT mới, nợ trả trong P4** |
+| T-1 tắt AI bằng gì | Helper SQL trong `e2e/` qua `DATABASE_URL_OWNER` | Nút tắt vẫn là T-9/P8, không kéo việc P8 vào phase đang chặn P7 |
+| T-1 mấy spec | **Một spec** (khác khuyến nghị tách ba), bọc `test.step()` từng chặng | Giữ "đi hết luồng" mà reporter vẫn chỉ ra chặng đỏ |
+
+**Việc kèm bắt buộc:** `seed-idempotent.test.ts` hardcode số công ty **5/4 → 6/5**. Seed còn thiếu thật: **0 contact · 0/12 ô dấu hiệu · 0 cơ hội `lost`**.
+
+**Nợ đo, không phải nợ ADR:** "cột thêm sau được phủ bởi GRANT mức bảng" là suy luận từ ngữ nghĩa `GRANT` của Postgres, chưa đo trên `crm_test`. P4 đóng bằng phép đo: `crm_system` UPDATE `snapshot_variant` → từ chối, `crm_app` → thành công.
+
 ## Câu hỏi chưa giải quyết
 
 - **Q-6: Admin có được thao tác CRM không** — chặn ma trận quyền của nhóm 6. P8 tạm làm: Admin xem được tất cả, không sửa dữ liệu Sales.
 - Format bộ dữ liệu BTC — [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) đã quyết không chờ. Khi dữ liệu về thì thay `seed-data.ts`.
+- **Công ty #5 `it_product` của P4** không thuộc T-1…T-10 — thuần điểm sản phẩm và câu trả lời vòng 2 ("cùng một tin, hai loại công ty, hai nhận định"). Là hạng mục cắt được đầu tiên nếu trưa 14/08 trượt.
+- **Ai flip bản chụp lúc demo:** CLI `switch-snapshot.ts` đủ cho vòng 1, hay cần nút trong `apps/web/src/app/quan-tri/` (P8)? Không chặn P4.
 - Telemetry của thành viên 2 và 3 chưa verify trên Grafana (README mục Telemetry). **Không phải việc của plan này nhưng là điều kiện qua vòng 1** — mỗi người tự kiểm trước khi gõ dòng đầu.

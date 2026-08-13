@@ -37,6 +37,8 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0022](0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md) | Design | "Bản chụp hiện tại" là cột `text` + CHECK trên `companies`, không phải enum của ontology | Chấp nhận — **phép đo GRANT còn nợ ở phase 4** |
+| [0021](0021-ban-chup-demo-giu-dang-hang-so-typescript-khong-tach-thanh-file-html.md) | Design | Bản chụp demo giữ dạng hằng số TypeScript trong `apps/api/src/ai/`, không tách thành file HTML | Chấp nhận |
 | [0020](0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md) | Design + Build | Đổi giai đoạn chỉ bằng kéo thả dnd-kit, không kèm Select; đường bàn phím là đường lái của T-1 | Chấp nhận — **đã đo** |
 | [0019](0019-co-canh-bao-suy-ra-tu-cot-null-khong-luu-thanh-cot.md) | Design | Cờ cảnh báo của cơ hội suy ra từ cột null, không lưu thành cột | Chấp nhận |
 | [0018](0018-cua-kiem-muc-chac-bo-qua-ten-cua-chinh-cong-ty-dang-doc.md) | Implementation | Cửa kiểm mức Chắc bỏ qua tên của chính công ty đang đọc; vẫn kiểm số và tên bên thứ ba | **Đề xuất — chờ quyết định** |
