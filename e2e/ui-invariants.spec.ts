@@ -1,0 +1,170 @@
+import { expect, test, type Locator, type Page } from '@playwright/test'
+
+/**
+ * The invariants the primitives in `components/ui/` carry, measured on the running stack.
+ *
+ * These exist because those files are being rebuilt on shadcn, and shadcn's defaults quietly
+ * contradict two project rules: its `Button` is `h-9` (36px, under the 44px touch target) and
+ * its `Badge` variants are `default | secondary | destructive | outline`, which have no way to
+ * say "a machine produced this". Accepting either default would delete a rule while every
+ * existing test stayed green.
+ *
+ * They read COMPUTED STYLE, not class strings: what matters is the pixel a judge sees, and a
+ * class-name assertion would go red on any legitimate restyle while missing a broken one.
+ * Thresholds and colour sets, never exact pixel counts.
+ *
+ * Unlike normal tests-first, this file is written to be GREEN BEFORE the migration — it locks
+ * behaviour that is already correct. A red assertion the day it is written means the assertion
+ * is wrong, not that a bug was found.
+ *
+ * ONE EXCEPTION, and it is worth knowing about: T-E's accessible-name assertion was red when
+ * this file was first run. The native `<dialog>` renders its title as a plain `<h2>` and never
+ * points at it with `aria-labelledby`, so a screen reader announces "dialog" and stops. That
+ * is a real defect the file caught rather than a mis-written assertion, and the move to Radix
+ * — which requires a `DialogTitle` and wires the name itself — is what turns it green.
+ */
+
+const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+
+/** brand-400 — the one colour that means "a human is meant to press this". */
+const BRAND_400 = 'rgb(255, 194, 15)'
+/** The violet family: machine-100 surface, machine-600/700 text. */
+const MACHINE_COLOURS = ['rgb(237, 233, 254)', 'rgb(109, 40, 217)', 'rgb(91, 33, 182)']
+
+async function login(page: Page) {
+  await page.goto('/dang-nhap')
+  await page.getByLabel('Email').fill(SALES.email)
+  await page.getByLabel('Mật khẩu').fill(SALES.password)
+  await page.getByRole('button', { name: 'Đăng nhập' }).click()
+  await expect(page).toHaveURL(/\/cong-ty$/)
+}
+
+function styleOf(locator: Locator, property: string) {
+  return locator.evaluate(
+    (node, prop) => getComputedStyle(node as Element).getPropertyValue(prop),
+    property,
+  )
+}
+
+test('T-A · mọi nút nhìn thấy được đều cao ít nhất 44px', async ({ page }) => {
+  await login(page)
+
+  for (const route of ['/cong-ty', '/hang-doi']) {
+    await page.goto(route)
+    const buttons = page.getByRole('button')
+    const count = await buttons.count()
+    expect(count).toBeGreaterThan(0)
+
+    for (let index = 0; index < count; index += 1) {
+      const button = buttons.nth(index)
+      if (!(await button.isVisible())) continue
+      const box = await button.boundingBox()
+      const label = (await button.innerText()).trim() || (await button.getAttribute('aria-label'))
+      // 44px is the smallest target a thumb hits reliably, and shadcn's default is 36px.
+      expect(box?.height ?? 0, `nút "${label}" ở ${route}`).toBeGreaterThanOrEqual(44)
+    }
+  }
+})
+
+test('T-B · nút chính mang nền thương hiệu, nút phá huỷ thì không', async ({ page }) => {
+  await login(page)
+
+  const primary = page.getByRole('button', { name: 'Thêm công ty' })
+  expect(await styleOf(primary, 'background-color')).toBe(BRAND_400)
+
+  // Ink on amber is 11.36:1; white on amber is 1.7:1. The pairing is the point, so the text
+  // colour is asserted as dark rather than merely "not the background".
+  const primaryText = await styleOf(primary, 'color')
+  const [r, g, b] = primaryText.match(/\d+/g)!.map(Number)
+  expect(r + g + b).toBeLessThan(200)
+
+  // A destructive action never wears the brand colour — CLAUDE.md's forbidden list.
+  await page.goto('/cong-ty')
+  await page.getByRole('link', { name: 'Sakura Manufacturing KK' }).click()
+  const danger = page.getByRole('button', { name: 'Xoá' }).first()
+  await expect(danger).toBeVisible()
+  expect(await styleOf(danger, 'background-color')).not.toBe(BRAND_400)
+})
+
+test('T-C · nhãn của máy mang màu tím, nhãn dữ liệu người nhập thì không', async ({ page }) => {
+  await login(page)
+
+  /**
+   * Rule 2 of CLAUDE.md, measured: a reader must tell a fact from something the AI concluded
+   * without reading an explanation. If both badges came out the same colour the rule would be
+   * gone while every other test stayed green.
+   *
+   * The read zone's header badge is the anchor. It only exists once a snapshot has been read,
+   * so this test reads one itself rather than assuming earlier specs left something behind: a
+   * fresh seed creates NO observations and NO proposals, and an assertion that depends on which
+   * specs ran first is an assertion that reports run order, not colour.
+   *
+   * Marlin is the one company no other spec touches, so reading it disturbs nobody.
+   */
+  await page.getByRole('link', { name: 'Marlin Product Labs' }).click()
+  await page.getByRole('button', { name: 'Đọc bản chụp sau' }).click()
+
+  const machineBadge = page.getByText('Vùng đọc — do AI sinh').first()
+  await expect(machineBadge).toBeVisible()
+  const machineColours = [
+    await styleOf(machineBadge, 'background-color'),
+    await styleOf(machineBadge, 'color'),
+  ]
+  expect(machineColours.some((colour) => MACHINE_COLOURS.includes(colour))).toBe(true)
+
+  // Scoped to the table: the filter dropdown has an <option> with the same words, and an
+  // unscoped lookup matches that invisible option instead of the badge.
+  await page.goto('/cong-ty')
+  const humanBadge = page.locator('table').getByText('Đang theo dõi').first()
+  await expect(humanBadge).toBeVisible()
+  const humanColours = [
+    await styleOf(humanBadge, 'background-color'),
+    await styleOf(humanBadge, 'color'),
+  ]
+  expect(humanColours.some((colour) => MACHINE_COLOURS.includes(colour))).toBe(false)
+})
+
+test('T-D · nhãn ô nhập vẫn bind bằng id nên tra được bằng tên', async ({ page }) => {
+  await login(page)
+  await page.getByRole('button', { name: 'Thêm công ty' }).click()
+
+  /**
+   * `getByLabel` is how five specs find their fields; it works only because `Input` generates
+   * an `id` and points `htmlFor` at it. Losing that wiring breaks the suite AND every screen
+   * reader at the same time, so it is asserted directly rather than left implied.
+   *
+   * The error colour is NOT asserted here: `Input`'s `error` prop is currently passed by no
+   * screen in the app, so no end-to-end path can render it. `text-red-600` → `text-danger` is
+   * verified by the grep in the phase 6 checklist instead — an honest static check beats an
+   * end-to-end assertion that cannot reach the code.
+   */
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByLabel('Tên công ty')).toBeVisible()
+  await expect(dialog.getByLabel('Ngành')).toBeVisible()
+})
+
+test('T-E · hộp thoại có tên đọc được và đóng bằng Escape', async ({ page }) => {
+  await login(page)
+  await page.getByRole('button', { name: 'Thêm công ty' }).click()
+
+  // The accessible name is the contract a native <dialog> gave for free and a portal-based
+  // one must be told to provide. Without it a screen reader announces "dialog" and nothing else.
+  await expect(page.getByRole('dialog', { name: 'Thêm công ty' })).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('T-F · cờ cảnh báo mang chữ đọc được, không chỉ có màu', async ({ page }) => {
+  await login(page)
+  await page.goto('/co-hoi')
+
+  /**
+   * The greyscale-printout test, automated: a judge printing this screen in black and white
+   * must still read what is wrong. A coloured chip with no words fails that, and colour is
+   * never allowed to be the only channel.
+   */
+  const flag = page.getByText('Chưa có Việc tiếp theo').first()
+  await expect(flag).toBeVisible()
+  expect((await flag.innerText()).trim().length).toBeGreaterThan(3)
+})
