@@ -97,8 +97,14 @@
 
   /* ------------------------------------------------------------- shape, depth, and time */
 
-  --radius-card: 0.75rem;
+  /**
+   * Three values, and there is deliberately no fourth. Tables and text inputs keep square
+   * corners: on a CRM screen packed with data, a straight edge is what the eye uses to line
+   * columns up, and rounding it costs more legibility than it buys warmth.
+   */
   --radius-control: 0.5rem;
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
 
   /**
    * Two levels only. A CRM screen is a dense grid of cards; a third shadow tier reads as
@@ -112,6 +118,50 @@
   --duration-state: 150ms;
   --duration-motion: 250ms;
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/**
+ * TRANSLATION LAYER FOR VENDORED COMPONENTS — NOT APP VOCABULARY.
+ *
+ * Components copied in from shadcn are written against semantic names (`bg-background`,
+ * `text-primary`). Rather than edit every one of them, the names are pointed at the tokens
+ * above. Nothing new is introduced here: every value on the right already existed.
+ *
+ * The rule that keeps this from becoming a second palette: `bg-background` and friends are
+ * legal ONLY inside `src/components/ui/`. Screen code writes `ink-*` / `brand-*` /
+ * `machine-*`. Without that rule the repo has two vocabularies for one colour, and the ban
+ * on raw Tailwind colours quietly stops meaning anything — because `bg-background` passes
+ * every grep while telling the reader nothing about which colour it is.
+ *
+ * `--color-primary-foreground` is ink, NOT white. White on brand-400 is 1.7:1 and unreadable;
+ * ink on brand-400 is 11.36:1. A vendored component that assumes white-on-primary is the one
+ * place this layer must actively contradict upstream.
+ */
+@theme inline {
+  --color-background: var(--color-ink-50);
+  --color-foreground: var(--color-ink-900);
+
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-ink-900);
+  --color-popover: #ffffff;
+  --color-popover-foreground: var(--color-ink-900);
+
+  --color-primary: var(--color-brand-400);
+  --color-primary-foreground: var(--color-ink-900);
+
+  --color-secondary: var(--color-ink-100);
+  --color-secondary-foreground: var(--color-ink-900);
+  --color-accent: var(--color-ink-100);
+  --color-accent-foreground: var(--color-ink-900);
+  --color-muted: var(--color-ink-100);
+  --color-muted-foreground: var(--color-ink-600);
+
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: var(--color-ink-200);
+  --color-input: var(--color-ink-300);
+  --color-ring: var(--color-ink-900);
 }
 
 /**
