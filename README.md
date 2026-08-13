@@ -25,6 +25,18 @@ Mở `.env` và điền **ba** biến bắt buộc, thiếu một cái là `pnpm
 | `CRM_DB_PASSWORD` | Mật khẩu chung của 3 role `crm_*`. **Đổi ở đây thì phải đổi cả 6 URL `DATABASE_URL_*` bên dưới** — 6 URL đó là đường đi của các lệnh chạy từ máy (`pnpm seed`, `pnpm test:unit`), không phải của container |
 | `JWT_SECRET` | `openssl rand -hex 32` |
 
+`ANTHROPIC_API_KEY` **không bắt buộc** và cố ý như vậy: bỏ trống thì lớp rút phát hiện chạy bằng `FixtureClaimExtractor` — đọc đúng bộ bản chụp trong repo, câu trích vẫn nguyên văn, vẫn qua đủ cửa kiểm, nên **bộ nghiệm thu 10 điểm chạy được khi không có key** ([ADR-0014](docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md)). Điền key thì gọi LLM thật, `ANTHROPIC_MODEL` chọn model.
+
+Đang chạy bằng cái nào thì **đọc log lúc khởi động**, đừng đoán từ hành vi:
+
+```bash
+docker compose -f infra/docker-compose.yml logs api | grep ClaimExtractor
+# Dùng AnthropicClaimExtractor (model ...)   ← LLM thật
+# ANTHROPIC_API_KEY trống → dùng FixtureClaimExtractor
+```
+
+Đổi key trong `.env` thì phải `docker compose ... up -d api worker` lại — container đọc biến môi trường một lần lúc khởi động.
+
 ### Bước 2 — bật hệ thống (terminal 1)
 
 ```bash

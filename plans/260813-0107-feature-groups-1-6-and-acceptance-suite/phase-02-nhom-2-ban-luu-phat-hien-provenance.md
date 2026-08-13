@@ -61,9 +61,12 @@ Chạy 13/08 03:00–03:25. **113 unit + 6 e2e xanh** (từ 88 + 3), `pnpm typec
 - [x] T-3 **tự động hoá thành e2e** thay vì chạy tay: bấm phát hiện → `<mark>` hiện ra, và đoạn được đánh dấu là chuỗi con thật của `data-testid="source-text"`
 - [x] Nguồn lỗi → `fetch_status = failed`, `raw_html` NULL, 0 claim; giao diện nói "không đoán"
 - [x] Ba mức chắc chắn phân biệt được khi chụp đen trắng: mỗi mức có **chữ + ký hiệu chấm** (`●●●` / `●●○` / `●○○`), màu không phải thứ duy nhất mang nghĩa
-- [ ] ADR-0014 mục verify có ba con số thật — **2/3**. Phép đo gọi LLM thật còn nợ: `ANTHROPIC_API_KEY` là dòng rỗng trong `.env`
+- [x] ADR-0014 mục verify có ba con số thật — **3/3**, trả 13/08 11:28 với `claude-haiku-4-5`: 11 draft, **0 bị bỏ vì không nguyên văn**, 7 bị hạ khỏi mức Chắc. Đối chiếu độc lập bằng SQL: 6/6 câu trích là chuỗi con thật **và** offset cắt lại ra đúng chuỗi đó
 
 ### Phát sinh ngoài phase file
+
+- **Ba lỗi phép đo LLM thật bắt được ngày 13/08** (chi tiết trong [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) phép đo 3): (1) `docker-compose.yml` không truyền `ANTHROPIC_API_KEY` vào `api`/`worker` → có key vẫn chạy fixture, **đã sửa**; (2) statement trả về tiếng Anh, **đã sửa prompt**; (3) cửa kiểm mức Chắc hạ 5/6 claim chỉ vì tên công ty viết đủ — **chưa sửa, chờ quyết định** ở [ADR-0018](../../docs/decisions/0018-cua-kiem-muc-chac-bo-qua-ten-cua-chinh-cong-ty-dang-doc.md).
+- **`pnpm test:unit` không khởi động được trên Node 22.11.** Vite 7 là ESM-only, `vitest.config.ts` bị nạp theo đường CJS, `ERR_REQUIRE_ESM` — không phải test đỏ mà là **cả bộ test không chạy**, và nó im lặng với người chỉ nhìn dòng cuối. Đổi 4 file config sang `.mts` → 113/113 xanh trên đúng Node đó. Sửa ở repo chứ không bắt mỗi người nâng Node, vì máy ai người nấy.
 
 - **Lỗ ADR-0009 đã bịt.** Nút tắt AI dừng *mọi* việc sinh mới, mà ingest tay là một đường sinh mới — phase file không nhắc. Thêm cửa chặn đọc `system_settings` mỗi lần gọi (không cache, cùng lý do với worker) + khẳng định 10: tắt AI → `skippedReason = 'ai_disabled'`, không bản lưu mới, **dữ liệu cũ còn nguyên**.
 - **Cửa kiểm mức `certain` của ADR-0007** chưa có trong phase file nhưng ADR đòi: `ClaimService.gateCertainty` — mọi số và chuỗi viết hoa trong `statement` phải có trong `quote_text`, không thoả thì hạ `likely`. Hai khẳng định (11, 12).

@@ -37,10 +37,11 @@ Hoặc copy [adr-template.md](adr-template.md) thủ công.
 
 | ID | Giai đoạn | Quyết định | Trạng thái |
 | --- | --- | --- | --- |
+| [0018](0018-cua-kiem-muc-chac-bo-qua-ten-cua-chinh-cong-ty-dang-doc.md) | Implementation | Cửa kiểm mức Chắc bỏ qua tên của chính công ty đang đọc; vẫn kiểm số và tên bên thứ ba | **Đề xuất — chờ quyết định** |
 | [0017](0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) | Design | I-3 enforce ở service, không `UNIQUE`; ràng buộc CSDL chỉ dành cho ranh giới, luật hành vi thuộc service | Chấp nhận |
 | [0016](0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) | Design | `Proposal.status` chỉ `pending \| decided`; mọi con số đo lấy từ `ProposalDecision` | Chấp nhận |
 | [0015](0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) | Design | `GRANT INSERT` mức bảng có cùng bẫy như `UPDATE` mức bảng; bảng có cột thuộc quyết định của người phải GRANT theo cột | Chấp nhận — **đã đo** |
-| [0014](0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) | Design | Nhóm 2 dùng LLM thật; code kiểm câu trích là chuỗi con và tự tính offset, không khớp thì bỏ claim | Chấp nhận — **nợ verify** |
+| [0014](0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) | Design | Nhóm 2 dùng LLM thật; code kiểm câu trích là chuỗi con và tự tính offset, không khớp thì bỏ claim | Chấp nhận — **đã đo 3/3** |
 | [0013](0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) | Development | Seed bằng dữ liệu tự đặt, không chờ format BTC; chấp nhận effort migrate sau | Chấp nhận |
 | [0012](0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md) | Design | Bản lưu giữ cả HTML gốc và text trích; offset câu trích và hash tính trên text | Chấp nhận |
 | [0011](0011-worker-cung-image-va-vong-quet-tu-hen-nhip.md) | Design | Worker cùng image qua `APP_ROLE`; vòng quét tự hẹn nhịp thay `@Cron` | Chấp nhận |

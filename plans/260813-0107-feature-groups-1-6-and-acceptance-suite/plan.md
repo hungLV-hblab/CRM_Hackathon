@@ -125,7 +125,7 @@ CI/CD · triển khai đám mây · phân quyền theo người sở hữu (mộ
 
 | Rủi ro | Xử lý |
 | --- | --- |
-| LLM trả câu trích diễn giải thay vì nguyên văn → claim bị bỏ hàng loạt | P2 đo tỉ lệ khớp **trước** khi P5/P6 bắt đầu. Sửa prompt, **không** hạ chuẩn kiểm chuỗi con |
+| ~~LLM trả câu trích diễn giải thay vì nguyên văn → claim bị bỏ hàng loạt~~ | **Đã đo 13/08 11:28, cửa chặn P5/P6 mở: 0/11 draft bị bỏ.** Mẫu nhỏ (11 draft, `claude-haiku-4-5`) — đổi model hay bản chụp dài hơn thì đo lại, chỉ số có sẵn trong mọi response |
 | Quên GRANT cho bảng mới → nhóm 4/5 ghi không được | Smoke **chiều-cho** nằm trong P1a (không hoãn sang P1b); ma trận đầy đủ hai chiều ở P1b |
 | `GRANT INSERT` mức bảng lọt vào → AI tự duyệt gợi ý, đè `undo_deadline`, tự đánh dấu đã đọc | Cùng cấu trúc lỗi ADR-0010 đã bắt trên `UPDATE`, lần này trên `INSERT` ([ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md)). Phép đo đột biến số 3 ở P1b là cách duy nhất biết — review bằng mắt đã trượt một lần |
 | `UNIQUE (company_id, content_hash)` chặn giám khảo diễn lại T-6/T-8 lần hai | Đã loại ở [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md); P2 phải có test ca trước→sau→trước |
