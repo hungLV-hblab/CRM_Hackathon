@@ -1,0 +1,193 @@
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
+
+import {
+  SIGNAL_DUE_DAYS,
+  type DecideProposalDto,
+  type ProposalTargetField,
+} from '@crm/contracts'
+import {
+  type CrmDatabase,
+  claims,
+  companies,
+  opportunities,
+  proposalDecisions,
+  proposals,
+  timelineEntries,
+} from '@crm/db'
+
+import type { Actor } from '../../common/actor/actor-context'
+import { AuditEventService } from '../../common/audit/audit-event-service'
+import { DRIZZLE_APP } from '../../common/db/db.module'
+
+/**
+ * Where autonomy zone 2 ends: a PERSON decides, and only that decision changes official data.
+ *
+ * Every write in this file goes through `DRIZZLE_APP`, and that is not a convenience — it is
+ * the point. `crm_system` holds no privilege on `proposal_decisions` and no UPDATE on
+ * `proposals`, so the row that says "a human decided this" cannot be written by the AI branch
+ * even if a future bug called this method with `SYSTEM_ACTOR`. The guard below makes that
+ * refusal explicit and audited rather than a permission error nobody reads.
+ *
+ * I-12 needs no arithmetic: `accept` and `edit` are two values of one enum, counted separately
+ * by default. There is no second column holding "approved" that a report could sum by mistake.
+ *
+ * ADR-0009: nothing here reads `ai_enabled`. Switching the AI off stops NEW suggestions; a
+ * queue that already exists stays decidable, which is what the switch is for.
+ */
+@Injectable()
+export class ProposalDecisionService {
+  private readonly logger = new Logger('ProposalDecisionService')
+
+  constructor(
+    @Inject(DRIZZLE_APP) private readonly db: CrmDatabase,
+    private readonly audit: AuditEventService,
+  ) {}
+
+  async decide(actor: Actor, proposalId: string, dto: DecideProposalDto): Promise<void> {
+    if (actor.kind === 'system' || !actor.userId) {
+      await this.audit.recordRefusal(actor, 'decide_proposal', 'proposal', proposalId, {
+        reason: 'deciding a suggestion is a human act (autonomy zone 2)',
+      })
+      throw new ForbiddenException('Hệ thống không được tự duyệt gợi ý')
+    }
+
+    const proposal = await this.loadPending(proposalId)
+
+    /**
+     * One transaction for the decision record, the queue flag and the change itself. Split them
+     * and a crash in between leaves either a profile edited by nobody or a decision that never
+     * took effect — both of which are worse than the request failing.
+     */
+    await this.db.transaction(async (tx) => {
+      await tx.insert(proposalDecisions).values({
+        proposalId,
+        decision: dto.decision,
+        decidedBy: actor.userId as string,
+        rejectReason: dto.rejectReason ?? null,
+        finalValue: dto.decision === 'edit' ? (dto.finalValue as string) : null,
+        secondsToDecide: dto.secondsToDecide ?? null,
+      })
+
+      await tx.update(proposals).set({ status: 'decided' }).where(eq(proposals.id, proposalId))
+
+      if (dto.decision === 'reject') return
+
+      /** `edit` applies what the PERSON typed, never `proposed_value` (I-12, ADR-0008). */
+      const value = dto.decision === 'edit' ? (dto.finalValue as string) : proposal.proposedValue
+      await this.apply(tx, proposal, value)
+    })
+
+    this.logger.log(
+      `Gợi ý ${proposalId}: ${dto.decision} bởi ${actor.userId}` +
+        (dto.rejectReason ? ` (lý do: ${dto.rejectReason})` : '') +
+        (dto.secondsToDecide !== undefined ? ` — ${dto.secondsToDecide}s` : ''),
+    )
+  }
+
+  /**
+   * The three shapes of "accepted". All three write under the deciding person's identity, so
+   * the resulting row reads as theirs — which is the whole difference between zone 2 and zone 3.
+   */
+  private async apply(
+    tx: CrmDatabase,
+    proposal: PendingProposal,
+    value: string,
+  ): Promise<void> {
+    if (proposal.proposalType === 'field_update') {
+      const field = proposal.targetField as ProposalTargetField
+      await tx
+        .update(companies)
+        .set({ [field]: value, updatedAt: new Date() })
+        .where(eq(companies.id, proposal.companyId))
+      return
+    }
+
+    if (proposal.proposalType === 'timeline_entry') {
+      await tx.insert(timelineEntries).values({
+        companyId: proposal.companyId,
+        entryType: 'note',
+        occurredAt: new Date(),
+        description: value,
+        /**
+         * `human`, not `system`. A person read the evidence and chose to record this, so the
+         * entry is theirs and carries no "do hệ thống thêm" label — that label belongs to the
+         * watch cycle (zone 4), and using it here would make the two indistinguishable. This is
+         * also why I-4 is not in play: I-4 forbids the AI writing a timeline entry from a
+         * `manual_ingest` finding, and nothing here is written by the AI.
+         */
+        createdBy: 'human',
+      })
+      return
+    }
+
+    /**
+     * `next_step` (ADR-0023). The due date is computed AT ACCEPT TIME from the urgency table
+     * (I-9), not stored when the suggestion was raised: a queue entry may sit for days, and a
+     * date measured from then would land in the past.
+     *
+     * `nextStepSource` becomes `human`. Writing `system` here would drop the cell into autonomy
+     * zone 3 and pull in the notification and the 7-day undo, which belong to a write nobody
+     * asked for — the opposite of what just happened.
+     */
+    await tx
+      .update(opportunities)
+      .set({
+        nextStepText: value,
+        nextStepDueDate: dueDateFor(proposal.signalType),
+        nextStepSource: 'human',
+        updatedAt: new Date(),
+      })
+      .where(eq(opportunities.id, proposal.opportunityId as string))
+  }
+
+  private async loadPending(proposalId: string): Promise<PendingProposal> {
+    const [row] = await this.db
+      .select({
+        id: proposals.id,
+        companyId: proposals.companyId,
+        opportunityId: proposals.opportunityId,
+        proposalType: proposals.proposalType,
+        targetField: proposals.targetField,
+        proposedValue: proposals.proposedValue,
+        signalType: claims.signalType,
+      })
+      .from(proposals)
+      .innerJoin(claims, eq(claims.id, proposals.claimId))
+      .where(and(eq(proposals.id, proposalId), eq(proposals.status, 'pending')))
+      .limit(1)
+
+    if (!row) throw new NotFoundException('Không tìm thấy gợi ý đang chờ duyệt')
+    return row
+  }
+}
+
+interface PendingProposal {
+  id: string
+  companyId: string
+  opportunityId: string | null
+  proposalType: string
+  targetField: string | null
+  proposedValue: string
+  signalType: string
+}
+
+/**
+ * `YYYY-MM-DD` in the LOCAL calendar, which is the calendar Sales works in.
+ *
+ * Not `toISOString().slice(0, 10)`: that reports the UTC day, and Vietnam is UTC+7, so every
+ * decision made after 17:00 local would get a due date one day early — silently, and only in
+ * the evening. A next step that appears to be due sooner than the urgency table says is exactly
+ * the kind of wrong data rule 4 ranks below no data at all.
+ */
+function dueDateFor(signalType: string): string {
+  const days = SIGNAL_DUE_DAYS[signalType as keyof typeof SIGNAL_DUE_DAYS] ?? 14
+  const due = new Date()
+  due.setDate(due.getDate() + days)
+
+  return [
+    due.getFullYear(),
+    String(due.getMonth() + 1).padStart(2, '0'),
+    String(due.getDate()).padStart(2, '0'),
+  ].join('-')
+}

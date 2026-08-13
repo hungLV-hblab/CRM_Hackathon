@@ -9,6 +9,13 @@ export const PROPOSAL_TARGET_FIELDS = ['industry', 'country', 'size', 'website']
 export type ProposalTargetField = (typeof PROPOSAL_TARGET_FIELDS)[number]
 
 /**
+ * The single `target_field` a `next_step` proposal carries (ADR-0023). It is deliberately NOT
+ * a member of `PROPOSAL_TARGET_FIELDS`: that list is the I-11 whitelist of company profile
+ * fields, and mixing the two would let a `field_update` aim at an opportunity column.
+ */
+export const NEXT_STEP_TARGET_FIELD = 'next_step_text' as const
+
+/**
  * ontology 3.2 — "gợi ý". Autonomy zone 2: nothing happens until a human decides, and the
  * queue never expires into an action (CLAUDE.md section 4).
  *
@@ -22,9 +29,18 @@ export type ProposalTargetField = (typeof PROPOSAL_TARGET_FIELDS)[number]
 export interface ProposalDto {
   id: string
   companyId: string
+  /** Shown on the card so the reviewer knows which company without a second query. */
+  companyName: string
   proposalType: ProposalType
-  /** NULL for `timeline_entry`; one of `PROPOSAL_TARGET_FIELDS` for `field_update`. */
-  targetField: ProposalTargetField | null
+  /**
+   * NULL for `timeline_entry`; one of `PROPOSAL_TARGET_FIELDS` for `field_update`;
+   * `NEXT_STEP_TARGET_FIELD` for `next_step`.
+   */
+  targetField: ProposalTargetField | typeof NEXT_STEP_TARGET_FIELD | null
+  /** Set for `next_step` only — the opportunity whose next step is being proposed (ADR-0023). */
+  opportunityId: string | null
+  /** `next_step` only: the reviewer must see WHICH deal, not just which company. */
+  opportunityName: string | null
   /** What the field holds now, so the reviewer sees what would be overwritten. */
   currentValue: string | null
   proposedValue: string
@@ -34,6 +50,9 @@ export interface ProposalDto {
   createdAt: string
   claim: ClaimDto
 }
+
+/** Map `companyId → number of pending proposals`, for the badges on the company and deal screens. */
+export type PendingProposalSummary = Record<string, number>
 
 /**
  * The one request that moves a proposal out of the queue.

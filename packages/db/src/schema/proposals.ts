@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 
 import { claims } from './claims'
 import { companies } from './companies'
+import { opportunities } from './opportunities'
 import { proposalStatusEnum, proposalTypeEnum } from './enums'
 
 /**
@@ -24,6 +25,12 @@ import { proposalStatusEnum, proposalTypeEnum } from './enums'
  *    AND the ban on `name` / `company_type`) and additionally pins the type↔field pairing.
  *    `company_type` is banned because it is the lens signals are read under — letting a
  *    proposal edit it creates a self-referential loop.
+ *
+ * The third branch is I-7 (ADR-0023): feature group 4 refuses to overwrite a next step a
+ * human typed and raises a proposal instead. It needs `opportunityId`, because a next step
+ * belongs to a DEAL and a company can have several open ones — a proposal that cannot say
+ * which deal cannot be decided. `next_step` is not an I-11 exception: I-11 lists company
+ * PROFILE fields, and this branch never touches one.
  */
 export const proposals = pgTable(
   'proposals',
@@ -37,8 +44,13 @@ export const proposals = pgTable(
       .notNull()
       .references(() => claims.id),
     proposalType: proposalTypeEnum('proposal_type').notNull(),
-    /** NULL for `timeline_entry`; one of the I-11 whitelist for `field_update`. */
+    /**
+     * NULL for `timeline_entry`; one of the I-11 whitelist for `field_update`;
+     * `next_step_text` for `next_step`.
+     */
     targetField: text('target_field'),
+    /** `next_step` only — which deal's next step is being proposed (ADR-0023). */
+    opportunityId: uuid('opportunity_id').references(() => opportunities.id),
     /** What the field holds right now, so the reviewer sees what would be overwritten. */
     currentValue: text('current_value'),
     proposedValue: text('proposed_value').notNull(),
@@ -48,11 +60,26 @@ export const proposals = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    /**
+     * `proposal_type::text` rather than the bare enum column, and that cast is load-bearing.
+     *
+     * `next_step` is added to the type by the same migration that writes this constraint, and
+     * Postgres refuses to USE a new enum label in the transaction that added it (55P04,
+     * "unsafe use of new value"). Drizzle runs all pending migrations in ONE transaction, so
+     * on a fresh database — every test run, every judge replay — the enum literal form fails
+     * outright. Comparing text to text never touches the enum type.
+     */
     check(
       'proposals_target_field_matches_type',
-      sql`(${table.proposalType} = 'field_update'
-             AND ${table.targetField} IN ('industry', 'country', 'size', 'website'))
-          OR (${table.proposalType} = 'timeline_entry' AND ${table.targetField} IS NULL)`,
+      sql`(${table.proposalType}::text = 'field_update'
+             AND ${table.targetField} IN ('industry', 'country', 'size', 'website')
+             AND ${table.opportunityId} IS NULL)
+          OR (${table.proposalType}::text = 'timeline_entry'
+             AND ${table.targetField} IS NULL
+             AND ${table.opportunityId} IS NULL)
+          OR (${table.proposalType}::text = 'next_step'
+             AND ${table.targetField} = 'next_step_text'
+             AND ${table.opportunityId} IS NOT NULL)`,
     ),
     /** The review queue reads `status = 'pending'`; keep that lookup cheap. */
     index('proposals_status_created_at_idx').on(table.status, table.createdAt),

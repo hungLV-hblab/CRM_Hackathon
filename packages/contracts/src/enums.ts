@@ -65,9 +65,45 @@ export const CONFIDENCE = {
 } as const
 export type Confidence = keyof typeof CONFIDENCE
 
+/**
+ * I-9, the urgency table of ontology section 6 — days from decision to the due date, per signal.
+ *
+ * A PARAMETER, not a magic number, because Specs group 4 asks for a due date that "phản ánh độ
+ * gấp của loại tín hiệu": a funding window is measured in days, an expansion in weeks. Shared
+ * from contracts because two features read it — group 3 when a human accepts a `next_step`
+ * suggestion, group 4 when the system sets one itself — and two copies would drift into two
+ * different promises to Sales.
+ */
+export const SIGNAL_DUE_DAYS: Record<SignalType, number> = {
+  funding: 3,
+  leadership_hire: 5,
+  expansion: 14,
+  mass_hiring: 14,
+  new_business_line: 14,
+  other: 14,
+}
+
+/** The reason shown on screen next to the date, so the number is never unexplained. */
+export const SIGNAL_DUE_REASON: Record<SignalType, string> = {
+  funding: 'cửa sổ gọi vốn tính bằng ngày',
+  leadership_hire: 'sếp mới xem lại lựa chọn của người cũ trong vài tuần đầu',
+  expansion: 'cửa sổ tính bằng tuần',
+  mass_hiring: 'cửa sổ tính bằng tuần',
+  new_business_line: 'cửa sổ tính bằng tuần',
+  other: 'cửa sổ tính bằng tuần',
+}
+
+/**
+ * Three kinds, and the third one exists because of I-7 (ADR-0023).
+ *
+ * `next_step` is NOT a loosening of I-11: I-11 whitelists which COMPANY PROFILE fields a
+ * proposal may target, and `next_step` targets an opportunity instead. `name` and
+ * `company_type` stay banned in both layers.
+ */
 export const PROPOSAL_TYPE = {
   field_update: 'sửa ô hồ sơ',
   timeline_entry: 'thêm tin',
+  next_step: 'đặt Việc tiếp theo',
 } as const
 export type ProposalType = keyof typeof PROPOSAL_TYPE
 

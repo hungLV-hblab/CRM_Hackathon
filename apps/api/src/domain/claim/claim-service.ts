@@ -1,7 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { asc, eq } from 'drizzle-orm'
 
-import type { ClaimDraft, ClaimDto, Confidence, TriggerContext } from '@crm/contracts'
+import type {
+  ClaimDraft,
+  ClaimDto,
+  Confidence,
+  FieldSuggestion,
+  TriggerContext,
+} from '@crm/contracts'
 import { type CrmDatabase, claims } from '@crm/db'
 
 import { DRIZZLE_APP, DRIZZLE_SYSTEM } from '../../common/db/db.module'
@@ -23,8 +29,21 @@ import { locateVerbatimQuote } from '../../ai/normalize-snapshot-text'
  * thức" rule made structural: there is no code path to grep for.
  */
 
+/**
+ * A stored finding plus the field implication the extractor attached to it, if any (ADR-0024).
+ *
+ * The suggestion is carried in memory rather than stored on `claims`: it is not a property of
+ * the finding, it is the reason a proposal is about to exist. Persisting it would create a
+ * second place to read "what should this field say", and the proposal row already is that
+ * place. Nothing downstream may treat it as verified — `ProposalService` re-checks it.
+ */
+export interface SavedClaim {
+  claim: ClaimDto
+  fieldSuggestion?: FieldSuggestion
+}
+
 export interface SaveClaimsResult {
-  saved: ClaimDto[]
+  saved: SavedClaim[]
   proposed: number
   droppedNoVerbatimQuote: number
   downgradedFromCertain: number
@@ -62,6 +81,8 @@ export class ClaimService {
     drafts: ClaimDraft[],
   ): Promise<SaveClaimsResult> {
     const rows: (typeof claims.$inferInsert)[] = []
+    /** Same order as `rows`, so the insert result can be zipped back onto its draft. */
+    const suggestions: (FieldSuggestion | undefined)[] = []
     let droppedNoVerbatimQuote = 0
     let downgradedFromCertain = 0
 
@@ -89,12 +110,16 @@ export class ClaimService {
         quoteEnd: span.quoteEnd,
         triggerContext,
       })
+      suggestions.push(draft.fieldSuggestion)
     }
 
     const inserted = rows.length > 0 ? await this.dbSystem.insert(claims).values(rows).returning() : []
 
     return {
-      saved: inserted.map(toDto),
+      saved: inserted.map((row, index) => ({
+        claim: toDto(row),
+        fieldSuggestion: suggestions[index],
+      })),
       proposed: drafts.length,
       droppedNoVerbatimQuote,
       downgradedFromCertain,

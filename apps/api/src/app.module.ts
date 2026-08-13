@@ -4,6 +4,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core'
 import { ActorInterceptor } from './common/actor/actor.interceptor'
 import { AuditEventService } from './common/audit/audit-event-service'
 import { AuthModule } from './auth/auth.module'
+import { ClaimReactionService } from './domain/claim/claim-reaction-service'
 import { ClaimService } from './domain/claim/claim-service'
 import { CompanyController } from './domain/company/company.controller'
 import { CompanyService } from './domain/company/company-service'
@@ -20,6 +21,9 @@ import { OpportunityController } from './domain/opportunity/opportunity.controll
 import { OpportunityService } from './domain/opportunity/opportunity-service'
 import { OverviewController } from './domain/overview/overview.controller'
 import { OverviewService } from './domain/overview/overview-service'
+import { ProposalController } from './domain/proposal/proposal.controller'
+import { ProposalDecisionService } from './domain/proposal/proposal-decision-service'
+import { ProposalService } from './domain/proposal/proposal-service'
 import { TimelineController } from './domain/timeline/timeline.controller'
 import { TimelineService } from './domain/timeline/timeline-service'
 import { SettingsController } from './settings/settings.controller'
@@ -39,11 +43,13 @@ import { SystemSettingService } from './settings/system-setting-service'
     ObservationController,
     OpportunityController,
     OverviewController,
+    ProposalController,
     SettingsController,
     TimelineController,
   ],
   providers: [
     AuditEventService,
+    ClaimReactionService,
     ClaimService,
     CompanyService,
     ContactService,
@@ -52,6 +58,8 @@ import { SystemSettingService } from './settings/system-setting-service'
     ObservationService,
     OpportunityService,
     OverviewService,
+    ProposalDecisionService,
+    ProposalService,
     SystemSettingService,
     TimelineService,
     claimExtractorProvider,

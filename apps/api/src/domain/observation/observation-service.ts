@@ -12,6 +12,7 @@ import {
 } from '@crm/contracts'
 import { type CrmDatabase, companies, observations } from '@crm/db'
 
+import { ClaimReactionService } from '../claim/claim-reaction-service'
 import { ClaimService } from '../claim/claim-service'
 import { DRIZZLE_APP, DRIZZLE_SYSTEM } from '../../common/db/db.module'
 import { DemoSnapshotSource, type SnapshotVariant } from '../../ai/demo-snapshots'
@@ -57,6 +58,7 @@ export class ObservationService {
     private readonly claims: ClaimService,
     private readonly snapshots: DemoSnapshotSource,
     private readonly settings: SystemSettingService,
+    private readonly reactions: ClaimReactionService,
   ) {}
 
   /**
@@ -125,6 +127,12 @@ export class ObservationService {
       // ontology section 4: a finding is read under the lens of the company type.
       companyType: company.companyType,
       triggerContext,
+      currentProfile: {
+        industry: company.industry,
+        country: company.country,
+        size: company.size,
+        website: company.website,
+      },
     })
 
     const result = await this.claims.saveDrafts(
@@ -140,6 +148,19 @@ export class ObservationService {
         `${result.droppedNoVerbatimQuote} bỏ vì câu trích không khớp, ` +
         `${result.downgradedFromCertain} hạ mức Chắc`,
     )
+
+    /**
+     * The ONE line that hands findings on to the rest of the product (ADR-0023). Everything
+     * downstream — group 4 setting a next step, group 3 filing suggestions — hangs off
+     * `ClaimReactionService`, so this file does not grow a branch per feature group and the
+     * ORDER between them stays written down in one place (group 4 first: it decides whether
+     * I-7 turns a next step into a suggestion instead of a write).
+     */
+    await this.reactions.react({
+      companyId,
+      observationId: created.id,
+      savedClaims: result.saved,
+    })
 
     return {
       observationId: created.id,
@@ -220,7 +241,19 @@ export class ObservationService {
   /** Read under the AI identity: `crm_system` holds SELECT on `companies` and nothing more. */
   private async loadCompanyForReading(companyId: string) {
     const [company] = await this.dbSystem
-      .select({ id: companies.id, companyType: companies.companyType })
+      .select({
+        id: companies.id,
+        companyType: companies.companyType,
+        /**
+         * The four proposable fields, handed to the extractor so it only suggests a cell that
+         * is blank or stale (ADR-0024). SELECT only — `crm_system` cannot write any of them,
+         * which is what makes group 3 a queue rather than an edit.
+         */
+        industry: companies.industry,
+        country: companies.country,
+        size: companies.size,
+        website: companies.website,
+      })
       .from(companies)
       .where(eq(companies.id, companyId))
       .limit(1)

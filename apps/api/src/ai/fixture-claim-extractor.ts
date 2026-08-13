@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
 
-import type { ClaimDraft, ClaimExtractor, ObservationInput, SignalType } from '@crm/contracts'
+import type {
+  ClaimDraft,
+  ClaimExtractor,
+  CurrentProfile,
+  ObservationInput,
+  SignalType,
+} from '@crm/contracts'
 
 /**
  * The deterministic adapter behind the `CLAIM_EXTRACTOR` port. Two real jobs, neither of them
@@ -56,6 +62,40 @@ const SIGNAL_PATTERNS: SignalPattern[] = [
   },
 ]
 
+/**
+ * The facts block of a company page (ADR-0024): `Ngành: …`, `Trụ sở chính: …`, `Quy mô: … nhân
+ * viên`, `Website: …`.
+ *
+ * `readValue` pulls the part that belongs in the profile cell, and it must return a VERBATIM
+ * substring of the line — `ProposalService` re-checks that and drops anything else. So `Trụ sở
+ * chính: Aichi, Nhật Bản` yields `Nhật Bản` by cutting at the last comma, never by rewriting.
+ */
+interface ProfileFactPattern {
+  targetField: 'industry' | 'country' | 'size' | 'website'
+  label: string
+  readValue: (afterLabel: string) => string | null
+}
+
+const PROFILE_FACT_PATTERNS: ProfileFactPattern[] = [
+  { targetField: 'industry', label: 'Ngành:', readValue: (value) => value },
+  {
+    targetField: 'country',
+    label: 'Trụ sở chính:',
+    // A headquarters line is "city, country". The country is the profile cell; the city is not.
+    readValue: (value) => {
+      const parts = value.split(',')
+      return parts[parts.length - 1].trim() || null
+    },
+  },
+  {
+    targetField: 'size',
+    label: 'Quy mô:',
+    // "500-1000 nhân viên" → "500-1000". Cutting the unit off keeps the result a substring.
+    readValue: (value) => value.replace(/nhân viên\s*$/u, '').trim() || null,
+  },
+  { targetField: 'website', label: 'Website:', readValue: (value) => value },
+]
+
 /** Sentence boundaries of the normalised text. Newlines count: paragraphs are boundaries too. */
 function splitIntoSentences(rawContent: string): string[] {
   return rawContent
@@ -89,6 +129,43 @@ export class FixtureClaimExtractor implements ClaimExtractor {
         // trimmed form is still a substring; rewriting any character would not be.
         quoteText: sentence,
       })
+    }
+
+    drafts.push(...this.readProfileFacts(sentences, observation.currentProfile))
+
+    return drafts
+  }
+
+  /**
+   * The `field_update` half (ADR-0024). Only lines that DIFFER from the profile become drafts —
+   * proposing a value the cell already holds is noise, and Specs asks for "một ô còn trống hoặc
+   * đã cũ". `ProposalService` compares against the row again; this is the extractor's judgement,
+   * not the guarantee.
+   *
+   * The statement is a claim, not a transcription: mapping `Quy mô: 1000+ nhân viên` onto the
+   * `size` cell is an interpretation of the page, which is the boundary CLAUDE.md section 3
+   * draws ("hễ biến đổi thông tin gốc là claim").
+   */
+  private readProfileFacts(sentences: string[], currentProfile: CurrentProfile): ClaimDraft[] {
+    const drafts: ClaimDraft[] = []
+
+    for (const sentence of sentences) {
+      for (const pattern of PROFILE_FACT_PATTERNS) {
+        if (!sentence.startsWith(pattern.label)) continue
+
+        const value = pattern.readValue(sentence.slice(pattern.label.length).trim())
+        if (!value) continue
+        if ((currentProfile[pattern.targetField] ?? '').trim() === value) continue
+
+        drafts.push({
+          statement: `Trang nguồn ghi ${pattern.label} ${value}`,
+          /** A profile line is not a buying signal — `other` keeps it out of the news branch. */
+          signalType: 'other',
+          confidence: 'certain',
+          quoteText: sentence,
+          fieldSuggestion: { targetField: pattern.targetField, proposedValue: value },
+        })
+      }
     }
 
     return drafts

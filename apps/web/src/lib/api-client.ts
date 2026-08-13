@@ -2,6 +2,9 @@ import type {
   CompanyDto,
   ContactDto,
   CreateCompanyDto,
+  DecideProposalDto,
+  PendingProposalSummary,
+  ProposalDto,
   CreateContactDto,
   CreateOpportunityDto,
   CreateTimelineEntryDto,
@@ -160,4 +163,18 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(dto),
     }),
+
+  /** The review queue — everything still waiting for a person (autonomy zone 2). */
+  listPendingProposals: () => call<ProposalDto[]>('/proposals'),
+
+  /** `companyId → count`, for the "đang có gợi ý chờ duyệt" markers. */
+  pendingProposalSummary: () => call<PendingProposalSummary>('/proposals/pending-summary'),
+
+  /**
+   * Duyệt / Sửa rồi duyệt / Bỏ. There is deliberately NO endpoint to create a proposal and none
+   * to undo a decision: suggestions are raised by the AI while reading a source, and a decision
+   * is the measurement feature group 6 reads (ADR-0016).
+   */
+  decideProposal: (proposalId: string, dto: DecideProposalDto) =>
+    call<void>(`/proposals/${proposalId}/decide`, { method: 'POST', body: JSON.stringify(dto) }),
 }

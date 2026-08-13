@@ -4,10 +4,12 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ClaimDraft, ClaimExtractor, ObservationInput } from '@crm/contracts'
 import { createConnection, resetTestDatabase } from '@crm/db'
 
+import { ClaimReactionService } from '../../claim/claim-reaction-service'
 import { ClaimService } from '../../claim/claim-service'
 import { DemoSnapshotSource } from '../../../ai/demo-snapshots'
 import { FixtureClaimExtractor } from '../../../ai/fixture-claim-extractor'
 import { ObservationService } from '../observation-service'
+import { ProposalService } from '../../proposal/proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 
 /**
@@ -36,6 +38,14 @@ function buildService(extractor: ClaimExtractor): {
   claims: ClaimService
 } {
   const claims = new ClaimService(systemConnection.db, appConnection.db)
+  /**
+   * The real reaction service, not a stub: reading a source now feeds feature group 3, and the
+   * assertions below on "official data untouched" are only worth something if that path
+   * actually runs (phase 5).
+   */
+  const reactions = new ClaimReactionService(
+    new ProposalService(systemConnection.db, appConnection.db),
+  )
   const observations = new ObservationService(
     systemConnection.db,
     appConnection.db,
@@ -43,6 +53,7 @@ function buildService(extractor: ClaimExtractor): {
     claims,
     snapshots,
     settings,
+    reactions,
   )
   return { observations, claims }
 }
@@ -215,9 +226,19 @@ describe('I-4 · group 2 never touches official data', () => {
     const after = await owner.query('SELECT industry FROM companies WHERE id = $1', [SAKURA])
     expect(after.rows[0].industry).toBe(before.rows[0].industry)
 
-    // Nothing reached the proposal queue either — that is group 3's job, not group 2's.
-    const proposals = await owner.query('SELECT count(*)::int AS total FROM proposals')
-    expect(proposals.rows[0].total).toBe(0)
+    /**
+     * Reading a source DOES now feed the review queue (phase 5) — that is feature group 3
+     * doing its job, and it is not a write to official data. What must hold is that every
+     * entry is still waiting: unchanged profile above, and not one decision recorded, so
+     * nothing in the queue has taken effect.
+     */
+    const pending = await owner.query(
+      `SELECT count(*)::int AS total FROM proposals WHERE status <> 'pending'`,
+    )
+    expect(pending.rows[0].total).toBe(0)
+
+    const decisions = await owner.query('SELECT count(*)::int AS total FROM proposal_decisions')
+    expect(decisions.rows[0].total).toBe(0)
   })
 })
 
@@ -327,14 +348,23 @@ describe('the fixture extractor earns its place', () => {
     expect(rows.map((row) => row.signal_type)).toContain('funding')
   })
 
-  it('14 · the "before" snapshot carries no signal, so it yields no findings', async () => {
+  it('14 · the "before" snapshot carries no buying signal — only profile facts', async () => {
     const { observations } = buildService(new FixtureClaimExtractor())
 
     const result = await observations.ingest(SAKURA, 'before', 'manual_ingest')
 
-    // Rule 4: nothing to report is a valid answer. Inventing a finding here would be worse.
-    expect(result.claimsSaved).toBe(0)
     expect(result.observationId).not.toBeNull()
+
+    /**
+     * Rule 4: nothing to report is a valid answer, and the `before` page still reports no news.
+     * Since ADR-0024 the page also carries a facts block, and reading `Ngành: …` off it IS a
+     * finding — so the assertion is on the news branch specifically. `signal_type = 'other'`
+     * is what keeps profile facts out of the timeline half of the queue.
+     */
+    const signals = await owner.query(
+      `SELECT count(*)::int AS total FROM claims WHERE signal_type <> 'other'`,
+    )
+    expect(signals.rows[0].total).toBe(0)
   })
 })
 
@@ -355,6 +385,9 @@ describe('read zone shape', () => {
     // Re-reading a source does NOT delete the older findings: each snapshot keeps its own,
     // with its own timestamp, so a reader can see what was known when.
     expect(zone[0].claims.length).toBeGreaterThan(0)
-    expect(zone[1].claims).toHaveLength(0)
+    // The funding news belongs to the NEWER snapshot only. The older one carries just the
+    // profile facts, which both pages state — so compare on the news, not on the count.
+    expect(zone[0].claims.some((claim) => claim.signalType === 'funding')).toBe(true)
+    expect(zone[1].claims.some((claim) => claim.signalType !== 'other')).toBe(false)
   })
 })
