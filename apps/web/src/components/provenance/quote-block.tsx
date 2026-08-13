@@ -36,10 +36,27 @@ export function QuoteBlock({ quote, sourceLabel, onOpenSource }: QuoteBlockProps
  * Confidence is shown as a WORD, never as a bare percentage: "82%" reads as a measurement
  * the system does not actually have. Ontology 3.5 gives three levels, and those are the
  * three the user sees.
+ *
+ * Each level also carries a FILLED-DOT glyph, and that is a requirement rather than
+ * decoration: the three levels must stay distinguishable on a black and white screenshot, so
+ * neither colour nor hue may be the only carrier. Word + glyph both survive.
  */
+const CONFIDENCE_MARKS = {
+  certain: { label: 'Chắc', glyph: '●●●' },
+  likely: { label: 'Có thể', glyph: '●●○' },
+  speculative: { label: 'Đoán', glyph: '●○○' },
+} as const
+
 export function ConfidenceBadge({ confidence }: { confidence: 'certain' | 'likely' | 'speculative' }) {
-  const LABELS = { certain: 'Chắc', likely: 'Có thể', speculative: 'Đoán' } as const
-  return <Badge tone="inference">{LABELS[confidence]}</Badge>
+  const mark = CONFIDENCE_MARKS[confidence]
+  return (
+    <Badge tone="inference">
+      <span aria-hidden className="mr-1 tracking-tighter">
+        {mark.glyph}
+      </span>
+      {mark.label}
+    </Badge>
+  )
 }
 
 /** Autonomy zone 4: anything the watch cycle wrote must say so on its face. */

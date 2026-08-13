@@ -12,6 +12,11 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './e2e',
+  /**
+   * Reseed first. The read zone accumulates snapshot rows, so without a known starting state
+   * the suite judges a different screen on every run — see `e2e/global-setup.ts`.
+   */
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   // One worker: every spec logs into the same seeded database and writes rows into it.
   workers: 1,

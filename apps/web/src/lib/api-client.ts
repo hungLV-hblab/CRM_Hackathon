@@ -1,4 +1,10 @@
-import type { CompanyDto, CreateCompanyDto } from '@crm/contracts'
+import type {
+  CompanyDto,
+  CreateCompanyDto,
+  IngestResultDto,
+  IngestSnapshotDto,
+  ObservationWithClaimsDto,
+} from '@crm/contracts'
 
 /**
  * Every API call goes through here.
@@ -60,4 +66,19 @@ export const api = {
 
   createCompany: (dto: CreateCompanyDto) =>
     call<CompanyDto>('/companies', { method: 'POST', body: JSON.stringify(dto) }),
+
+  /** The read zone: snapshots newest first, each carrying the findings drawn from it. */
+  readingZone: (companyId: string) =>
+    call<ObservationWithClaimsDto[]>(`/companies/${companyId}/reading-zone`),
+
+  /**
+   * "Đọc lại nguồn". The response carries the counts, including how many findings were dropped
+   * for an unverifiable quote — that number is a metric the team has to be able to defend
+   * (ADR-0014), so the UI shows it instead of swallowing it.
+   */
+  ingestSnapshot: (companyId: string, dto: IngestSnapshotDto) =>
+    call<IngestResultDto>(`/companies/${companyId}/observations`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    }),
 }

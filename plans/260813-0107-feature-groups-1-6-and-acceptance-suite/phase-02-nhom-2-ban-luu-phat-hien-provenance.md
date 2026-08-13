@@ -1,9 +1,9 @@
 ---
 phase: 2
 title: "Nhóm 2 — bản lưu, phát hiện, provenance"
-status: pending
+status: done
 priority: P1
-dependencies: [1]
+dependencies: [1a]
 owner: A
 estimate: 3h
 ---
@@ -51,15 +51,24 @@ Sửa: `app.module.ts` (đăng ký provider theo env), `packages/contracts/src/d
 
 ## Validation
 
-- [ ] T-2 xanh: thiếu câu trích → từ chối, cả qua service lẫn `INSERT` thẳng
-- [ ] T-2b xanh: câu trích paraphrase → từ chối cả claim
-- [ ] **Phép đo đột biến:** xoá dòng kiểm chuỗi con → T-2b phải **đỏ**. Vẫn xanh = việc kiểm là trang trí
-- [ ] I-3 xanh: đọc lại nội dung y nguyên → 0 bản lưu mới, 0 lần gọi extractor
-- [ ] I-4 xanh: claim `trigger_context = manual_ingest` không sinh `TimelineEntry` nào
-- [ ] T-3 chạy tay: bấm claim → mở đúng đoạn, có đánh dấu
-- [ ] Nguồn lỗi → `fetch_status = failed`, không có claim nào được sinh
-- [ ] Ba mức chắc chắn phân biệt được khi **chụp màn hình đen trắng** (không chỉ dựa màu)
-- [ ] ADR-0014 mục verify đã có **ba con số thật**, không còn chữ "chưa chạy"
+Chạy 13/08 03:00–03:25. **113 unit + 6 e2e xanh** (từ 88 + 3), `pnpm typecheck` + `pnpm lint` sạch.
+
+- [x] T-2 xanh: thiếu câu trích → từ chối, **cả hai đường** — service (khẳng định 1) và `INSERT` SQL thẳng bằng `crm_owner` (khẳng định 3)
+- [x] T-2b xanh: câu trích paraphrase → **bỏ cả claim**, không nới, không hạ mức để giữ lại
+- [x] **Phép đo đột biến:** đổi dòng kiểm thành `?? { quoteStart: 0, quoteEnd: length }` → khẳng định 1 **đỏ** (`expected 1 to be +0`); khôi phục → 15/15 xanh
+- [x] I-3 xanh: đọc lại nội dung y nguyên → 0 bản lưu mới **và extractor được gọi đúng 1 lần** (spy đếm; đây là nửa đắt tiền của I-3)
+- [x] I-4 xanh: claim `manual_ingest` → 0 `TimelineEntry`, 0 `Proposal`, ô `industry` không đổi
+- [x] T-3 **tự động hoá thành e2e** thay vì chạy tay: bấm phát hiện → `<mark>` hiện ra, và đoạn được đánh dấu là chuỗi con thật của `data-testid="source-text"`
+- [x] Nguồn lỗi → `fetch_status = failed`, `raw_html` NULL, 0 claim; giao diện nói "không đoán"
+- [x] Ba mức chắc chắn phân biệt được khi chụp đen trắng: mỗi mức có **chữ + ký hiệu chấm** (`●●●` / `●●○` / `●○○`), màu không phải thứ duy nhất mang nghĩa
+- [ ] ADR-0014 mục verify có ba con số thật — **2/3**. Phép đo gọi LLM thật còn nợ: `ANTHROPIC_API_KEY` là dòng rỗng trong `.env`
+
+### Phát sinh ngoài phase file
+
+- **Lỗ ADR-0009 đã bịt.** Nút tắt AI dừng *mọi* việc sinh mới, mà ingest tay là một đường sinh mới — phase file không nhắc. Thêm cửa chặn đọc `system_settings` mỗi lần gọi (không cache, cùng lý do với worker) + khẳng định 10: tắt AI → `skippedReason = 'ai_disabled'`, không bản lưu mới, **dữ liệu cũ còn nguyên**.
+- **Cửa kiểm mức `certain` của ADR-0007** chưa có trong phase file nhưng ADR đòi: `ClaimService.gateCertainty` — mọi số và chuỗi viết hoa trong `statement` phải có trong `quote_text`, không thoả thì hạ `likely`. Hai khẳng định (11, 12).
+- **`e2e/global-setup.ts` seed lại trước mỗi lần chạy.** Vùng đọc *tích luỹ* bản lưu, nên e2e chạy trên trạng thái lần trước sẽ thấy màn hình khác mỗi lần — đã gặp thật: hai test đỏ vì *hành vi đúng* (hai thẻ bản lưu thay vì một, "đã đọc không đổi" ở lần bấm đầu). Đây là loại flake tệ nhất vì nó dụ người ta nới khẳng định thay vì sửa trạng thái. Đã kiểm tất định 3 lần chạy liên tiếp.
+- **Chỉ số bị bỏ chưa có chỗ lưu.** `IngestResultDto` trả về `claimsDroppedNoVerbatimQuote` và `claimsDowngradedFromCertain`, giao diện hiện, log ghi — nhưng **không persist**. `WatchCycleRun` không có cột cho nó. P7/P8 phải quyết: thêm cột hay tính từ `claims`. Không tự thêm cột vì sẽ phá danh sách GRANT theo cột của ADR-0015.
 
 ## Risks
 

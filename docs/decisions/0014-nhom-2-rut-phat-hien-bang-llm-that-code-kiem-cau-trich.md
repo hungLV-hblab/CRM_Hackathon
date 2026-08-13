@@ -4,7 +4,7 @@
 | --- | --- |
 | **Ngày** | 2026-08-13 01:20 |
 | **Giai đoạn** | Design |
-| **Trạng thái** | Chấp nhận |
+| **Trạng thái** | Chấp nhận — 2/3 phép đo đã trả 13/08; **còn nợ phép đo gọi LLM thật** (chưa có API key) |
 | **Người quyết định** | HungLV |
 | **Prompt log** | *không có* — chốt trong phiên rà soát trạng thái 13/08, ba phương án do AI trình bày |
 
@@ -53,13 +53,26 @@ Model mặc định `claude-sonnet-5`, đặt qua biến môi trường cùng `A
 
 ## Đội đã verify bằng cách nào
 
-**Chưa verify — nợ verify, phải trả trong phase nhóm 2, ghi lại ngay tại mục này.** Hẹn ba phép đo, không được bỏ phép nào:
+Hẹn ba phép đo. **Hai đã trả ngày 13/08, phép thứ ba còn nợ và nợ vì một lý do cụ thể, không phải vì quên.**
 
-1. **Test câu trích diễn giải:** cắm adapter trả về `quoteText` là một câu **paraphrase** (không phải chuỗi con) → phải bị từ chối, không lưu. Đây là T-2 mở rộng.
-2. **Phép đo đột biến:** xoá dòng kiểm chuỗi con → test 1 phải **đỏ**. Nếu vẫn xanh thì việc kiểm là trang trí (đúng lỗi kiểu ADR-0004 đã bắt được ngày 12/08).
-3. **Chạy thật một lần với API key** trên một bản chụp, rồi **đối chiếu tay từng câu trích** với `raw_content` để biết LLM trả nguyên văn hay diễn giải, và ghi con số vào đây.
+**1 · Test câu trích diễn giải — ĐÃ TRẢ.** `reading-zone-provenance.test.ts` khẳng định 1: cắm adapter trả `quoteText` là một câu paraphrase (mọi chữ đều có trong nguồn, **thứ tự** thì không) → `claimsSaved = 0`, `claimsDroppedNoVerbatimQuote = 1`, bảng `claims` rỗng. Bản lưu **vẫn** được ghi (khẳng định 2): đã đọc nguồn là một sự thật, chỉ phát hiện là bị bỏ.
 
-Không được ghi "đọc thấy hợp lý". Chưa có ba con số này thì nhóm 2 chưa xong.
+**2 · Phép đo đột biến — ĐÃ TRẢ.** Đổi dòng kiểm thành "không tìm thấy thì lấy offset 0 → độ dài câu trích" (đúng kiểu một người sẽ *nới* thay vì *bỏ*):
+
+```ts
+const span = locateVerbatimQuote(rawContent, draft.quoteText) ?? { quoteStart: 0, quoteEnd: draft.quoteText.length }
+```
+
+→ khẳng định 1 **đỏ**: `expected 1 to be +0`. Khôi phục → 15/15 xanh. Việc kiểm có răng.
+
+**3 · Chạy thật với API key — CÒN NỢ.** `ANTHROPIC_API_KEY` trong `.env` là dòng rỗng (độ dài 0), nên không chạy được. Đây là chỗ đáng nói thẳng:
+
+- Toàn bộ nhóm 2 hiện chạy trên `FixtureClaimExtractor`. Adapter đó **không phải mock**: nó đọc bản chụp thật và trả về chuỗi con nguyên văn thật, nên nó đi qua đúng những cửa kiểm I-1/I-2 mà LLM phải đi qua. Cái nó **không** kiểm được là câu hỏi duy nhất mà phép đo 3 tồn tại để trả lời: **LLM thật trả nguyên văn bao nhiêu phần trăm số lần.**
+- Rủi ro ghi ở plan vẫn nguyên: nếu tỉ lệ paraphrase cao thì nhóm 3/4/5 thiếu nguyên liệu, và ta chỉ biết khi gọi thật. Fixture 100% xanh **không** làm rủi ro đó nhỏ đi, chỉ đẩy nó sang muộn hơn.
+- Khi có key: chạy `POST /companies/:id/observations` cho cả bốn công ty, đối chiếu tay từng `quote_text` với `raw_content`, ghi vào đây ba con số — số draft, số bị bỏ vì không nguyên văn, số bị hạ khỏi mức Chắc. Cả ba đã có sẵn trong response `IngestResultDto` nên không phải dựng thêm gì để đo.
+- **Cửa chặn:** phép đo này phải xong **trước khi P5/P6 bắt đầu**, đúng như bảng rủi ro của plan. Nếu tới lúc đó vẫn không có key thì đó là một quyết định phải ghi ADR, không phải im lặng bỏ qua.
+
+**Ngoài ba phép đo, phát sinh thêm một cửa kiểm không có trong ADR này.** ADR-0007 đòi mức `certain` có cửa kiểm bằng máy; nó nằm ở `ClaimService.gateCertainty` và có hai khẳng định (11, 12): statement chứa "35 triệu" mà câu trích chỉ có "20 triệu USD" → hạ xuống `likely`; statement mà mọi con số đều có trong câu trích → giữ `certain`.
 
 ## Rollback
 

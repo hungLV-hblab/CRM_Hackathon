@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 
@@ -72,7 +73,14 @@ export default function CompanyListPage() {
         <Table headers={['Tên', 'Ngành', 'Loại hình', 'Quốc gia', 'Theo dõi']}>
           {companies.data.map((company) => (
             <tr key={company.id}>
-              <Cell>{company.name}</Cell>
+              <Cell>
+                <Link
+                  href={`/cong-ty/${company.id}`}
+                  className="underline underline-offset-2 hover:text-slate-600"
+                >
+                  {company.name}
+                </Link>
+              </Cell>
               <Cell>{company.industry}</Cell>
               <Cell>{COMPANY_TYPE[company.companyType as keyof typeof COMPANY_TYPE]}</Cell>
               {/* Rule 4: an empty cell says it is empty. It never gets a plausible filler. */}
