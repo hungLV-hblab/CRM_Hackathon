@@ -1,6 +1,8 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+import { claims } from './claims'
 import { companies } from './companies'
+import { contacts } from './contacts'
 import { createdByEnum, entryTypeEnum } from './enums'
 
 /**
@@ -22,14 +24,15 @@ export const timelineEntries = pgTable('timeline_entries', {
   entryType: entryTypeEnum('entry_type').notNull(),
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
   description: text('description').notNull(),
-  /**
-   * There is no `contacts` or `claims` table in the skeleton yet, so the two columns below
-   * carry NO foreign key. When those tables land, add `references()` — do not leave this.
-   */
-  contactId: uuid('contact_id'),
+  /** Which contact the activity was with, when the entry records one. */
+  contactId: uuid('contact_id').references(() => contacts.id),
   createdBy: createdByEnum('created_by').notNull(),
-  /** Back-reference for the `generated_from` relation (ontology section 4). */
-  sourceClaimId: uuid('source_claim_id'),
+  /**
+   * Back-reference for the `generated_from` relation (ontology section 4). Set on entries the
+   * watch cycle added (zone 4) and NULL on entries Sales typed — which is what makes the
+   * "do hệ thống thêm" label and its quote reachable from the timeline row.
+   */
+  sourceClaimId: uuid('source_claim_id').references(() => claims.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

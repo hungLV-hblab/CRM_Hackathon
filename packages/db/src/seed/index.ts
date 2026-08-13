@@ -5,15 +5,14 @@ import { getTableName, sql } from 'drizzle-orm'
 
 import { createConnection } from '../client'
 import {
+  ALL_TABLES,
   SETTING_KEY_AI_ENABLED,
   SETTING_KEY_WATCH_CYCLE_SECONDS,
-  auditEvents,
   companies,
   opportunities,
   systemSettings,
   timelineEntries,
   users,
-  watchCycleRuns,
 } from '../schema'
 import {
   SEED_COMPANIES,
@@ -23,17 +22,6 @@ import {
 } from './seed-data'
 
 export * from './seed-data'
-
-/** Listed in one place so adding a table cannot leave a stale row behind on reseed. */
-const ALL_TABLES = [
-  auditEvents,
-  watchCycleRuns,
-  timelineEntries,
-  opportunities,
-  companies,
-  systemSettings,
-  users,
-]
 
 /**
  * I-14 and spec 7.5 — judges replay the scenario a second time, so `pnpm seed` has to return

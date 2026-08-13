@@ -77,7 +77,7 @@ Role tạo ở `infra/postgres-init/01-roles.sql` (mount vào `/docker-entrypoin
 
 - [x] Từ CSDL trống: `pnpm db:migrate && pnpm seed` chạy sạch — điểm nghiệm thu 1
 - [x] 6 khẳng định quyền cột xanh, **cả chiều cấm lẫn chiều cho** — `column-grants-block-system-actor.test.ts`: 5 khẳng định chiều cấm + 2 chiều cho + 1 kiểm trạng thái cuối
-- [ ] Thử đổi `0001_grants.sql` thành `GRANT UPDATE ON opportunities TO crm_system` → test 1 **đỏ** — **chưa chạy**; phép đo đột biến mới chỉ chạy cho `updateStage` và `updateNextStep`
+- [x] Thử đổi `0001_grants.sql` thành `GRANT UPDATE ON opportunities TO crm_system` → test 1 **đỏ** — **đã chạy 13/08 02:16** trong P1a của [plan sáu nhóm](../260813-0107-feature-groups-1-6-and-acceptance-suite/plan.md): áp `GRANT UPDATE` mức bảng lên `crm_test` → `column-grants-block-system-actor.test.ts` **3/8 đỏ** (đổi giai đoạn, đổi giá trị tiền, và kiểm trạng thái cuối); `REVOKE` rồi cấp lại đúng ba cột → 8/8 xanh
 - [x] `pnpm seed` hai lần → trạng thái giống hệt — điểm nghiệm thu 6, `md5=2dd301579b48842b49fd7e7824c1d2de` hai lần
 - [x] Không có script `db:push` nào trong `package.json`
 

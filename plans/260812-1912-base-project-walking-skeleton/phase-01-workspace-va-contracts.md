@@ -71,7 +71,7 @@ plugins: [swc.vite({ module: { type: 'es6' } })]
 
 - [x] `pnpm install` sạch, không peer warning chặn
 - [x] `pnpm test` chạy, test enum xanh — `contracts/src/__tests__/ontology-enum-parity.test.ts`, 22 test xanh
-- [ ] Sửa 1 giá trị enum trong `enums.ts` → test **đỏ** (chứng minh test có răng) — **chưa chạy**, không có bằng chứng trong báo cáo nghiệm thu
+- [x] Sửa 1 giá trị enum trong `enums.ts` → test **đỏ** (chứng minh test có răng) — **đã chạy 13/08 02:17** trong P1a của [plan sáu nhóm](../260813-0107-feature-groups-1-6-and-acceptance-suite/plan.md): đổi `PROPOSAL_STATUS.pending` → `waiting`, parity test đỏ với `expected [ 'waiting', 'decided' ] to deeply equal [ 'pending', 'decided' ]`; khôi phục → 24/24 xanh
 - [x] Một file `.ts` rỗng trong `apps/api` import được `@crm/contracts` và biên dịch
 - [x] `.env.example` có đủ `DATABASE_URL_OWNER` / `_APP` / `_SYSTEM`, `JWT_SECRET`, `APP_ROLE`, `WATCH_CYCLE_SECONDS`, `ANTHROPIC_API_KEY`
 

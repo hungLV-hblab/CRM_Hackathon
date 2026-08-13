@@ -1,6 +1,8 @@
 import { Pool } from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { resetTestDatabase } from '../testing/reset-test-database'
+
 /**
  * Rebuilds the four ADR-0010 measurements as tests that run inside `pnpm test` — paying off
  * the debt that ADR records at its end ("so far only run by hand with psql").
@@ -24,9 +26,7 @@ beforeAll(async () => {
   owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
   system = new Pool({ connectionString: process.env.DATABASE_URL_TEST_SYSTEM })
 
-  await owner.query(
-    'TRUNCATE TABLE audit_events, watch_cycle_runs, timeline_entries, opportunities, companies, system_settings, users RESTART IDENTITY CASCADE',
-  )
+  await resetTestDatabase(owner)
   await owner.query(
     `INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, 'sales@test.local', 'x', 'Sales', 'sales')`,
     [USER_ID],

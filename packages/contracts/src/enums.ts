@@ -1,5 +1,5 @@
 /**
- * The SINGLE source of truth for the 11 enums defined in ontology section 3.5.
+ * The SINGLE source of truth for the enums defined in ontology section 3.5.
  *
  * Key = the code used in code/database/API. Value = the Vietnamese label shown in the UI
  * (CLAUDE.md section 3: the UI speaks the Specs' Vietnamese, the code speaks English).
@@ -70,6 +70,24 @@ export const PROPOSAL_TYPE = {
   timeline_entry: 'thêm tin',
 } as const
 export type ProposalType = keyof typeof PROPOSAL_TYPE
+
+/**
+ * ADR-0016 — deliberately TWO values, not a mirror of `DECISION`.
+ *
+ * `status` is only the queue flag ("is this still waiting?"). Every NUMBER — auto-accept
+ * rate, error-detection rate, the share of `edit` — is read from `proposal_decisions`, so
+ * there is exactly one source of truth and I-12 (`edit` never counted as `accept`) holds
+ * without anyone having to remember it.
+ *
+ * `pending` is also the column DEFAULT, and `status` is absent from the `GRANT INSERT`
+ * column list of `crm_system` (ADR-0015): the database itself guarantees every AI-generated
+ * proposal starts out waiting for a human. That is T-4 at the second defence layer.
+ */
+export const PROPOSAL_STATUS = {
+  pending: 'Chờ duyệt',
+  decided: 'Đã quyết',
+} as const
+export type ProposalStatus = keyof typeof PROPOSAL_STATUS
 
 export const DECISION = {
   accept: 'Duyệt',
@@ -148,6 +166,7 @@ export const ENUMS = {
   signal_type: SIGNAL_TYPE,
   confidence: CONFIDENCE,
   proposal_type: PROPOSAL_TYPE,
+  proposal_status: PROPOSAL_STATUS,
   decision: DECISION,
   reject_reason: REJECT_REASON,
   next_step_source: NEXT_STEP_SOURCE,

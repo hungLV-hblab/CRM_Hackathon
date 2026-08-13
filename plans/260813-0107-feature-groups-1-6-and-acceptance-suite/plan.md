@@ -17,6 +17,7 @@ source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-cr
 
 > Nối tiếp [plan skeleton](../260812-1912-base-project-walking-skeleton/plan.md) (đã đóng, 6/6 điểm nghiệm thu).
 > Quyết định chi phối: [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) (LLM thật + code kiểm chuỗi con) · [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) (seed tự đặt) · [ADR-0010](../../docs/decisions/0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) + [ADR-0004](../../docs/decisions/0004-chan-ranh-gioi-o-tang-domain-va-tang-csdl.md) (chặn hai lớp).
+> Ba quyết định mới từ phiên phản biện P1 ngày 13/08 ([báo cáo](../reports/from-brainstorm-to-planner-260813-0127-phase-01-grant-insert-theo-cot-va-ba-quyet-dinh-report.md)): [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) (`GRANT INSERT` theo cột) · [ADR-0016](../../docs/decisions/0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) (`status = pending|decided`) · [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) (I-3 ở service, không `UNIQUE`).
 
 ## Mục tiêu
 
@@ -26,9 +27,13 @@ Sáu nhóm tính năng của Specs mục 4 chạy được trên stack productio
 
 ## Ngân sách — nói thẳng chỗ không vừa
 
-3 người × 2 ngày. Cộng ước lượng: **~25h việc / ~24h năng lực**. Không có đệm.
+3 người × 2 ngày. Cộng ước lượng: **~27h việc / ~24h năng lực**. Âm đệm.
 
-Đường găng: **P1 (1h) → P2 nhóm 2 (3h) → P6 nhóm 4 (3h) → P8 nghiệm thu (4h) = 11h**, phần lớn trên vai A. Vừa đúng 2 ngày nếu không hỏng gì — nghĩa là hỏng một chỗ là trượt freeze.
+Đường găng: **P1a (1.5h) → P2 nhóm 2 (3h) → P6 nhóm 4 (3h) → P8 nghiệm thu (4h) = 11.5h**, phần lớn trên vai A. P1b (1.5h) chạy song song nên không vào đường găng, nhưng **phải xanh trước P5/P6/P7**.
+
+Ước lượng P1 đã sửa từ 60' lên 1.5h + 1.5h sau phiên phản biện 13/08 — cộng thật là ~3h, và 60' là con số đoán.
+
+**Cập nhật 13/08 02:20 — P1a + P1b xong trong ~20', không phải 3h.** P1b không cần chạy song song vì làm liền được. Đội **không bị chặn** và đệm âm được trả lại: quay về ~24h việc / 24h năng lực. Đừng đọc con số này thành "ước lượng luôn thừa" — nó thừa vì P1 là việc thuần schema + SQL, không có ẩn số nghiệp vụ nào; P2 (LLM thật) và P8 (nghiệm thu) không có tính chất đó.
 
 Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xong:
 
@@ -43,31 +48,36 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 
 | # | Phase | Trạng thái | Người | Ước lượng | Phụ thuộc |
 | --- | --- | --- | --- | --- | --- |
-| 1 | [Seam — 7 bảng còn lại, GRANT, contracts](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md) | pending | 1 người, **cả đội chờ** | 60' | — |
-| 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | pending | A | 3h | 1 |
-| 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | pending | B | 5h | 1 |
-| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h | 1, (3 cho T-1) |
-| 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2 |
-| 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2 |
-| 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4 |
+| 1a | [Seam — 7 bảng, GRANT theo cột, contracts](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1a--mở-khoá-đội-15h) | **done** | 1 người, **cả đội chờ** | 1.5h (thực: ~20') | — |
+| 1b | [Ma trận chiều-cấm + 3 phép đo đột biến](phase-01-seam-bay-bang-con-lai-grant-va-contracts.md#p1b--song-song-phải-xanh-trước-p5p6p7-15h) | **done** | cùng người, **song song** | 1.5h (thực: gộp vào 1a) | 1a |
+| 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | pending | A | 3h | 1a |
+| 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | pending | B | 5h | 1a |
+| 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | pending | C | 2h | 1a, (3 cho T-1) |
+| 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2, **1b** |
+| 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
+| 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
 | 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h | 5, 6, 7 |
 
 ```
-P1 (cả đội chờ, 60')
- ├── A: P2 nhóm 2 ──────────┬── P6 nhóm 4 ──┐
+P1a (cả đội chờ, 1.5h)
+ ├── P1b (song song, 1.5h) ──────── phải xanh TRƯỚC P5/P6/P7 ──┐
+ ├── A: P2 nhóm 2 ──────────┬── P6 nhóm 4 ──┐                  │
  ├── B: P3 nhóm 1 ──────────┴── P5 nhóm 3 ──┼── P8 nhóm 6 + T-1..T-10
  └── C: P4 seed fixture ─────── P7 nhóm 5 ──┘
 ```
 
-Phụ thuộc cứng duy nhất: **P5, P6, P7 đều cần `Claim` của P2**. P3 và P4 không cần.
+Hai phụ thuộc cứng:
+
+- **P5, P6, P7 đều cần `Claim` của P2.** P3 và P4 không cần.
+- **P5, P6, P7 đều cần P1b xanh**, không phải P8. P6 (Hoàn tác) và P5 (duyệt) ăn trực tiếp `undo_deadline` và `status` — hai cột mà GRANT theo cột của [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) đang bảo vệ. Dồn ma trận chiều-cấm sang P8 là để hở đúng chỗ rubric chấm.
 
 ### Mốc thời gian
 
 | Khi | Phải xong |
 | --- | --- |
-| 13/08 sáng | P1. **Không ai code nhóm nào trước khi P1 xanh** |
+| ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
 | 13/08 hết ngày | P2, P3, P4 |
-| 14/08 trưa | P5, P6, P7. Chưa xong → cắt theo danh sách trên |
+| 14/08 trưa | P5, P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | 14/08 tối | P8, **freeze** |
 
 ## Chủ quyền file — chống đụng nhau
@@ -116,10 +126,12 @@ CI/CD · triển khai đám mây · phân quyền theo người sở hữu (mộ
 | Rủi ro | Xử lý |
 | --- | --- |
 | LLM trả câu trích diễn giải thay vì nguyên văn → claim bị bỏ hàng loạt | P2 đo tỉ lệ khớp **trước** khi P5/P6 bắt đầu. Sửa prompt, **không** hạ chuẩn kiểm chuỗi con |
-| Quên GRANT cho bảng mới → nhóm 4/5 ghi không được | P1 test cả hai chiều cho từng bảng mới, giống `column-grants-block-system-actor.test.ts` đã làm |
+| Quên GRANT cho bảng mới → nhóm 4/5 ghi không được | Smoke **chiều-cho** nằm trong P1a (không hoãn sang P1b); ma trận đầy đủ hai chiều ở P1b |
+| `GRANT INSERT` mức bảng lọt vào → AI tự duyệt gợi ý, đè `undo_deadline`, tự đánh dấu đã đọc | Cùng cấu trúc lỗi ADR-0010 đã bắt trên `UPDATE`, lần này trên `INSERT` ([ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md)). Phép đo đột biến số 3 ở P1b là cách duy nhất biết — review bằng mắt đã trượt một lần |
+| `UNIQUE (company_id, content_hash)` chặn giám khảo diễn lại T-6/T-8 lần hai | Đã loại ở [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md); P2 phải có test ca trước→sau→trước |
 | Nhóm 1 phình ra ăn hết ngày 13 | Cắt kéo thả trước, cắt màn tổng quan sau. Ranh giới cắt ghi ở mục Ngân sách |
 | Vòng quét gọi LLM chậm hơn nhịp 60s | Đã có luật bỏ nhịp + `skipped_reason` của ADR-0011. P7 test đúng kịch bản này |
-| Ba phép đo đột biến còn nợ từ plan skeleton | P1 trả nợ GRANT + enum; `@Cron` trả trong P7 |
+| Ba phép đo đột biến còn nợ từ plan skeleton | P1b trả nợ GRANT + enum (cộng một phép đo mới cho ADR-0015); `@Cron` trả trong P7 |
 
 ## Câu hỏi chưa giải quyết
 

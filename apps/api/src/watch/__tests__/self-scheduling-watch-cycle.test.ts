@@ -1,7 +1,7 @@
 import { Pool } from 'pg'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createConnection } from '@crm/db'
+import { createConnection, resetTestDatabase } from '@crm/db'
 
 import { SystemSettingService } from '../../settings/system-setting-service'
 import { WatchCycleService } from '../watch-cycle-service'
@@ -64,8 +64,7 @@ async function watchLog(): Promise<{ skipped_reason: string | null }[]> {
 }
 
 beforeEach(async () => {
-  await owner.query('TRUNCATE TABLE watch_cycle_runs RESTART IDENTITY')
-  await owner.query('TRUNCATE TABLE timeline_entries, opportunities, companies CASCADE')
+  await resetTestDatabase(owner)
   await owner.query(
     `INSERT INTO companies (name, industry, company_type, is_watched)
      VALUES ('Watched company', 'ITO', 'it_solution', true)`,
