@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useMemo, useState, type FormEvent } from 'react'
 
 import { COMPANY_TYPE, type CreateCompanyDto, type ListCompaniesQuery } from '@crm/contracts'
@@ -22,7 +21,6 @@ const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: 'tra
 const EMPTY_FILTERS: ListCompaniesQuery = {}
 
 export default function CompanyListPage() {
-  const router = useRouter()
   const queryClient = useQueryClient()
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<CreateCompanyDto>(EMPTY_FORM)
@@ -67,12 +65,6 @@ export default function CompanyListPage() {
     },
   })
 
-  async function onLogout() {
-    await api.logout()
-    router.push('/dang-nhap')
-    router.refresh()
-  }
-
   function onSubmit(event: FormEvent) {
     event.preventDefault()
     createCompany.mutate(form)
@@ -82,32 +74,11 @@ export default function CompanyListPage() {
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Công ty</h1>
+        {/* The three cross-screen links and the logout button that used to sit here are the
+            shell's job now — the sidebar reaches every screen and the account menu holds the
+            logout. Leaving a second "Đăng xuất" on the page would give the app two of them. */}
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" onClick={() => router.push('/tong-quan')}>
-            Tổng quan
-          </Button>
-          <Button variant="ghost" onClick={() => router.push('/co-hoi')}>
-            Cơ hội
-          </Button>
-          <Button variant="ghost" onClick={() => router.push('/hang-doi')}>
-            Hàng đợi gợi ý
-          </Button>
-          {/**
-           * TEMPORARY, and matching the pattern already here rather than introducing a second
-           * one. A shared navigation belongs to the UI shell plan (`260814-0056` phase 2), which
-           * owns `layout.tsx`; adding these two there now would mean two people editing the same
-           * file on the last day before freeze. That plan removes both of these lines.
-           */}
-          <Button variant="ghost" onClick={() => router.push('/dang-theo-doi')}>
-            Đang theo dõi
-          </Button>
-          <Button variant="ghost" onClick={() => router.push('/quan-tri/nhat-ky-vong-quet')}>
-            Nhật ký vòng quét
-          </Button>
           <Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>
-          <Button variant="ghost" onClick={onLogout}>
-            Đăng xuất
-          </Button>
         </div>
       </header>
 

@@ -168,3 +168,19 @@ Phase này chưa có component để test hành vi, nên "tests-first" ở đây
 3. **`packages/contracts` chưa build** → `pnpm seed` chết với `MODULE_NOT_FOUND: @crm/contracts`. Chạy `pnpm --filter @crm/contracts build && pnpm --filter @crm/db build` trước khi seed.
 
 Điểm 2 là lỗi thật của repo trên mọi máy Windows, không phải sự cố riêng của máy này.
+
+### Cửa build đổi từ `pnpm build` sang `docker compose build web`
+
+`pnpm build` **đỏ trên máy này kể cả khi cây làm việc sạch** — đã kiểm bằng `git stash -u` rồi chạy lại: **8 lỗi `EPERM: operation not permitted, symlink`**. Nguyên nhân là `output: 'standalone'` của Next phải tạo symlink lúc gom traced files, mà Windows không cho nếu chưa bật Developer Mode. Nó **không** phải lỗi token hay lỗi code:
+
+```
+✓ Compiled successfully in 1821ms
+✓ Generating static pages (10/10)
+⚠ Failed to copy traced files ... EPERM: operation not permitted, symlink
+```
+
+Biên dịch, kiểm kiểu, sinh trang tĩnh đều qua; chỉ bước copy cuối chết.
+
+**Quyết định: cửa build của plan này là `docker compose -f infra/docker-compose.yml --env-file .env build web`.** Đó cũng là đường build thật của sản phẩm — image này chính là thứ chạy ở `:8080` và là thứ BGK mở. Kiểm 14/08: **xanh** với thang token mới. Tiêu chí *"`pnpm build` xanh"* ở P1 và mục 8 checklist P6 đọc theo nghĩa này.
+
+Phương án bị loại: bật Developer Mode của Windows (sửa cấu hình máy người dùng để thoả một tiêu chí, trong khi đường build thật vẫn xanh) · bỏ `output: 'standalone'` (Dockerfile dựa vào nó — đổi để test chạy được là để test lái kiến trúc).

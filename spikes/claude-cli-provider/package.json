@@ -1,0 +1,10 @@
+{
+  "name": "@crm/spike-claude-cli-provider",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Spike: gọi Claude qua CLI headless thay cho ANTHROPIC_API_KEY. Không thuộc sản phẩm.",
+  "scripts": {
+    "start": "node server.ts"
+  }
+}

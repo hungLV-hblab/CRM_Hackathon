@@ -231,4 +231,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ isWatched }),
     }),
+
+  /**
+   * ADMIN ONLY — `GET /settings` is guarded by `@Roles('admin')`, so a Sales session gets a
+   * 403 here, not a payload. Callers must check the role first (`api.me()`) rather than
+   * firing this on every page load and swallowing the failure.
+   */
+  systemSettings: () => call<{ aiEnabled: boolean; watchCycleSeconds: number }>('/settings'),
 }

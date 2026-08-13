@@ -52,8 +52,11 @@ test('đăng nhập, giữ phiên qua reload, tạo công ty, đăng xuất', as
   await dialog.getByRole('button', { name: 'Lưu' }).click()
   await expect(page.getByRole('cell', { name: NEW_COMPANY })).toBeVisible()
 
-  // 6 — logging out returns to the login screen.
-  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  // 6 — logging out returns to the login screen. It lives in the account menu now, where a
+  // logout belongs, so the menu has to be opened first. Keeping a top-level logout button on
+  // the header purely so this line did not change would be letting the test drive the design.
+  await page.getByRole('button', { name: 'Tài khoản' }).click()
+  await page.getByRole('menuitem', { name: 'Đăng xuất' }).click()
   await expect(page).toHaveURL(/\/dang-nhap$/)
 })
 
