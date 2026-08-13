@@ -21,6 +21,33 @@ export const createCompanySchema = z.object({
 
 export type CreateCompanyDto = z.infer<typeof createCompanySchema>
 
+/**
+ * Every profile cell is editable BY A HUMAN, `companyType` included.
+ *
+ * I-11 forbids a `Proposal` from editing `companyType` because it is the lens signals are
+ * read under, and editing the lens with the thing that reads through it is a self-referential
+ * loop. That constraint is about the AI, not about Sales: locking the cell for everyone would
+ * block an ordinary correction and leave "delete the company and start over" as the only fix
+ * for a typo made at creation.
+ *
+ * `isWatched` is here too — turning watching on is what delegates news-writing to the system
+ * (ADR-0006), and that has to be a human's decision.
+ */
+export const updateCompanySchema = createCompanySchema
+  .extend({ isWatched: z.boolean() })
+  .partial()
+
+export type UpdateCompanyDto = z.infer<typeof updateCompanySchema>
+
+/** Search by name plus the four filters of the list screen. All optional, all combinable. */
+export interface ListCompaniesQuery {
+  q?: string
+  industry?: string
+  companyType?: string
+  country?: string
+  isWatched?: boolean
+}
+
 export interface CompanyDto {
   id: string
   name: string

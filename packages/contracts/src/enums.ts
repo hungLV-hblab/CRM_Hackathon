@@ -157,6 +157,41 @@ export const USER_ROLE = {
 export type UserRole = keyof typeof USER_ROLE
 
 /**
+ * Warning flags on an `Opportunity`. DERIVED from null columns by `opportunity-warnings.ts`,
+ * never stored: a `has_warning` column would be a second source of truth that drifts away
+ * from the cells it describes the first time someone fills one in through SQL.
+ *
+ * Deliberately OUTSIDE the `ENUMS` registry below, same as `USER_ROLE`: ontology 3.5 lists
+ * the enums that exist as a Postgres type, and this one has no column and no `pgEnum`.
+ * Registering it here would make `ontology-enum-parity.test.ts` report drift that is not real.
+ *
+ * The labels are the SENTENCE shown next to the flag. Rule 4 of design-guidelines section 5
+ * forbids a bare `—`: an empty cell has to say why it is empty.
+ */
+export const OPPORTUNITY_WARNING = {
+  missing_qualification_signals: 'Chưa đủ dấu hiệu nhu cầu/ngân sách',
+  missing_lost_reason: 'Chưa ghi lý do thua',
+  missing_next_step: 'Chưa có Việc tiếp theo',
+} as const
+export type OpportunityWarning = keyof typeof OPPORTUNITY_WARNING
+
+/**
+ * The stages at which the qualification gate is considered PASSED, so a missing signal cell
+ * becomes a warning. A fixed set rather than a walk back through the timeline, and the price
+ * of that is written down: jumping `prospecting → negotiation` still warns (correct — the two
+ * directions were never checked), stepping back to `prospecting` clears the warning (correct —
+ * the gate is ahead again), and a deal that was qualified and then paused loses the flag
+ * (accepted). In exchange the warning function stays pure and needs no JOIN, so list, detail
+ * and the overview screen can all call it.
+ */
+export const QUALIFICATION_CHECKED_STAGES = [
+  'qualified',
+  'drafting',
+  'negotiation',
+  'won',
+] as const
+
+/**
  * Registry keyed by the exact enum names used in ontology 3.5. The parity test walks this
  * object, so adding an enum here without adding it to the ontology (or the reverse) fails.
  */
