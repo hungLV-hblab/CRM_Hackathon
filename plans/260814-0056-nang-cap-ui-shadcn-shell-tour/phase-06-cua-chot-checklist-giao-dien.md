@@ -13,6 +13,8 @@ dependencies: [4, 5]
 
 Chạy checklist mục 7 của [design-guidelines](../../docs/design-guidelines.md) trên **phần đã làm được**, đối chiếu baseline, viết ADR. Phase này chạy dù P4/P5 có bị cắt hay không — chỉ phạm vi kiểm thu nhỏ lại.
 
+**Sau khi đảo thứ tự (14/08), phase này còn một việc nữa:** bàn giao lại cho P8. Không phải "xong rồi báo một tiếng" — P8 sẽ viết vào đúng cây thư mục ta vừa dời và đúng file nav ta vừa dựng. Xem [Bàn giao cho P8](#bàn-giao-cho-p8).
+
 Không có ADR = quyết định không tồn tại với BGK ([CLAUDE.md mục 5](../../CLAUDE.md#5-quy-trình-làm-việc-với-ai-áp-dụng-cho-cả-5-giai-đoạn)).
 
 ## Requirements
@@ -40,6 +42,19 @@ Thêm ba mục riêng của plan này:
 | 9 | Không có nền tối lọt vào | `grep -rn "\.dark\|data-theme\|prefers-color-scheme" apps/web/src` → chỉ được thấy `prefers-reduced-motion`, không thấy `color-scheme` |
 | 10 | Tour không tự chạy | `tour-does-not-block.spec.ts` xanh cả ba nhánh (nếu P5 làm) · `grep -rn "localStorage" apps/web/src/components/tour/` rỗng · `e2e/global-setup.ts` không bị sửa |
 | 11 | Từ vựng alias shadcn không tràn ra app | `grep -rn "bg-background\|text-primary\|text-muted-foreground" apps/web/src/app` → **rỗng**. Chỉ `components/ui/` được dùng |
+| 12 | Không mục nav nào 404, không link nào trỏ `/quan-tri` | `grep -rn "quan-tri" apps/web/src` → **rỗng** cho tới khi P8 tạo route. `app-shell-navigation.spec.ts` đi hết mọi mục nav |
+| 13 | Không có dòng trạng thái AI bịa | Đăng nhập bằng tài khoản **Sales** → header **không** có pill nào. `grep -rn "AI đang bật" apps/web/src` không được ra chuỗi hằng nào render vô điều kiện |
+| 14 | Ba bàn giao đã nói, không phải đã nghĩ | Có chỗ ghi lại (chat/issue): C nhận `app/(app)/quan-tri/` · C nhận ranh giới `e2e/` · B nhận việc rebase |
+
+## Bàn giao cho P8
+
+Viết thành **một danh sách gửi C và B**, không phải một đoạn văn. Ba việc P8 phải làm mà trước khi đảo thứ tự thì không tồn tại:
+
+1. **Màn quản trị vào `app/(app)/quan-tri/`**, không phải `app/quan-tri/`. URL vẫn `/quan-tri`. Sai chỗ = màn không có shell.
+2. **Thêm một dòng vào `apps/web/src/components/shell/nav-items.tsx`** cho mục *Quản trị*. Không thêm thì màn quản trị không có đường tới từ giao diện.
+3. **Thêm link "nút tắt sạch AI" vào `/huong-dan`** (nếu P5 đã làm) và link `/quan-tri` vào bước 6 của tour. Cả hai đang cố ý để trống vì route chưa tồn tại.
+
+Cộng một việc P8 **được lợi**, nói ra để khỏi làm lại: pill trạng thái AI ở header đã dựng sẵn, chỉ 403 với Sales. Nếu P8 quyết định mở quyền đọc `GET /settings` cho mọi vai thì pill **tự sống lại**, không phải sửa gì ở web — nhưng đó là **quyết định về quyền hạn, cần ADR riêng**, không phải hệ quả của một phase UI.
 
 ## ADR — nội dung bắt buộc
 
@@ -50,6 +65,8 @@ Thêm ba mục riêng của plan này:
 - **Phương án bị loại, kèm lý do:**
   - **A · shell-only** (2–3h, rủi ro e2e ~0) — bịt đúng lỗ thật, nhưng không đạt yêu cầu shadcn toàn diện.
   - **B · shadcn map-token chọn lọc** (5–7h) — **đây là phương án người brainstorm khuyến nghị**; giữ `Button`/`Badge`/`Table`/`Input` viết tay vì chúng cõng luật 1–3. Bị loại theo quyết định của người dùng.
+- **Đảo thứ tự 14/08:** plan này chạy **trước** P8 của `260813-0107`, thay quyết định cũ. Ghi cái giá (7h20' trình bày đứng trước 4h chấm điểm nghiệm thu, trong ngày freeze) và đối sách (P4/P5 cắt được + mốc cắt cứng + P1–P3 không đụng file ai nên P8 chạy song song được). **Đừng viết như thể đây là lựa chọn không có nhược điểm** — BGK đọc ra ngay, và luật 7 chấm khả năng giải thích chứ không chấm sự tự tin.
+- **Hai hệ quả phải khai:** sidebar tạm 6 mục (thiếu *Quản trị*) · pill trạng thái AI vắng mặt với Sales vì `GET /settings` là `@Roles('admin')` — **chọn để trống thay vì bịa "AI đang bật"**, đúng luật 4.
 - **Năm quyết định phụ:** không oval hoá toàn cục (nâng `radius-card` + thêm `radius-pill`) · `driver.js` thay vì react-joyride (5KB, không peer dep React) · `shadcn add` thay vì `shadcn init` (init ghi đè `@theme` + thêm `.dark`) · **bất biến khoá bằng e2e computed-style, không bằng unit test** (`apps/web` không nằm trong `vitest.config.mts` projects, repo không có testing-library) · **tour không auto-run** (`playwright.config.ts` không có `storageState`, `global-setup.ts` chỉ `pnpm seed` → `localStorage` rỗng mọi spec nên cờ "lần đầu" không chặn được gì).
 - **Cách verify:** `e2e/ui-invariants.spec.ts` T-A…T-F của P3 + `tour-does-not-block.spec.ts` ba nhánh của P5 + baseline P1. Nêu tên test cụ thể, không nói "đã test".
 - **Tái khẳng định:** chỉ nền sáng, không đổi.
@@ -75,7 +92,8 @@ diff <(grep -E "passed|failed" baseline-test-output.txt) <(grep -E "passed|faile
 
 ## Success Criteria
 
-- [ ] 11 mục checklist trên đều đã chạy, mỗi mục có kết quả ghi lại (không phải tick trôi)
+- [ ] **14** mục checklist trên đều đã chạy, mỗi mục có kết quả ghi lại (không phải tick trôi)
+- [ ] Danh sách [Bàn giao cho P8](#bàn-giao-cho-p8) đã gửi C và B, có chỗ ghi lại
 - [ ] `diff` baseline vs final rỗng hoặc lệch đúng phần có chủ đích
 - [ ] `pnpm lint` · `typecheck` · `build` xanh
 - [ ] ADR có đủ: quyết định · đảo hướng gì · **hai phương án bị loại kèm lý do** · cách verify nêu tên test · tái khẳng định nền sáng
