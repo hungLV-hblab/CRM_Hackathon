@@ -64,7 +64,14 @@ export const SEED_COMPANIES = [
     companyType: 'tech_startup' as const,
     country: 'Hoa Kỳ',
     size: '50-100',
-    website: 'https://kitefin.example.com',
+    /**
+     * Deliberately EMPTY while the Kitefin page states a website (ADR-0024). This is the demo's
+     * "fill a blank cell" proposal, and it sits on a WATCHED company on purpose: together with
+     * Sakura's stale `size` it means both halves of Specs group 3 ("điền hoặc sửa một ô còn
+     * trống hoặc đã cũ") are demonstrated inside the watch set, so neither depends on Marlin —
+     * the company the plan lists as first to cut.
+     */
+    website: null,
     /**
      * Watched, so the demo has THREE watched companies with a readable source — the exact
      * count acceptance check 8 counts. Ohara stays unwatched: it is the unreadable source,

@@ -1,0 +1,25 @@
+-- ═══════════════════════════════════════════════════════════════════════════════════════════
+-- GRANT for the column added by 0005 — ADR-0023, and the rule the plan states as law 3
+-- ═══════════════════════════════════════════════════════════════════════════════════════════
+--
+-- `GRANT INSERT (col, col, …)` in 0003 is an EXPLICIT COLUMN LIST. A column added later is not
+-- covered by it, and nothing warns about that: `crm_system` simply gets "permission denied for
+-- column opportunity_id" the first time feature group 4 raises an I-7 proposal.
+--
+-- That direction of failure is the safe one — loud, and on the side of less authority. The
+-- dangerous direction is the opposite: had 0003 granted INSERT at TABLE level, this new column
+-- would have been silently covered, and so would `status`, and the AI could file
+-- pre-approved proposals (ADR-0015, the mistake a review by eye already missed once).
+--
+-- Mutation measurement owed by ADR-0023: delete this file's GRANT and the `next_step` proposal
+-- test must fail with a permission error. If it still passes, INSERT is granted somewhere at
+-- table level and the second defence layer is gone.
+--
+-- Deliberately NOT granted here:
+--   * UPDATE on any column of `proposals` — deciding is a human act, `crm_app` records it
+--   * anything at all on `proposal_decisions` — see 0003
+--   * UPDATE on `opportunities.next_step_*` for this path — a `next_step` PROPOSAL only ever
+--     writes a row in `proposals`; the opportunity is written when a human accepts, by
+--     `crm_app`, which is what makes I-7 a suggestion rather than a write.
+
+GRANT INSERT (opportunity_id) ON proposals TO crm_system;

@@ -19,6 +19,7 @@ source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-cr
 > Quyết định chi phối: [ADR-0014](../../docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md) (LLM thật + code kiểm chuỗi con) · [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) (seed tự đặt) · [ADR-0010](../../docs/decisions/0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md) + [ADR-0004](../../docs/decisions/0004-chan-ranh-gioi-o-tang-domain-va-tang-csdl.md) (chặn hai lớp).
 > Ba quyết định mới từ phiên phản biện P1 ngày 13/08 ([báo cáo](../reports/from-brainstorm-to-planner-260813-0127-phase-01-grant-insert-theo-cot-va-ba-quyet-dinh-report.md)): [ADR-0015](../../docs/decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) (`GRANT INSERT` theo cột) · [ADR-0016](../../docs/decisions/0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md) (`status = pending|decided`) · [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md) (I-3 ở service, không `UNIQUE`).
 > Thiết kế P3 chốt 13/08 12:15 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1215-phase-03-nhom-1-crm-lam-tay-report.md)): cờ cảnh báo suy ra không lưu cột · kéo thả dnd-kit không kèm Select, KeyboardSensor làm đường lái T-1 · đầu mối chính tự hạ người cũ · tổng quan thêm khối lý do thua. ADR trả 13/08 17:20: [ADR-0019](../../docs/decisions/0019-co-canh-bao-suy-ra-tu-cot-null-khong-luu-thanh-cot.md) · [ADR-0020](../../docs/decisions/0020-doi-giai-doan-chi-bang-keo-tha-dnd-kit-duong-ban-phim-la-duong-lai-cua-t1.md).
+> Thiết kế P5 chốt 13/08 20:51 ([báo cáo](../reports/from-brainstorm-to-planner-260813-2051-phase-05-nhom-3-hang-doi-goi-y-report.md)): [ADR-0023](../../docs/decisions/0023-goi-y-viec-tiep-theo-la-proposal-type-thu-ba-kem-cot-opportunity-id.md) (I-7 cần `proposal_type = next_step` + cột `opportunity_id` — **không có nó Proposal của nhóm 4 không lưu được**) · [ADR-0024](../../docs/decisions/0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) (`field_update`: LLM đề xuất + ba cửa chặn code) · [ADR-0025](../../docs/decisions/0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md) (mốc `seconds_to_decide` đặt lại sau mỗi quyết định, **ontology mục 7 đã sửa**).
 > Thiết kế P4 chốt 13/08 19:56 ([báo cáo](../reports/from-brainstorm-to-planner-260813-1956-GH-3-phase-04-seed-ban-chup-va-t1-report.md)): [ADR-0021](../../docs/decisions/0021-ban-chup-demo-giu-dang-hang-so-typescript-khong-tach-thanh-file-html.md) (bản chụp giữ dạng hằng số TS, không tách HTML) · [ADR-0022](../../docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md) (cột `snapshot_variant` — **P4 làm thay P7, không có nó T-8 không đóng được**).
 
 ## Mục tiêu
@@ -55,7 +56,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 2 | [Nhóm 2 — bản lưu + phát hiện + provenance](phase-02-nhom-2-ban-luu-phat-hien-provenance.md) | **done** | A | 3h (thực: ~25') | 1a |
 | 3 | [Nhóm 1 — CRM làm tay](phase-03-nhom-1-crm-lam-tay.md) | **done** | B | 5h (thực: ~2h45') | 1a |
 | 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | **done** | C | 2h15 (thực: ~1h20') | 1a, (3 cho T-1) |
-| 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | pending | B | 3h | 2, **1b** |
+| 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | **done** | B | ~~3h~~ 4.5h (thực: ~1h20') | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | pending | A | 3h | 2, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
 | 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h | 5, 6, 7 |
@@ -80,7 +81,7 @@ Ba phụ thuộc cứng:
 | --- | --- |
 | ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
 | 13/08 hết ngày | ~~P2~~ · ~~P3~~ · ~~P4~~ — **cả ba xong 13/08 20:35. P5/P6/P7 mở khoá hết** |
-| 14/08 trưa | P5, P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
+| ~~14/08 trưa~~ | ~~P5~~ — **xong 13/08 22:07**. P6, P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | 14/08 tối | P8, **freeze** |
 
 ## Chủ quyền file — chống đụng nhau
@@ -112,8 +113,8 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 | T-1 | Tắt AI, nhóm 1 chạy đủ: công ty/liên hệ/cơ hội, kéo qua 3 giai đoạn có Đủ điều kiện, bỏ 2 ô dấu hiệu vẫn kéo được + có cờ, ghi hoạt động, tìm/lọc, màn tổng quan. **Một spec, mỗi chặng một `test.step()`**; lái bằng bàn phím, giãn ≥50ms giữa phím (ADR-0020) | 3, 4 ✅ e2e |
 | T-2 | Phát hiện thiếu câu trích không lưu được — thử ghi thẳng, phải bị từ chối | 2 ✅ |
 | T-3 | Bấm phát hiện → mở đúng đoạn gốc, có đánh dấu | 2 ✅ e2e |
-| T-4 | Sinh gợi ý rồi không làm gì; sau ≥3 chu kỳ hồ sơ y nguyên | 5 |
-| T-5 | Duyệt / Sửa-rồi-duyệt / Bỏ đều có bản ghi; *sửa* không cộng vào *duyệt* | 5 |
+| T-4 | Sinh gợi ý rồi không làm gì; sau ≥3 chu kỳ hồ sơ y nguyên | 5 ✅ |
+| T-5 | Duyệt / Sửa-rồi-duyệt / Bỏ đều có bản ghi; *sửa* không cộng vào *duyệt* | 5 ✅ e2e |
 | T-6 | Đổi bản chụp sang bản "sau" → Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống | 6 |
 | T-7 | Hoàn tác một cú bấm, giá trị cũ trở lại; có bản ghi hai chiều | 6 |
 | T-8 | 3 công ty Đang theo dõi, đổi nguồn 2 công ty → trong 2 chu kỳ có 2 mục mới, Nhật ký có dòng từng vòng | 7 |
@@ -202,6 +203,44 @@ Bốn việc mang sang phase khác:
 - **`getByText` khớp chuỗi con.** `Đầu mối chính` khớp cả nút `Đặt làm đầu mối chính`; `getByLabel('Dấu hiệu nhu cầu')` khớp cả `Nguồn của dấu hiệu nhu cầu`. Dùng `{ exact: true }` cho mọi nhãn là tiền tố của nhãn khác — P8 gom bộ nghiệm thu sẽ gặp lại.
 
 **Công ty #5 (Marlin Product Labs, `it_product`) đã làm** thay vì cắt: đoạn funding dùng chung một hằng số với Sakura, nên "cùng một tin, hai loại công ty" là số đo được chứ không phải lời kể.
+
+### Phiên 5 — 13/08 20:51, phạm vi Phase 5
+
+Phase 5 cũng viết **trước khi P2 xong** nên giả định "claim mới → sinh Proposal" là chuyện nối dây. Kiểm bằng đọc mã nguồn: **ba chỗ không nối được**, một trong đó làm hàng đợi trống lúc demo.
+
+**Ba lỗ hổng:**
+
+- **`Claim` không mang cặp (ô, giá trị)** ở bất kỳ đâu trong pipeline (`contracts/dto/claim.ts`, zod schema `anthropic-claim-extractor.ts:41-46`, hàng insert `claim-service.ts:81-91`), và grep `Ngành|Trụ sở|Quy mô|Website|nhân viên` trên cả 5 bản chụp trả **0 kết quả** ⇒ không có đường nào sinh `field_update`. Đường tắt duy nhất sai ngay ví dụ đầu: claim Kitefin *"mở rộng sang thị trường Nhật Bản"* → `country`, mà Kitefin trụ sở Hoa Kỳ (`seed-data.ts:65`).
+- **I-5 làm hàng đợi trống:** 3/5 công ty seed `is_watched = true` ⇒ `timeline_entry` bị chặn cho cả ba. Còn Marlin (đầu danh sách cắt) và Ohara (`rawHtml: ''` cả hai biến thể). Không có `field_update` thì hàng đợi demo tối đa **1 thẻ**.
+- **Proposal của I-7 không lưu được:** CHECK chỉ hai nhánh (`proposals.ts:51-56`) và bảng **không có `opportunity_id`**, trong khi Việc tiếp theo thuộc cơ hội.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| `field_update` lấy bằng chứng từ đâu | **Kết hợp**: bản chụp thêm khối dữ kiện → LLM đề xuất `fieldSuggestion` → code giữ ba cửa chặn ([ADR-0024](../../docs/decisions/0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md)). Đội **bác** khuyến nghị "parser tất định" của AI vì nó đẩy AI ra khỏi nhóm 3 | B sửa 4 file của A và C. Nợ đo mới: tỉ lệ LLM trả `fieldSuggestion`, trả trong P5 |
+| I-7 biểu diễn thế nào | `proposal_type = next_step` + cột `opportunity_id` + CHECK ba nhánh ([ADR-0023](../../docs/decisions/0023-goi-y-viec-tiep-theo-la-proposal-type-thu-ba-kem-cot-opportunity-id.md)) | **P6 mở khoá** — nhánh I-7 có chỗ hạ cánh. Cột mới ⇒ GRANT tay + phép đo đột biến thứ ba |
+| Nối vào pipeline ở đâu | `ClaimReactionService`, `ObservationService` gọi **1 dòng** | P6 và P7 chỉ sửa file điều phối, không sửa hàm của A. Thứ tự nhóm 4 → nhóm 3 tường minh và test được |
+| Mốc `seconds_to_decide` | Đặt lại sau **mỗi** quyết định ([ADR-0025](../../docs/decisions/0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md)) — mốc chung làm trung vị thành hàm của độ dài hàng đợi | **Sửa ontology mục 7** (đã làm). P8: cột nullable, bảng điều khiển phải nói rõ mẫu bao nhiêu |
+
+**Ước lượng sửa 3h → 4.5h**, nằm trên đường găng của B. Món cắt đầu tiên nếu trượt: `next_step` → đẩy sang P6 (enum thừa + cột NULL không cần migration ngược).
+
+**Một câu treo, không chặn code:** I-4 cấm claim `manual_ingest` sinh `TimelineEntry` — duyệt một `timeline_entry` proposal là **người** ghi (`created_by = human`) nên đọc là ngoài phạm vi I-4. Đã ghi câu này vào ADR-0024 để vòng 2 không hỏi vào chỗ trống.
+
+### Phiên 6 — 13/08 22:07, P5 đóng
+
+**203 test đơn vị + 9 e2e xanh**, lint/typecheck sạch, ba phép đo đột biến đều cắn. Hàng đợi trên stack thật có **3 gợi ý** — Sakura `size` (ô cũ) · Kitefin `website` (ô trống) · Marlin một mục dòng thời gian. Hai nửa của Specs nhóm 3 đều nằm **trong** tập công ty đang theo dõi, nên không phụ thuộc Marlin (công ty đầu danh sách cắt).
+
+**P6 mở khoá:** `proposal_type = next_step` + cột `opportunity_id` đã có, `BlockedNextStep` đã có kiểu, nhánh duyệt đã có test. `ClaimReactionService` để sẵn chỗ cho bước nhóm 4 **phía trên** bước nhóm 3.
+
+Bốn việc mang sang phase khác — **ba trong số đó là bẫy sẽ gặp lại nguyên vẹn**:
+
+- **`db.insert().values()` của drizzle không dùng được cho đường ghi của `crm_system`.** Nó liệt kê **mọi** cột của bảng, nên chỉ cần *nêu tên* `status` là Postgres từ chối cả câu lệnh. Cách sửa là viết `INSERT` nêu đúng cột được phép, **không** phải nới GRANT. **P6 sẽ đụng ngay**: `auto_next_step_events` có `undo_deadline` + 4 cột `undone_*` vắng khỏi GRANT theo đúng thiết kế ADR-0015.
+- **`ALTER TYPE ... ADD VALUE` rồi dùng giá trị đó trong cùng transaction = lỗi 55P04**, mà drizzle chạy mọi migration trong một transaction ⇒ CHECK phải so `::text`. Không sửa thì migration vỡ trên **mọi CSDL mới** — mỗi lần chạy test, mỗi lần giám khảo diễn lại.
+- **Phép đo trên bộ demo tìm ra lỗi thật mà test không thấy:** Kitefin ra hai thẻ y hệt (bản trước + bản sau cùng một dòng website). Luật chống sinh lại chỉ chặn nội dung *đã quyết*; đã sửa để gợi ý *đang chờ* cũng chặn bản trùng. **Chạy trên dữ liệu thật rồi mới tin, kể cả khi test xanh hết.**
+- **Test parity ontology cắn** khi thêm `next_step` vào enum mà chưa sửa `docs/ontology.md` mục 3.5 — lớp chống "ontology trang trí" hoạt động thật.
+
+**Nợ để lại, cần người có key:** tỉ lệ LLM thật trả `fieldSuggestion` **chưa đo được** — máy này và container đều không có `ANTHROPIC_API_KEY`, stack đang chạy `FixtureClaimExtractor`. Số ở trên đo đường tất định, không đo mức tuân thủ của model ([ADR-0024](../../docs/decisions/0024-goi-y-sua-o-ho-so-do-llm-de-xuat-code-giu-ba-cua-chan.md) mục "Chưa làm").
 
 ## Câu hỏi chưa giải quyết
 

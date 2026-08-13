@@ -6,6 +6,10 @@ import Link from 'next/link'
 import { STAGE, type OpportunityDto } from '@crm/contracts'
 
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
+import {
+  PendingProposalMarker,
+  usePendingProposalCounts,
+} from '@/components/proposal/pending-proposal-marker'
 
 /**
  * One deal on the board. Draggable by pointer AND by keyboard — `useSortable` wires both, and
@@ -15,6 +19,12 @@ import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
  * machine hue would tell Sales the deal was written by the system.
  */
 export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }) {
+  /**
+   * Read here rather than drilled down from the board: every card shares ONE cache entry under
+   * the `pending-proposals` key, so this is one request for the whole screen, and the board
+   * does not have to carry a prop it has no use for.
+   */
+  const pendingProposals = usePendingProposalCounts()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: opportunity.id,
   })
@@ -42,6 +52,8 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
         <p className="text-sm font-medium text-ink-900">{opportunity.name}</p>
         <p className="text-xs text-ink-600">{opportunity.companyName}</p>
       </div>
+
+      <PendingProposalMarker count={pendingProposals[opportunity.companyId]} />
 
       {opportunity.expectedValue ? (
         <p className="tabular text-sm text-ink-700">

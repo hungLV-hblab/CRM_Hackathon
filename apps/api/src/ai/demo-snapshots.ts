@@ -44,7 +44,42 @@ function fundingParagraph(companyName: string): string {
   return `<p>${companyName} vừa hoàn tất vòng Series B huy động 20 triệu USD do Mizuho Capital dẫn dắt.</p>`
 }
 
+/**
+ * The facts block every company page carries — and the reason feature group 3 can propose a
+ * profile edit at all (ADR-0024).
+ *
+ * Without it a `field_update` proposal has no source: a `Claim` records what a page SAYS, and
+ * no page here said anything about industry, country, size or website. The choice made in
+ * ADR-0024 is that the LLM decides which field a line implies, while code checks the proposed
+ * value is a verbatim substring of the quoted line. That check is only satisfiable if the value
+ * is literally on the page, which is what these lines provide.
+ *
+ * Each value is therefore written so it can be QUOTED, not paraphrased: `Quy mô: 1000+ nhân
+ * viên` yields `1000+`, `Trụ sở chính: Aichi, Nhật Bản` yields `Nhật Bản`. A line reading
+ * "khoảng một nghìn người" would force a paraphrase and the proposal would be dropped —
+ * correctly, and invisibly, which is why the wording here is not cosmetic.
+ */
+function factsBlock(facts: {
+  industry: string
+  headquarters: string
+  size: string
+  website: string
+}): string {
+  return `<ul class="facts">
+        <li>Ngành: ${facts.industry}</li>
+        <li>Trụ sở chính: ${facts.headquarters}</li>
+        <li>Quy mô: ${facts.size} nhân viên</li>
+        <li>Website: ${facts.website}</li>
+        </ul>`
+}
+
 const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
+  /**
+   * Sakura is the "stale cell" case: its `before` facts match the seeded profile exactly, so
+   * nothing is proposed; its `after` block reports a larger headcount after the funding round,
+   * so `size` differs and one `field_update` appears. Sakura is also `is_watched = true`, which
+   * makes it the proof that I-5 blocks only the `timeline_entry` kind, not this one.
+   */
   [SAKURA]: {
     before: {
       sourceUrl: 'https://sakura-mfg.example.jp/news',
@@ -52,6 +87,12 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <body><div class="news">
         <h1>Sakura Manufacturing KK</h1>
         <p>Chúng tôi là nhà sản xuất linh kiện chính xác phục vụ ngành ô tô từ năm 1978.</p>
+        ${factsBlock({
+          industry: 'Sản xuất linh kiện',
+          headquarters: 'Aichi, Nhật Bản',
+          size: '500-1000',
+          website: 'https://sakura-mfg.example.jp',
+        })}
         <p>Nhà máy tại Aichi hiện vận hành ba dây chuyền&nbsp;lắp ráp.</p>
         </div></body></html>`,
     },
@@ -62,17 +103,35 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <h1>Sakura Manufacturing KK</h1>
         <p>Chúng tôi là nhà sản xuất linh kiện chính xác phục vụ ngành ô tô từ năm 1978.</p>
         ${fundingParagraph('Sakura')}
+        ${factsBlock({
+          industry: 'Sản xuất linh kiện',
+          headquarters: 'Aichi, Nhật Bản',
+          size: '1000+',
+          website: 'https://sakura-mfg.example.jp',
+        })}
         <p>Nhà máy tại Aichi hiện vận hành ba dây chuyền&nbsp;lắp ráp.</p>
         </div></body></html>`,
     },
   },
 
+  /**
+   * Nimbus' facts match its seeded profile in BOTH variants, deliberately: it is the T-6/T-7
+   * company (empty next step → the system fills it in), and a profile proposal in its queue
+   * would put a second thing on screen during that demo. It is also the case that proves the
+   * G3 gate fires — same value as the profile, so nothing is proposed.
+   */
   [NIMBUS]: {
     before: {
       sourceUrl: 'https://nimbus.example.sg/press',
       rawHtml: `<html><body><article>
         <h2>Nimbus Cloud Solutions</h2>
         <p>Nimbus cung cấp dịch vụ tích hợp hệ thống cho khách hàng khu vực ASEAN.</p>
+        ${factsBlock({
+          industry: 'Tích hợp hệ thống',
+          headquarters: 'Singapore',
+          size: '100-500',
+          website: 'https://nimbus.example.sg',
+        })}
         </article></body></html>`,
     },
     after: {
@@ -82,20 +141,49 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <p>Nimbus cung cấp dịch vụ tích hợp hệ thống cho khách hàng khu vực ASEAN.</p>
         <p>Nimbus bổ nhiệm bà Tan Wei Ling làm Giám đốc Công nghệ mới từ tháng này.</p>
         <ul><li>Công ty cũng đang tuyển thêm 40 kỹ sư nền tảng trong năm nay.</li></ul>
+        ${factsBlock({
+          industry: 'Tích hợp hệ thống',
+          headquarters: 'Singapore',
+          size: '100-500',
+          website: 'https://nimbus.example.sg',
+        })}
         </article></body></html>`,
     },
   },
 
+  /**
+   * Kitefin is the "empty cell" case: its seeded `website` is NULL while the page states one,
+   * so the queue gets a proposal that FILLS a blank rather than overwriting a value — the other
+   * half of what Specs group 3 asks for. Watched, like Sakura, so both halves are demonstrated
+   * on companies the watch cycle covers and neither depends on Marlin, which is first to be cut.
+   *
+   * Its `after` also carries an expansion into Japan while the company is headquartered in the
+   * United States — the trap that made ADR-0024 necessary. Nothing may read that sentence as a
+   * `country` change, and the facts block is what keeps `country` anchored to `Hoa Kỳ`.
+   */
   [KITEFIN]: {
     before: {
       sourceUrl: 'https://kitefin.example.com/blog',
-      rawHtml: `<html><body><p>Kitefin Analytics giúp doanh nghiệp đo lường hiệu quả vận hành.</p></body></html>`,
+      rawHtml: `<html><body><p>Kitefin Analytics giúp doanh nghiệp đo lường hiệu quả vận hành.</p>
+        ${factsBlock({
+          industry: 'Phân tích dữ liệu',
+          headquarters: 'Boston, Hoa Kỳ',
+          size: '50-100',
+          website: 'https://kitefin.example.com',
+        })}
+        </body></html>`,
     },
     after: {
       sourceUrl: 'https://kitefin.example.com/blog',
       rawHtml: `<html><body>
         <p>Kitefin Analytics giúp doanh nghiệp đo lường hiệu quả vận hành.</p>
         <p>Kitefin mở rộng sang thị trường Nhật Bản với văn phòng đầu tiên tại Tokyo.</p>
+        ${factsBlock({
+          industry: 'Phân tích dữ liệu',
+          headquarters: 'Boston, Hoa Kỳ',
+          size: '50-100',
+          website: 'https://kitefin.example.com',
+        })}
         </body></html>`,
     },
   },
@@ -114,6 +202,12 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
       rawHtml: `<html><body><section>
         <h1>Marlin Product Labs</h1>
         <p>Marlin phát triển bộ công cụ quản lý kho theo mô hình thuê bao cho ngành bán lẻ.</p>
+        ${factsBlock({
+          industry: 'Phần mềm đóng gói',
+          headquarters: 'Singapore',
+          size: '50-100',
+          website: 'https://marlin-labs.example.com',
+        })}
         </section></body></html>`,
     },
     after: {
@@ -122,6 +216,12 @@ const SNAPSHOTS: Record<string, Record<SnapshotVariant, Snapshot>> = {
         <h1>Marlin Product Labs</h1>
         <p>Marlin phát triển bộ công cụ quản lý kho theo mô hình thuê bao cho ngành bán lẻ.</p>
         ${fundingParagraph('Marlin')}
+        ${factsBlock({
+          industry: 'Phần mềm đóng gói',
+          headquarters: 'Singapore',
+          size: '50-100',
+          website: 'https://marlin-labs.example.com',
+        })}
         </section></body></html>`,
     },
   },

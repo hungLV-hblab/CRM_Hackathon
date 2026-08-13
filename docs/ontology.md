@@ -21,7 +21,7 @@ Người dùng: `Sales` (một tài khoản, sở hữu mọi công ty — khôn
 | --- | --- | --- |
 | `Observation` | bản lưu | `id`, `company_id`, `source_url`, `source_tier`, `captured_at`, `raw_html`, `raw_content`, `extractor_version`, `content_hash`, `fetch_status`. Bản chụp là HTML: `raw_html` giữ nguyên bản, `raw_content` là text trích ra đã chuẩn hoá — **offset câu trích và `content_hash` tính trên `raw_content`** ([ADR-0012](decisions/0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md)) |
 | `Claim` | phát hiện | `id`, `company_id`, `observation_id`, `statement`, `signal_type`, `confidence`, `quote_text`, `quote_start`, `quote_end`, `trigger_context` |
-| `Proposal` | gợi ý | `id`, `company_id`, `claim_id`, `proposal_type`, `target_field`, `current_value`, `proposed_value`, `impact_if_wrong`, `status` |
+| `Proposal` | gợi ý | `id`, `company_id`, `claim_id`, `proposal_type`, `target_field`, `opportunity_id`, `current_value`, `proposed_value`, `impact_if_wrong`, `status` |
 | `Provenance` | câu trích + vị trí | **Không phải bảng riêng — là ràng buộc.** Mọi `Claim` phải trỏ về `Observation` kèm `quote_start`/`quote_end`; mọi `Proposal` phải trỏ về `Claim`. Xem I-1, I-2 |
 
 ## 3. Đối tượng domain
@@ -72,7 +72,7 @@ Giao diện dùng từ tiếng Việt cột "Specs"; code/CSDL/API dùng tên c�
 | `stage` | `prospecting` · `qualified` · `drafting` · `negotiation` · `won` · `lost` · `on_hold` | Tiếp cận · Đủ điều kiện · Soạn đề xuất · Thương lượng · Thắng · Thua · Tạm dừng |
 | `signal_type` | `funding` · `leadership_hire` · `expansion` · `mass_hiring` · `new_business_line` · `other` | gọi vốn · nhân sự cấp cao · mở rộng · tuyển dụng · mảng kinh doanh mới · khác |
 | `confidence` | `certain` · `likely` · `speculative` | Chắc · Có thể · Đoán |
-| `proposal_type` | `field_update` · `timeline_entry` | sửa ô hồ sơ · thêm tin |
+| `proposal_type` | `field_update` · `timeline_entry` · `next_step` | sửa ô hồ sơ · thêm tin · đặt Việc tiếp theo |
 | `proposal_status` | `pending` · `decided` | Chờ duyệt · Đã quyết |
 | `decision` | `accept` · `edit` · `reject` | Duyệt · Sửa rồi duyệt · Bỏ |
 | `reject_reason` | `wrong_info` · `irrelevant` · `outdated` · `misread_context` · `other` | thông tin sai · đúng nhưng không liên quan · đã cũ · hiểu sai ngữ cảnh · khác |
@@ -82,6 +82,8 @@ Giao diện dùng từ tiếng Việt cột "Specs"; code/CSDL/API dùng tên c�
 | `fetch_status` | `ok` · `failed` | nguồn không đọc được thì ghi `failed`, **không đoán** |
 
 **Bẫy đặt tên:** giai đoạn "Soạn đề xuất" **không** được đặt là `proposal` — trùng với đối tượng `Proposal` (gợi ý của AI). Dùng `drafting`.
+
+`next_step` là loại thứ ba, do I-7 mở ra ([ADR-0023](decisions/0023-goi-y-viec-tiep-theo-la-proposal-type-thu-ba-kem-cot-opportunity-id.md)): nhóm 4 gặp ô `next_step_source = human` thì **không đè**, sinh gợi ý thay vì tự ghi. Nó **không phải ngoại lệ của I-11** — I-11 nói về whitelist ô **hồ sơ công ty**, còn loại này nhắm vào `opportunities.next_step_text` và **bắt buộc** mang `opportunity_id` (một công ty có thể có nhiều cơ hội mở; gợi ý không nói được cho cơ hội nào thì không quyết được). Ràng buộc CHECK ghim cả ba loại: mỗi loại một hình dạng `(target_field, opportunity_id)`, không loại nào mượn được hình dạng của loại khác.
 
 `proposal_status` **chỉ có hai giá trị, không phải bản sao của `decision`** — nó là cờ hàng đợi. Mọi **con số** (auto-accept rate, error-detection rate, tỉ lệ `edit`) đọc từ `ProposalDecision`, nên chỉ có một nguồn sự thật và I-12 tự đúng. `pending` cũng là `DEFAULT` của cột, và cột này **vắng** khỏi `GRANT INSERT` của `crm_system` → CSDL tự bảo đảm mọi gợi ý AI sinh ra đều chờ người duyệt ([ADR-0016](decisions/0016-proposal-status-chi-hai-gia-tri-moi-con-so-do-lay-tu-proposal-decisions.md), [ADR-0015](decisions/0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md)).
 
@@ -185,7 +187,7 @@ Hiện trên bảng điều khiển Quản trị **đúng tên này**, không đ
 | Thời gian quyết trung bình | trung vị `seconds_to_decide` | **Chỉ đọc cùng error-detection rate** — thấp có thể là giao diện tốt, cũng có thể là bấm mù |
 | Tỉ lệ hoàn tác | `undone / tổng AutoNextStepEvent` | Vùng 3 có đáng tin không |
 
-Mốc bắt đầu đo `seconds_to_decide`: **lúc mở màn hình hàng đợi** (gợi ý hiện đủ tại chỗ nên không có động tác "mở gợi ý").
+Mốc bắt đầu đo `seconds_to_decide`: **lúc rảnh tay** — lúc mở màn hình hàng đợi với gợi ý đầu tiên, và lúc quyết xong gợi ý trước với mỗi gợi ý tiếp theo. Gợi ý hiện đủ tại chỗ nên không có động tác "mở gợi ý" để bấm mốc; nhưng một mốc **chung** cho cả lượt sẽ làm trung vị thành hàm của độ dài hàng đợi, không còn là thời gian quyết một gợi ý ([ADR-0025](decisions/0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md)). Duyệt liên tiếp 6 gợi ý thu được **6 khoảng**, không phải một khoảng cộng dồn. Mốc **kết thúc** theo [ADR-0008](decisions/0008-bo-goi-y-bang-menu-ly-do-tai-cho.md): nhánh Bỏ tính tới **lúc chọn lý do**, không phải lúc bấm nút Bỏ. Reload trang giữa lúc quyết thì mốc mất → cột **để trống**, không gửi số bịa.
 
 ## 8. Chuỗi dẫn xuất tài liệu
 

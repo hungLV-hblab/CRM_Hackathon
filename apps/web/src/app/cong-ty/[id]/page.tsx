@@ -7,6 +7,10 @@ import { useParams } from 'next/navigation'
 import type { IngestResultDto } from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
+import {
+  PendingProposalMarker,
+  usePendingProposalCounts,
+} from '@/components/proposal/pending-proposal-marker'
 import { Button } from '@/components/ui/button'
 import { CompanyProfileSection } from './company-profile-section'
 import { ContactSection } from './contact-section'
@@ -44,11 +48,16 @@ export default function CompanyDetailPage() {
     queryFn: () => api.readingZone(companyId),
   })
 
+  /** Specs group 3: this screen says when something is waiting, so nobody has to remember. */
+  const pendingProposals = usePendingProposalCounts()
+
   const ingest = useMutation({
     mutationFn: (variant: 'before' | 'after') =>
       api.ingestSnapshot(companyId, { variant, triggerContext: 'manual_ingest' }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['reading-zone', companyId] })
+      // Reading a source can raise suggestions, so the marker below is stale from this moment.
+      await queryClient.invalidateQueries({ queryKey: ['pending-proposals'] })
     },
   })
 
@@ -61,7 +70,10 @@ export default function CompanyDetailPage() {
           </Link>
           <h1 className="mt-1 text-2xl font-semibold">{company?.name ?? 'Công ty'}</h1>
         </div>
-        {company?.isWatched ? <Badge tone="fact">Đang theo dõi</Badge> : null}
+        <div className="flex items-center gap-2">
+          <PendingProposalMarker count={pendingProposals[companyId]} />
+          {company?.isWatched ? <Badge tone="fact">Đang theo dõi</Badge> : null}
+        </div>
       </header>
 
       {company && <CompanyProfileSection company={company} />}

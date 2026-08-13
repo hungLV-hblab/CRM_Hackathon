@@ -8,6 +8,10 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { COMPANY_TYPE, type CreateCompanyDto, type ListCompaniesQuery } from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
+import {
+  PendingProposalMarker,
+  usePendingProposalCounts,
+} from '@/components/proposal/pending-proposal-marker'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input, Select } from '@/components/ui/input'
@@ -40,6 +44,8 @@ export default function CompanyListPage() {
    * empties the other dropdown.
    */
   const allCompanies = useQuery({ queryKey: ['companies', {}], queryFn: () => api.listCompanies() })
+  /** Specs group 3: the list must show which companies have something waiting for a decision. */
+  const pendingProposals = usePendingProposalCounts()
   const industries = useMemo(
     () => unique((allCompanies.data ?? []).map((row) => row.industry)),
     [allCompanies.data],
@@ -82,6 +88,9 @@ export default function CompanyListPage() {
           </Button>
           <Button variant="ghost" onClick={() => router.push('/co-hoi')}>
             Cơ hội
+          </Button>
+          <Button variant="ghost" onClick={() => router.push('/hang-doi')}>
+            Hàng đợi gợi ý
           </Button>
           <Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>
           <Button variant="ghost" onClick={onLogout}>
@@ -172,7 +181,7 @@ export default function CompanyListPage() {
       )}
 
       {companies.data && companies.data.length > 0 && (
-        <Table headers={['Tên', 'Ngành', 'Loại hình', 'Quốc gia', 'Theo dõi']}>
+        <Table headers={['Tên', 'Ngành', 'Loại hình', 'Quốc gia', 'Theo dõi', 'Gợi ý']}>
           {companies.data.map((company) => (
             <tr key={company.id}>
               <Cell>
@@ -190,6 +199,9 @@ export default function CompanyListPage() {
                 {company.country ?? <span className="text-ink-500">Chưa ghi quốc gia</span>}
               </Cell>
               <Cell>{company.isWatched ? <Badge tone="fact">Đang theo dõi</Badge> : null}</Cell>
+              <Cell>
+                <PendingProposalMarker count={pendingProposals[company.id]} />
+              </Cell>
             </tr>
           ))}
         </Table>

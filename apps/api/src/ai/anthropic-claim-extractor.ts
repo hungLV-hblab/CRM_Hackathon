@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import {
   CONFIDENCE,
+  PROPOSAL_TARGET_FIELDS,
   SIGNAL_TYPE,
   type ClaimDraft,
   type ClaimExtractor,
@@ -41,6 +42,17 @@ const claimDraftSchema = z.object({
   signalType: z.enum(enumCodes(SIGNAL_TYPE)),
   confidence: z.enum(enumCodes(CONFIDENCE)),
   quoteText: z.string().trim().min(1),
+  /**
+   * ADR-0024. Optional, and `targetField` is validated against the I-11 whitelist by
+   * `ProposalService`, not here: a model naming a field it may not touch must show up as a
+   * refusal that is counted, not as a parse failure that silently drops the whole finding.
+   */
+  fieldSuggestion: z
+    .object({
+      targetField: z.enum(PROPOSAL_TARGET_FIELDS),
+      proposedValue: z.string().trim().min(1),
+    })
+    .optional(),
 })
 
 const responseSchema = z.object({ claims: z.array(claimDraftSchema) })
@@ -61,7 +73,14 @@ Câu trích thì giữ nguyên ngôn ngữ của nguồn, vì nó phải khớp 
 - likely: suy ra một bước từ nguồn
 - speculative: phải đoán thêm
 
-Chỉ trả JSON: {"claims":[{"statement","signalType","confidence","quoteText"}]}
+GỢI Ý SỬA Ô HỒ SƠ (không bắt buộc, thêm "fieldSuggestion" vào phát hiện):
+- Chỉ khi bản chụp nói rõ một trong bốn ô: ${PROPOSAL_TARGET_FIELDS.join(' | ')}.
+- CHỈ đề xuất khi ô đó đang TRỐNG hoặc giá trị hiện tại KHÁC với điều bản chụp ghi. Giá trị hiện tại được cung cấp bên dưới.
+- "proposedValue" PHẢI là một đoạn CẮT NGUYÊN VĂN từ chính "quoteText" của phát hiện đó. Viết lại là mất trắng: hệ thống bỏ phần đề xuất.
+- Không đề xuất tên công ty và không đề xuất loại hình công ty — hệ thống từ chối cả hai.
+- Tin mở rộng sang một thị trường KHÔNG phải là đổi quốc gia trụ sở. Chỉ đổi "country" khi bản chụp ghi trụ sở chính.
+
+Chỉ trả JSON: {"claims":[{"statement","signalType","confidence","quoteText","fieldSuggestion":{"targetField","proposedValue"}}]}
 signalType ∈ ${enumCodes(SIGNAL_TYPE).join(' | ')}
 Không có phát hiện nào thì trả {"claims":[]} — trả về rỗng là câu trả lời hợp lệ và tốt hơn là bịa.`
 
@@ -87,6 +106,11 @@ export class AnthropicClaimExtractor implements ClaimExtractor {
           content: [
             `Loại hình công ty: ${observation.companyType}`,
             `Ngữ cảnh sinh phát hiện: ${observation.triggerContext}`,
+            '',
+            'Giá trị hiện tại của bốn ô hồ sơ (dùng để biết ô nào trống hoặc đã cũ):',
+            ...PROPOSAL_TARGET_FIELDS.map(
+              (field) => `- ${field}: ${observation.currentProfile[field] ?? '(trống)'}`,
+            ),
             '',
             'Nội dung bản chụp:',
             observation.rawContent,
