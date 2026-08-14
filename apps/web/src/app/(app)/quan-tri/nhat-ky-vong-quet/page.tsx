@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
 
 import type { WatchCycleRunDto } from '@crm/contracts'
 
+import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api-client'
 
@@ -44,15 +44,9 @@ export default function WatchCycleLogPage() {
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <Link href="/dang-theo-doi" className="text-sm text-ink-600 underline underline-offset-2">
-            ← Đang theo dõi
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold">Nhật ký vòng quét</h1>
-        </div>
-        <Badge tone="system">Do hệ thống ghi</Badge>
-      </header>
+      {/* The "← Đang theo dõi" link that used to open this header is the shell's job now — the
+          sidebar reaches that screen in one press from here. */}
+      <PageHeader title="Nhật ký vòng quét" actions={<Badge tone="system">Do hệ thống ghi</Badge>} />
 
       <p className="text-sm text-ink-600">
         Mỗi vòng quét ghi một dòng, kể cả vòng bị bỏ nhịp — không có dòng thì không phân biệt được

@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import type { CompanyDto } from '@crm/contracts'
 
+import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, ApiError } from '@/lib/api-client'
@@ -49,20 +50,19 @@ export default function WatchedCompaniesPage() {
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <Link href="/cong-ty" className="text-sm text-ink-600 underline underline-offset-2">
-            ← Danh sách công ty
+      {/* The "← Danh sách công ty" link that used to open this header is the shell's job now:
+          the sidebar reaches every screen and the breadcrumb says where this one sits. */}
+      <PageHeader
+        title="Đang theo dõi"
+        actions={
+          <Link
+            href="/quan-tri/nhat-ky-vong-quet"
+            className="text-sm text-ink-600 underline underline-offset-2"
+          >
+            Nhật ký vòng quét →
           </Link>
-          <h1 className="mt-1 text-2xl font-semibold">Đang theo dõi</h1>
-        </div>
-        <Link
-          href="/quan-tri/nhat-ky-vong-quet"
-          className="text-sm text-ink-600 underline underline-offset-2"
-        >
-          Nhật ký vòng quét →
-        </Link>
-      </header>
+        }
+      />
 
       {/**
        * The delegation warning. Machine-hued because it describes what the MACHINE will do, and

@@ -94,7 +94,8 @@ Phương án bị loại: giữ *Đăng xuất* hiện sẵn ở header desktop.
 
 ### Sidebar
 
-- 8 mục: Công ty · **Đang theo dõi** · Cơ hội · Hàng đợi · Tổng quan · Thông báo · Quản trị · Hướng dẫn. *(Nhật ký vòng quét nằm **trong** Quản trị, không lên cấp 1.)* Con số 7 của bản 14/08 00:56 viết trước khi P7 chốt hai route mới.
+- 8 mục: Công ty · **Đang theo dõi** · Cơ hội · Hàng đợi · Tổng quan · Thông báo · **Nhật ký vòng quét** · Hướng dẫn. Con số 7 của bản 14/08 00:56 viết trước khi P7 chốt hai route mới.
+- Mục thứ 7 mang nhãn *Nhật ký vòng quét* chứ không phải *Quản trị*: P7 mới chỉ tạo `quan-tri/nhat-ky-vong-quet/`, chưa có `quan-tri/page.tsx`, nên nhãn *Quản trị* sẽ trỏ vào 404. Khi P8 dựng bảng điều khiển thì đổi nhãn về *Quản trị*, href lên `/quan-tri`, và nhật ký thành link bên trong màn đó.
 - **Icon Lucide kèm nhãn chữ** — icon-only nav vi phạm `nav-label-icon`, và ở đây còn tệ hơn: 8 icon không nhãn thì Sales phải đoán.
 - Active: `usePathname()` + `aria-current="page"`. Màu không được là kênh duy nhất → active có cả nền `ink-100` **và** thanh chỉ thị.
 - Badge số trên *Hàng đợi*: dùng lại `usePendingProposalCounts()` từ `components/proposal/pending-proposal-marker.tsx`. **Không viết query mới.**
