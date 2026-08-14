@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Tìm nhiều nguồn — web_search, ứng viên, phân cấp"
-status: pending
+status: done
 priority: P2
 dependencies: [2]
 ---
