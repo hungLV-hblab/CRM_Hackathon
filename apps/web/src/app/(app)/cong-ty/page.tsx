@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { FilterBar, type FilterChip } from '@/components/ui/filter-bar'
 import { Input, Select } from '@/components/ui/input'
-import { Cell, Table } from '@/components/ui/table'
+import { Cell, Table, type TableSort } from '@/components/ui/table'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageBody } from '@/components/shell/page-body'
@@ -61,6 +61,39 @@ export default function CompanyListPage() {
     () => unique((allCompanies.data ?? []).map((row) => row.country).filter(Boolean) as string[]),
     [allCompanies.data],
   )
+
+  /**
+   * The screen owns the order, not the Table. A component that sorts its own rows becomes a
+   * second source of truth about sequence, free to disagree with whatever the server sent —
+   * so `Table` reports the click and this decides what it means.
+   *
+   * Vietnamese collation is explicit: the default comparison puts Đ after D-with-anything and
+   * gets the vowels with diacritics wrong, which for a list of Vietnamese company names is
+   * simply the wrong alphabet.
+   */
+  const [sort, setSort] = useState<TableSort | undefined>(undefined)
+
+  function toggleSort(key: string) {
+    setSort((current) =>
+      current?.key === key
+        ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: 'asc' },
+    )
+  }
+
+  const sorted = useMemo(() => {
+    const rows = companies.data ?? []
+    if (!sort) return rows
+    const factor = sort.direction === 'asc' ? 1 : -1
+    return [...rows].sort(
+      (a, b) =>
+        factor *
+        String(a[sort.key as 'name' | 'industry']).localeCompare(
+          String(b[sort.key as 'name' | 'industry']),
+          'vi',
+        ),
+    )
+  }, [companies.data, sort])
 
   const createCompany = useMutation({
     mutationFn: api.createCompany,
@@ -171,8 +204,20 @@ export default function CompanyListPage() {
       )}
 
       {companies.data && companies.data.length > 0 && (
-        <Table headers={['Tên', 'Ngành', 'Loại hình', 'Quốc gia', 'Theo dõi', 'Gợi ý']}>
-          {companies.data.map((company) => (
+        <Table
+          caption={`Danh sách công ty — ${companies.data.length} dòng`}
+          sort={sort}
+          onSort={toggleSort}
+          headers={[
+            { label: 'Tên', width: '28%', sortKey: 'name' },
+            { label: 'Ngành', sortKey: 'industry' },
+            'Loại hình',
+            'Quốc gia',
+            'Theo dõi',
+            'Gợi ý',
+          ]}
+        >
+          {sorted.map((company) => (
             <tr key={company.id}>
               <Cell>
                 <Link

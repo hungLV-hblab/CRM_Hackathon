@@ -295,3 +295,45 @@ test('ô nhập, ô chọn và checkbox đều đạt vùng chạm 44px', async 
   const box = await checkbox.boundingBox()
   expect(box!.height).toBeGreaterThanOrEqual(44)
 })
+
+test('header của bảng dính được thật — hộp bọc có trần chiều cao và tự cuộn', async ({ page }) => {
+  /**
+   * The comment in `table.tsx` promised a sticky header for months while the behaviour did not
+   * exist: the wrapper declared only `overflow-x-auto` and no height limit, so its height always
+   * equalled the table's, nothing ever scrolled inside it, and `sticky top-0` had no scroll to
+   * stick against. The page scrolled instead and the column titles left the screen.
+   *
+   * Asserted as the MECHANISM rather than by scrolling, deliberately: the seed has five
+   * companies, so a scroll assertion would pass on an empty gesture and prove nothing about a
+   * long list. What broke was the container, so the container is what gets measured.
+   */
+  await login(page)
+
+  const wrapper = page.locator('table').first().locator('..')
+  expect(await styleOf(wrapper, 'overflow-y')).toBe('auto')
+  expect(await styleOf(wrapper, 'max-height')).not.toBe('none')
+
+  const thead = page.locator('table thead').first()
+  expect(await styleOf(thead, 'position')).toBe('sticky')
+  // An opaque background is part of it: without one, rows scroll THROUGH the header.
+  expect(await styleOf(thead, 'background-color')).not.toBe('rgba(0, 0, 0, 0)')
+})
+
+test('cột số có header căn phải khớp với ô, và sắp xếp báo được aria-sort', async ({ page }) => {
+  await login(page)
+  await page.goto('/tong-quan')
+
+  // The cells were right-aligned and the headers were not, so the column had nothing to line up
+  // against — the one place in a table where alignment is information rather than taste.
+  const numericHeader = page.getByRole('columnheader', { name: 'Số cơ hội' }).first()
+  expect(await styleOf(numericHeader, 'text-align')).toBe('right')
+
+  await page.goto('/cong-ty')
+  // Only the SORTED state has to be announced — an unsorted column legitimately carries no
+  // `aria-sort` at all, so there is nothing to assert before the first click.
+  const sortable = page.getByRole('columnheader', { name: 'Tên' })
+  await sortable.getByRole('button').click()
+  await expect(sortable).toHaveAttribute('aria-sort', 'ascending')
+  await sortable.getByRole('button').click()
+  await expect(sortable).toHaveAttribute('aria-sort', 'descending')
+})

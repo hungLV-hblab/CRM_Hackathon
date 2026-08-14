@@ -195,16 +195,19 @@ function PipelineBlock({ data }: { data: OverviewDto }) {
       <h2 className="text-section font-semibold text-ink-900">
         Cơ hội theo giai đoạn
       </h2>
-      <Table headers={['Giai đoạn', 'Số cơ hội', 'Tổng giá trị']}>
+      <Table
+        caption="Cơ hội theo giai đoạn"
+        headers={[
+          'Giai đoạn',
+          { label: 'Số cơ hội', align: 'right' },
+          { label: 'Tổng giá trị', align: 'right' },
+        ]}
+      >
         {data.pipelineByStage.map((row) => (
           <tr key={row.stage}>
             <Cell>{STAGE[row.stage]}</Cell>
-            <Cell>
-              <span className="tabular">{row.count}</span>
-            </Cell>
-            <Cell>
-              <span className="tabular">{Number(row.totalValue).toLocaleString('vi-VN')} ₫</span>
-            </Cell>
+            <Cell numeric>{row.count}</Cell>
+            <Cell numeric>{Number(row.totalValue).toLocaleString('vi-VN')} ₫</Cell>
           </tr>
         ))}
       </Table>
@@ -232,13 +235,11 @@ function IndustryBlock({ data }: { data: OverviewDto }) {
       <h2 className="text-section font-semibold text-ink-900">
         Công ty theo ngành
       </h2>
-      <Table headers={['Ngành', 'Số công ty']}>
+      <Table caption="Công ty theo ngành" headers={['Ngành', { label: 'Số công ty', align: 'right' }]}>
         {data.companiesByIndustry.map((row) => (
           <tr key={row.industry}>
             <Cell>{row.industry}</Cell>
-            <Cell>
-              <span className="tabular">{row.count}</span>
-            </Cell>
+            <Cell numeric>{row.count}</Cell>
           </tr>
         ))}
       </Table>
@@ -253,13 +254,11 @@ function LostReasonBlock({ data }: { data: OverviewDto }) {
       {data.lostReasons.length === 0 ? (
         <EmptyState message="Chưa có cơ hội Thua nào có lý do được ghi." icon={CircleCheck} />
       ) : (
-        <Table headers={['Lý do', 'Số cơ hội']}>
+        <Table caption="Lý do thua" headers={['Lý do', { label: 'Số cơ hội', align: 'right' }]}>
           {data.lostReasons.map((row) => (
             <tr key={row.reason}>
               <Cell>{row.reason}</Cell>
-              <Cell>
-                <span className="tabular">{row.count}</span>
-              </Cell>
+              <Cell numeric>{row.count}</Cell>
             </tr>
           ))}
         </Table>
