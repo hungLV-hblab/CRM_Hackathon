@@ -48,7 +48,11 @@ const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
 const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const settings = new SystemSettingService(appConnection.db, systemConnection.db)
+const settings = new SystemSettingService(
+  appConnection.db,
+  systemConnection.db,
+  new AuditEventService(appConnection.db, systemConnection.db),
+)
 const snapshots = new DemoSnapshotSource()
 
 /** The real chain, group 4 → group 3 → group 5. A stub anywhere here proves nothing about I-5. */

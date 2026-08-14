@@ -16,6 +16,7 @@ import { DbModule } from './common/db/db.module'
 import { DemoController } from './demo/demo.controller'
 import { DemoSnapshotService } from './demo/demo-snapshot-service'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
+import { MetricsModule } from './domain/metrics/metrics.module'
 import { NotificationController } from './domain/notification/notification.controller'
 import { NotificationService } from './domain/notification/notification-service'
 import { ObservationController } from './domain/observation/observation.controller'
@@ -41,7 +42,7 @@ import { WatchLogModule } from './watch/watch-log.module'
  * nobody ends up with two watch cycles by scaling the API container.
  */
 @Module({
-  imports: [DbModule, AuthModule, WatchLogModule],
+  imports: [DbModule, AuthModule, MetricsModule, WatchLogModule],
   controllers: [
     AutoNextStepController,
     CompanyController,

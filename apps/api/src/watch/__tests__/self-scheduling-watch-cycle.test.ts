@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import type { IngestResultDto } from '@crm/contracts'
 import { createConnection, resetTestDatabase } from '@crm/db'
 
+import { AuditEventService } from '../../common/audit/audit-event-service'
 import type { ObservationService } from '../../domain/observation/observation-service'
 import { SystemSettingService } from '../../settings/system-setting-service'
 import type { WatchCycleRollup } from '../watch-cycle-rollup'
@@ -49,7 +50,11 @@ const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
 const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const settings = new SystemSettingService(appConnection.db, systemConnection.db)
+const settings = new SystemSettingService(
+  appConnection.db,
+  systemConnection.db,
+  new AuditEventService(appConnection.db, systemConnection.db),
+)
 
 let worker: WatchCycleService
 
