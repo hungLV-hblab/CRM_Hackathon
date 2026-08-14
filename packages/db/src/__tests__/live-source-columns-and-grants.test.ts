@@ -256,3 +256,67 @@ describe('company_sources — the read list is human-owned, and the grant says s
     ).rejects.toThrow(/company_sources_source_tier_check/i)
   })
 })
+
+describe('company_source_candidates — the AI cannot see its own suggestion list', () => {
+  it('19 · crm_app can add a candidate', async () => {
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url, source_tier, reason, snippet, found_by)
+         VALUES ($1, 'https://example.test/candidate', 'news', 'Bài viết nhắc tên công ty', 'Trích đoạn', $2)`,
+        [COMPANY_ID, USER_ID],
+      ),
+    ).resolves.toBeTruthy()
+  })
+
+  it('20 · crm_system SELECT is refused — a suggestion list is nothing the crawler acts on', async () => {
+    /**
+     * The difference from test 15 stated as a privilege. `company_sources` answers "which pages
+     * do I fetch", which the crawler genuinely has to know. This table answers "which pages might
+     * someone tick later", and a reader that consulted it would be reading a page nobody kept.
+     * Granting SELECT here for symmetry would collapse the two-step into one.
+     */
+    await expect(
+      system.query('SELECT url FROM company_source_candidates'),
+    ).rejects.toThrow(/permission denied/i)
+  })
+
+  it('21 · crm_system INSERT, UPDATE and DELETE are all refused', async () => {
+    // Nothing granted means all four refused, and all four are asserted rather than sampled:
+    // the guarantee is "no privilege on this table", not "no INSERT".
+    await expect(
+      system.query(
+        `INSERT INTO company_source_candidates (company_id, url, reason)
+         VALUES ($1, 'https://example.test/ai-suggested-itself', 'vì AI muốn')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(
+      system.query(`UPDATE company_source_candidates SET url = 'https://elsewhere.test'`),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(system.query('DELETE FROM company_source_candidates')).rejects.toThrow(
+      /permission denied/i,
+    )
+  })
+
+  it('22 · the same URL cannot be suggested twice for one company', async () => {
+    // A second search returning a URL already on the list must not double the row a person reads.
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url, reason)
+         VALUES ($1, 'https://example.test/candidate', 'lý do khác')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/company_source_candidates_company_id_url_unique|duplicate key/i)
+  })
+
+  it('23 · a candidate with no reason is refused — the reason is what a person decides on', async () => {
+    // Rule 4 where it costs the most: a row offered for a decision, carrying no grounds for it.
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url)
+         VALUES ($1, 'https://example.test/no-reason')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/reason/i)
+  })
+})
