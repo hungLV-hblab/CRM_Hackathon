@@ -72,6 +72,23 @@ test('T-3 · bấm phát hiện mở đúng đoạn nguồn và có đánh dấu
     timeout: INGEST_TIMEOUT,
   })
 
+  /**
+   * ── Added by phase 2 of the live-source work. Nothing above was changed ────────────────────
+   * Rule 2 applies to the SOURCE, not only to fact-versus-inference: a snapshot the team vetted
+   * and a public page nobody has read carry different weight, and the difference has to be
+   * visible without opening anything. This company reads a stored snapshot, so both labels are
+   * the snapshot ones — the assertion that matters is that the labels EXIST and say which.
+   *
+   * Scoped to one card: the read zone lists a card per snapshot, and a page-wide `getByText`
+   * would pass on any of them.
+   */
+  const labelledCard = page.locator('article', { hasText: 'Vùng đọc — do AI sinh' }).first()
+  await expect(labelledCard.getByText('Bản chụp', { exact: true })).toBeVisible()
+  await expect(labelledCard.getByText('Trang công ty', { exact: true })).toBeVisible()
+  // The live label must NOT appear on a snapshot read — the two are a distinction or they are
+  // decoration.
+  await expect(labelledCard.getByText('Nguồn thật', { exact: true })).toHaveCount(0)
+
   // Every finding is rendered WITH a way back to its source. There is no branch that renders a
   // statement without one, which is rule 1 enforced at the component layer.
   const openSource = page.getByRole('button', { name: 'Xem câu trích trong nguồn' }).first()

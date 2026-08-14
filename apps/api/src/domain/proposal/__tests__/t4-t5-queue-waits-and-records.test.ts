@@ -17,6 +17,7 @@ import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 import { WatchCycleRollup } from '../../../watch/watch-cycle-rollup'
 import { WatchCycleService } from '../../../watch/watch-cycle-service'
+import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * T-4 and T-5 — the two acceptance checks of feature group 3.
@@ -70,6 +71,7 @@ function buildIngest(): ObservationService {
       proposalService,
       new SystemTimelineEntryService(systemConnection.db),
     ),
+    liveSourceThatMustNotRun(),
   )
 }
 

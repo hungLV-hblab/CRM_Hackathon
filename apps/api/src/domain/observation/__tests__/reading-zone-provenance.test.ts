@@ -14,6 +14,7 @@ import { ObservationService } from '../observation-service'
 import { ProposalService } from '../../proposal/proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
+import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * Feature group 2 end to end, against a REAL database and with no network: the extractor is
@@ -69,6 +70,7 @@ function buildService(extractor: ClaimExtractor): {
     snapshots,
     settings,
     reactions,
+    liveSourceThatMustNotRun(),
   )
   return { observations, claims }
 }

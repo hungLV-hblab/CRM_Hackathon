@@ -21,6 +21,9 @@ const EMPTY_INGEST: IngestResultDto = {
   claimsDroppedNoVerbatimQuote: 0,
   claimsDowngradedFromCertain: 0,
   systemEntriesAdded: 0,
+  /** One source asked, none of them broken — the shape a snapshot company always produces. */
+  sourcesAttempted: 1,
+  sourcesFailed: 0,
 }
 
 /**

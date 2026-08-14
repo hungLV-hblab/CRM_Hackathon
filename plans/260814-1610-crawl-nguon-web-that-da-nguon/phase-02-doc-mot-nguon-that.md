@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Đọc một nguồn thật — SSRF, timeout, phân loại lỗi"
-status: pending
+status: done
 priority: P1
 dependencies: [1]
 ---
@@ -56,6 +56,9 @@ LiveCrawlSource        -- ghép hai cái, đọc env.        Test: mock hai mả
 | Quá ~512KB | `too_large` | Trang quá lớn để đọc an toàn |
 | Cửa gác SSRF chặn | `blocked_url` | Địa chỉ không được phép đọc |
 | URL không parse được / thiếu | `invalid_url` | Địa chỉ nguồn không hợp lệ |
+| **Không phân giải được tên miền / kết nối bị từ chối / TLS hỏng** | `unreachable` | Không kết nối được tới trang |
+
+> **Dòng cuối thêm lúc thi công (D5), không có trong bản plan.** Chín giá trị đầu được chốt trước khi có dòng code nào mở socket và **không có ô nào** cho một tên miền không phân giải được. Hai ô gần nhất đều nói sai với người đọc: `timeout` là "Trang không phản hồi kịp" trong khi kết nối bị từ chối sau 3ms, còn `invalid_url` bảo Sales đi sửa một địa chỉ đúng mà chỉ đang chết. Migration `0009` mở rộng `CHECK` — chỉ cộng thêm.
 
 `js_required` là giá trị **đắt nhất** của bảng này: nó chính là thứ phân biệt *"không đọc được vì lỗi"* với *"nguồn thật sự không có gì"* — đúng câu Sales Manager chất vấn ở [prompt log mục 2](../../docs/ai-sessions/260814-1124-req-crawl-web-that.md).
 
@@ -142,6 +145,33 @@ Commit. **Đây là điểm dừng an toàn** — quyết định có làm P3 ha
 - [ ] Vùng đọc phân biệt được loại nguồn / cấp nguồn / lý do hỏng bằng mắt; qua checklist mục 7
 - [ ] `pnpm test` đủ bộ xanh, gồm T-1…T-10; **không** test nào gọi mạng
 - [ ] `.env.example` khai `OBSERVATION_SOURCE` kèm cảnh báo mặc định tắt
+
+## Đã chạy — 14/08
+
+**Xanh. 414 unit test (baseline P1 337, cộng đúng 77 test mới), 0 hồi quy.** 39 e2e xanh, `docker compose build` xanh. `typecheck` · `lint` sạch cả 4 project.
+
+| Test mới | Số assertion | Đo gì |
+| --- | --- | --- |
+| `apps/api/src/ai/__tests__/assert-public-url.test.ts` | 42 | Bảng chặn: 20 dạng địa chỉ nội bộ · **5 cách viết loopback** (thập phân, bát phân, hex, rút gọn, percent-encode) · 5 scheme lạ · 3 ca thông tin đăng nhập · 4 ca không phân tích được |
+| `apps/api/src/ai/__tests__/fetch-page.test.ts` | 14 | Http server cục bộ: 200 · 200 rỗng · 403/404/500 · chuỗi chuyển hướng trong và ngoài hạn mức · **cửa gác được hỏi lại ở từng hop** · không phải HTML · quá cỡ theo header **và** theo dòng byte · treo quá hạn · cổng đóng · chuỗi không phải URL |
+| `apps/api/src/ai/__tests__/live-crawl-source.test.ts` | 11 | Thứ tự cửa gác trước request (**`fetchPage` đếm 0**) · URL sau chuyển hướng là URL được lưu · normalize rỗng → `js_required` · 7 lý do đi xuyên không bị dán nhãn lại |
+| `apps/api/src/domain/observation/__tests__/live-crawl-ingest.test.ts` | 10 | **Bộ nghiệm thu bất khả xâm phạm**: công ty seed + `OBSERVATION_SOURCE=live_crawl` → `demo_snapshot` và crawler đếm **0** · đường đọc thật ghi đúng `source_kind` · I-3 theo URL trên nhánh thật · 3 loại lỗi → 0 `Claim` · website trống → `invalid_url` · công tắc tắt và biến môi trường trống đều đóng đường |
+
+Kiểm chứng test có răng: đảo bốn chỗ trong code sản phẩm (bỏ dải link-local · chỉ hỏi cửa gác ở hop đầu · bỏ dòng đếm byte · bỏ nhánh `js_required`) → **đúng 4 test đỏ, không lệch cái nào**, rồi khôi phục.
+
+### Bốn chỗ làm khác plan, và lý do
+
+| | Chỗ lệch | Lý do |
+| --- | --- | --- |
+| **D5** | Bảng lỗi có **mười** giá trị, không phải chín. Thêm `unreachable` + migration `0009` | Danh sách chín được chốt trước khi có dòng code nào mở socket, và nó **không có ô nào** cho DNS không phân giải / kết nối bị từ chối / bắt tay TLS hỏng. Hai ô gần nhất đều nói sai: `timeout` là "Trang không phản hồi kịp" trong khi kết nối bị từ chối sau 3ms, `invalid_url` bảo người ta đi sửa một địa chỉ đúng mà chỉ đang chết. Luật 4 — một dòng sai tệ hơn một dòng trống. Migration chỉ thay `CHECK`, không đụng dữ liệu |
+| **D6** | `fetchPage` **có** gọi cửa gác — nhận `assertAllowed` là tham số **bắt buộc** và hỏi lại ở **từng hop chuyển hướng** | Bản plan để `fetchPage` không gọi cửa gác chút nào, để test dùng được `127.0.0.1`. Nhưng thế thì một URL công khai 302 sang `169.254.169.254` đi lọt — đúng bài SSRF sách giáo khoa. Cách giữ cả hai: cửa gác vẫn là hàm thuần và vẫn được truyền vào, nhưng **bắt buộc**, nên việc bỏ qua nó là một dòng nhìn thấy được trong file test (`ALLOW_LOOPBACK`) chứ không phải thứ code sản phẩm quên được. Vì vậy chuyển hướng đi theo tay, không dùng `redirect: 'follow'` — bản dựng sẵn không có chỗ nào để hỏi |
+| **D7** | `IngestResultDto` thêm `sourcesAttempted` · `sourcesFailed` | Một `fetchStatus` đủ khi mỗi công ty có đúng một nguồn. Nó **không nói được** "2 trong 3 trang trả lời", và làm tròn thành `ok` sẽ giấu một nguồn chết cả tuần sau một kết quả xanh. Chỉ **thêm** field, không đổi nghĩa field nào đang có, nên giao diện và e2e cũ không phải sửa |
+| **D8** | Test cũ nhận `liveSourceThatMustNotRun()` — một `LiveCrawlSource` **ném lỗi nếu bị chạm** | `ObservationService` có tham số thứ 8. Đưa cho test cũ một reader chạy được thì câu "test này có đọc mạng không" thành thứ phải suy luận; đưa reader nổ thì nó thành một assertion đỏ có stack trace. T-1…T-10 chạy trên công ty seed, mà I-16 nói seed không bao giờ được crawl, nên số lần đọc thật đúng của mọi test đó là **0** |
+
+### Chưa làm được ở P2, nói thẳng
+
+- **"Một URL hỏng không làm hỏng URL khác"** — vòng lặp và phần tổng hợp đã có và đã test cho ca một nguồn, nhưng **chưa chứng minh được** vì danh sách URL của P2 luôn đúng một phần tử (`companies.website`). Ca thật xuất hiện ở P3 cùng `company_sources`; tiêu chí này chuyển sang P3.
+- **Chống DNS rebinding** ngoài phạm vi: cửa gác là hàm thuần nên không phân giải tên miền, một hostname công khai trỏ về `127.0.0.1` vẫn lọt. Đã ghi thẳng giới hạn này trong `assert-public-url.ts`. Đóng nó cần kiểm địa chỉ đã phân giải lúc kết nối — là I/O, và thuộc `fetchPage`. Rủi ro còn lại bị chặn bởi chính hình dạng tính năng: một cú fetch tới địa chỉ do người đăng nhập tự chọn cho công ty của họ, và kết quả chỉ đi vào hàng đợi duyệt (I-15).
 
 ## Risk Assessment
 

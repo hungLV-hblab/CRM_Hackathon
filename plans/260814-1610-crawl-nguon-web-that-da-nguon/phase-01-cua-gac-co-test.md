@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Cửa gác có test — I-15, I-16, I-17, I-3"
-status: pending
+status: done
 priority: P1
 dependencies: []
 ---

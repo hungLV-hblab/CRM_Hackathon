@@ -289,6 +289,14 @@ export const FETCH_ERROR_REASON = {
   too_large: 'Trang quá lớn để đọc an toàn',
   blocked_url: 'Địa chỉ không được phép đọc',
   invalid_url: 'Địa chỉ nguồn không hợp lệ',
+  /**
+   * Added by `0009` after the first real read, not by the original list. DNS that does not
+   * resolve, a refused connection, a failed TLS handshake — nine reasons had no room for any of
+   * them, and the two near misses both state something false: `timeout` claims the page did not
+   * answer in time when it was never answered at all, and `invalid_url` sends someone to fix an
+   * address that is perfectly correct and merely down today.
+   */
+  unreachable: 'Không kết nối được tới trang',
 } as const
 export type FetchErrorReason = keyof typeof FETCH_ERROR_REASON
 

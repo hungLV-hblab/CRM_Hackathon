@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import type { ClaimDto } from './claim'
 import { TRIGGER_CONTEXT, enumCodes } from '../enums'
-import type { FetchStatus } from '../enums'
+import type { FetchErrorReason, FetchStatus, SourceKind } from '../enums'
 
 /**
  * ontology 3.2 — "bản lưu". What the provenance drawer renders when Sales clicks a finding.
@@ -18,13 +18,28 @@ export interface ObservationDto {
   id: string
   companyId: string
   sourceUrl: string
-  /** `'company_website'` today; the tier tower has only one level so far. */
+  /** `company_website`, and from the live path also `news` / `social`. */
   sourceTier: string
   /** ISO 8601. Every observation carries a timestamp — that is what makes it a `bản lưu`. */
   capturedAt: string
   rawContent: string
   rawHtml: string | null
   fetchStatus: FetchStatus
+  /**
+   * Which kind of source this came from. It travels to the client because rule 2 of CLAUDE.md
+   * applies to the SOURCE as much as to fact-versus-inference: a finding drawn from an unvetted
+   * public page has to be distinguishable by eye from one drawn from the vetted snapshot set.
+   * The screen cannot draw that distinction if the field never leaves the server.
+   */
+  sourceKind: SourceKind
+  /**
+   * Why the read failed, when it did — `null` on every successful read.
+   *
+   * The reason is the point, not a debugging aid: "Trang cần chạy JavaScript mới hiện nội dung"
+   * and "Trang từ chối máy đọc tự động" send a Sales person to two different actions, and the one
+   * state Specs group 2 offers ("could not read") sends them to neither.
+   */
+  fetchErrorReason: FetchErrorReason | null
 }
 
 /**
@@ -84,4 +99,14 @@ export interface IngestResultDto {
    * for. Here the number never leaves the process that produced it.
    */
   systemEntriesAdded: number
+  /**
+   * How many sources this read attempted, and how many of them failed.
+   *
+   * A single `fetchStatus` was enough while a company had exactly one source. It cannot say "two
+   * of your three pages answered", and rounding that to `ok` would hide a source that has been
+   * down for a week behind a green result. These two numbers are what keep the partial case
+   * visible without changing the meaning of any field that already existed.
+   */
+  sourcesAttempted: number
+  sourcesFailed: number
 }

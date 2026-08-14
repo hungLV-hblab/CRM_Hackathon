@@ -14,6 +14,7 @@ import { ObservationService } from '../../observation/observation-service'
 import { ProposalService } from '../proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
+import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * The generation half of feature group 3: which suggestions come into existence, and which are
@@ -62,6 +63,7 @@ function buildIngest(extractor: ClaimExtractor = new FixtureClaimExtractor()): O
       proposals,
       new SystemTimelineEntryService(systemConnection.db),
     ),
+    liveSourceThatMustNotRun(),
   )
 }
 

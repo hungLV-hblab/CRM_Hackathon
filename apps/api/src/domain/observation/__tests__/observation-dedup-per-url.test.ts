@@ -13,6 +13,7 @@ import { ObservationService } from '../observation-service'
 import { ProposalService } from '../../proposal/proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
+import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * I-3 is scoped to ONE URL, not to the company (ADR-0036).
@@ -111,6 +112,7 @@ function buildService(source: TwoUrlSource, extractor: ClaimExtractor): Observat
     source,
     settings,
     reactions,
+    liveSourceThatMustNotRun(),
   )
 }
 

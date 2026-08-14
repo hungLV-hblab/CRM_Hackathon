@@ -4,10 +4,13 @@ import { and, desc, eq } from 'drizzle-orm'
 import {
   CLAIM_EXTRACTOR,
   type ClaimExtractor,
+  type FetchErrorReason,
   type FetchStatus,
   type IngestResultDto,
   type ObservationDto,
   type ObservationWithClaimsDto,
+  type SourceKind,
+  type SourceTier,
   type TriggerContext,
 } from '@crm/contracts'
 import { type CrmDatabase, companies, observations } from '@crm/db'
@@ -16,7 +19,9 @@ import { ClaimReactionService } from '../claim/claim-reaction-service'
 import { ClaimService } from '../claim/claim-service'
 import { DRIZZLE_APP, DRIZZLE_SYSTEM } from '../../common/db/db.module'
 import { DemoSnapshotSource, type SnapshotVariant } from '../../ai/demo-snapshots'
+import { LiveCrawlSource } from '../../ai/live-crawl-source'
 import { SystemSettingService } from '../../settings/system-setting-service'
+import { resolveObservationSource } from '../../ai/resolve-observation-source'
 import {
   EXTRACTOR_VERSION,
   hashSnapshotContent,
@@ -37,6 +42,37 @@ const EMPTY_RESULT: IngestResultDto = {
   claimsDroppedNoVerbatimQuote: 0,
   claimsDowngradedFromCertain: 0,
   systemEntriesAdded: 0,
+  sourcesAttempted: 0,
+  sourcesFailed: 0,
+}
+
+/**
+ * One attempt at one source, already reduced to what a row needs. Both source kinds produce this
+ * shape, which is what keeps the write path below single: the difference between reading a stored
+ * page and fetching a live one ends at `collectReads`, and everything after it is identical.
+ */
+interface SourceRead {
+  sourceUrl: string
+  sourceTier: SourceTier
+  /** `null` means the source could not be read. Never an empty string standing in for failure. */
+  rawHtml: string | null
+  /**
+   * Only ever set on the live path. A stored snapshot that cannot be read has no diagnosis to
+   * offer — inventing one would be a wrong line where a blank is honest (rule 4).
+   */
+  fetchErrorReason: FetchErrorReason | null
+}
+
+/** What one source contributed, before the sources are added up. */
+interface SourceOutcome {
+  observationId: string | null
+  unchanged: boolean
+  failed: boolean
+  claimsProposed: number
+  claimsSaved: number
+  claimsDroppedNoVerbatimQuote: number
+  claimsDowngradedFromCertain: number
+  systemEntriesAdded: number
 }
 
 /**
@@ -60,10 +96,11 @@ export class ObservationService {
     private readonly snapshots: DemoSnapshotSource,
     private readonly settings: SystemSettingService,
     private readonly reactions: ClaimReactionService,
+    private readonly live: LiveCrawlSource,
   ) {}
 
   /**
-   * Read a company's source once.
+   * Read a company's sources once — one `Observation` per source.
    *
    * I-3 is enforced HERE rather than by a unique index, per ADR-0017: the invariant is
    * "different from the MOST RECENT snapshot", and a unique index on
@@ -93,37 +130,150 @@ export class ObservationService {
     }
 
     const company = await this.loadCompanyForReading(companyId)
-    const snapshot = this.snapshots.read(companyId, variant)
 
-    if (!snapshot) {
-      return this.recordUnreadableSource(companyId)
+    /**
+     * I-16 and I-17, on the execution path rather than only in a unit test. Phase 1 deliberately
+     * hard-coded `demo_snapshot` here: resolving to `live_crawl` before a crawler existed would
+     * have labelled stored snapshot content as a live read, which is a lie in the one column the
+     * autonomy ceiling is computed from. The crawler exists now, so the decision moves in.
+     */
+    const decision = resolveObservationSource({
+      aiEnabled: parameters.aiEnabled,
+      configuredSource: process.env.OBSERVATION_SOURCE,
+      companyId,
+      liveSourceEnabled: company.liveSourceEnabled,
+    })
+
+    if (decision === 'disabled') {
+      this.logger.log(`Bỏ qua đọc nguồn công ty ${companyId}: AI đang tắt`)
+      return { ...EMPTY_RESULT, skippedReason: 'ai_disabled' }
     }
 
-    const rawContent = normalizeSnapshotText(snapshot.rawHtml)
+    const reads = await this.collectReads(company, variant, decision)
+
+    /**
+     * One source per iteration, and a failure inside one does NOT abandon the rest. Same reasoning
+     * as the try/catch in `claim-reaction-service.ts:96-108`: a company whose news page is down
+     * still has a press page worth reading, and dropping it would make one bad source silently
+     * cost the others.
+     */
+    const outcomes: SourceOutcome[] = []
+    for (const read of reads) {
+      outcomes.push(await this.ingestOne(company, read, decision, triggerContext))
+    }
+
+    return summarise(outcomes)
+  }
+
+  /**
+   * WHERE to read, and the only place the two source kinds differ.
+   *
+   * Returns a LIST from phase 2 onward even though the live path has exactly one URL today
+   * (`companies.website`). Phase 3 replaces the contents with `company_sources` and touches
+   * nothing else — a loop written later is a loop written under time pressure.
+   */
+  private async collectReads(
+    company: CompanyForReading,
+    variant: SnapshotVariant,
+    decision: 'demo_snapshot' | 'live_crawl',
+  ): Promise<SourceRead[]> {
+    if (decision === 'demo_snapshot') {
+      const snapshot = this.snapshots.read(company.id, variant)
+      if (!snapshot) {
+        return [
+          {
+            sourceUrl: this.snapshots.sourceUrlFor(company.id) ?? 'unknown',
+            sourceTier: 'company_website',
+            rawHtml: null,
+            fetchErrorReason: null,
+          },
+        ]
+      }
+      return [
+        {
+          sourceUrl: snapshot.sourceUrl,
+          sourceTier: 'company_website',
+          rawHtml: snapshot.rawHtml,
+          fetchErrorReason: null,
+        },
+      ]
+    }
+
+    const reads: SourceRead[] = []
+    for (const url of this.liveSourceUrls(company)) {
+      const result = await this.live.read(url)
+      reads.push(
+        result.ok
+          ? {
+              sourceUrl: result.sourceUrl,
+              sourceTier: 'company_website',
+              rawHtml: result.rawHtml,
+              fetchErrorReason: null,
+            }
+          : {
+              sourceUrl: result.sourceUrl,
+              sourceTier: 'company_website',
+              rawHtml: null,
+              fetchErrorReason: result.reason,
+            },
+      )
+    }
+    return reads
+  }
+
+  /**
+   * Phase 2: the address Sales already typed when they created the company. Phase 3 reads
+   * `company_sources` first and falls back to this — a list of one is the shape that makes that
+   * a one-line change.
+   *
+   * An empty `website` is NOT skipped. It comes back as one failed read carrying `invalid_url`,
+   * because "this company has no address on file" is a fact worth showing, and a silent empty
+   * list would leave the screen looking as though nothing had been asked for.
+   */
+  private liveSourceUrls(company: CompanyForReading): (string | null)[] {
+    return [company.website]
+  }
+
+  /** One source → at most one row, its findings, and whatever those findings were allowed to do. */
+  private async ingestOne(
+    company: CompanyForReading,
+    read: SourceRead,
+    sourceKind: SourceKind,
+    triggerContext: TriggerContext,
+  ): Promise<SourceOutcome> {
+    if (read.rawHtml === null) {
+      return this.recordUnreadableSource(company.id, read, sourceKind)
+    }
+
+    const rawContent = normalizeSnapshotText(read.rawHtml)
     const contentHash = hashSnapshotContent(rawContent)
 
-    const latest = await this.latestObservationForUrl(companyId, snapshot.sourceUrl)
+    const latest = await this.latestObservationForUrl(company.id, read.sourceUrl)
     if (latest?.contentHash === contentHash) {
-      this.logger.log(`Đã đọc, không đổi: công ty ${companyId} — không tạo bản lưu, không gọi LLM`)
-      return { ...EMPTY_RESULT, unchanged: true }
+      this.logger.log(
+        `Đã đọc, không đổi: ${read.sourceUrl} — không tạo bản lưu, không gọi LLM`,
+      )
+      return { ...EMPTY_OUTCOME, unchanged: true }
     }
 
     const [created] = await this.dbSystem
       .insert(observations)
       .values({
-        companyId,
-        sourceUrl: snapshot.sourceUrl,
-        rawHtml: snapshot.rawHtml,
+        companyId: company.id,
+        sourceUrl: read.sourceUrl,
+        sourceTier: read.sourceTier,
+        rawHtml: read.rawHtml,
         rawContent,
         contentHash,
         extractorVersion: EXTRACTOR_VERSION,
         fetchStatus: 'ok',
+        sourceKind,
       })
       .returning()
 
     const drafts = await this.extractor.extract({
       id: created.id,
-      companyId,
+      companyId: company.id,
       rawContent,
       // ontology section 4: a finding is read under the lens of the company type.
       companyType: company.companyType,
@@ -138,7 +288,7 @@ export class ObservationService {
 
     const result = await this.claims.saveDrafts(
       created.id,
-      companyId,
+      company.id,
       rawContent,
       triggerContext,
       drafts,
@@ -162,25 +312,21 @@ export class ObservationService {
      * `timestamptz` rounding trap of feature group 4.
      */
     const reaction = await this.reactions.react({
-      companyId,
+      companyId: company.id,
       observationId: created.id,
       savedClaims: result.saved,
       observationCapturedAt: created.capturedAt,
       /**
-       * Hard-coded, and only for as long as this method reads through `DemoSnapshotSource`.
-       * `resolveObservationSource` (I-16/I-17) is what decides this value, and it is wired in
-       * together with `LiveCrawlSource` — resolving to `live_crawl` before a crawler exists would
-       * label snapshot content as a live read, which is a lie in the one column the autonomy
-       * ceiling is computed from.
+       * I-15. Now the real answer rather than a constant: findings drawn from a page nobody on
+       * the team has read may only ever become a `Proposal`, however watched the company is.
        */
-      sourceKind: 'demo_snapshot',
+      sourceKind,
     })
 
     return {
       observationId: created.id,
       unchanged: false,
-      skippedReason: null,
-      fetchStatus: 'ok',
+      failed: false,
       claimsProposed: result.proposed,
       claimsSaved: result.saved.length,
       claimsDroppedNoVerbatimQuote: result.droppedNoVerbatimQuote,
@@ -213,34 +359,33 @@ export class ObservationService {
    * cost, and a failed read causes neither; treating a second failure as "đã đọc, không đổi"
    * would hide an ongoing outage behind a reassuring log line.
    */
-  private async recordUnreadableSource(companyId: string): Promise<IngestResultDto> {
-    const sourceUrl = this.snapshots.sourceUrlFor(companyId) ?? 'unknown'
+  private async recordUnreadableSource(
+    companyId: string,
+    read: SourceRead,
+    sourceKind: SourceKind,
+  ): Promise<SourceOutcome> {
     const [created] = await this.dbSystem
       .insert(observations)
       .values({
         companyId,
-        sourceUrl,
+        sourceUrl: read.sourceUrl,
+        sourceTier: read.sourceTier,
         rawHtml: null,
         rawContent: '',
         contentHash: hashSnapshotContent(''),
         extractorVersion: EXTRACTOR_VERSION,
         fetchStatus: 'failed',
+        sourceKind,
+        fetchErrorReason: read.fetchErrorReason,
       })
       .returning()
 
-    this.logger.warn(`Không đọc được nguồn của công ty ${companyId} — ghi fetch_status=failed`)
+    this.logger.warn(
+      `Không đọc được ${read.sourceUrl} của công ty ${companyId} — ghi fetch_status=failed` +
+        (read.fetchErrorReason ? ` (${read.fetchErrorReason})` : ''),
+    )
 
-    return {
-      observationId: created.id,
-      unchanged: false,
-      skippedReason: null,
-      fetchStatus: 'failed',
-      claimsProposed: 0,
-      claimsSaved: 0,
-      claimsDroppedNoVerbatimQuote: 0,
-      claimsDowngradedFromCertain: 0,
-      systemEntriesAdded: 0,
-    }
+    return { ...EMPTY_OUTCOME, observationId: created.id, failed: true }
   }
 
   /**
@@ -269,7 +414,7 @@ export class ObservationService {
   }
 
   /** Read under the AI identity: `crm_system` holds SELECT on `companies` and nothing more. */
-  private async loadCompanyForReading(companyId: string) {
+  private async loadCompanyForReading(companyId: string): Promise<CompanyForReading> {
     const [company] = await this.dbSystem
       .select({
         id: companies.id,
@@ -283,6 +428,11 @@ export class ObservationService {
         country: companies.country,
         size: companies.size,
         website: companies.website,
+        /**
+         * SELECT and never UPDATE, by grant (0001). That is the whole reason this switch can be
+         * trusted: the AI reads whether it may crawl and has no way to answer yes for itself.
+         */
+        liveSourceEnabled: companies.liveSourceEnabled,
       })
       .from(companies)
       .where(eq(companies.id, companyId))
@@ -291,6 +441,60 @@ export class ObservationService {
     if (!company) throw new NotFoundException('Không tìm thấy công ty')
     return company
   }
+}
+
+type CompanyForReading = {
+  id: string
+  companyType: string
+  industry: string | null
+  country: string | null
+  size: string | null
+  website: string | null
+  liveSourceEnabled: boolean
+}
+
+const EMPTY_OUTCOME: SourceOutcome = {
+  observationId: null,
+  unchanged: false,
+  failed: false,
+  claimsProposed: 0,
+  claimsSaved: 0,
+  claimsDroppedNoVerbatimQuote: 0,
+  claimsDowngradedFromCertain: 0,
+  systemEntriesAdded: 0,
+}
+
+/**
+ * Several sources collapsed into the one result the API has always returned.
+ *
+ * With a single source — every read before phase 2, and every snapshot read after it — this is
+ * the identity function, which is what lets the live path arrive without rewriting the screen or
+ * a single existing test. `sourcesAttempted` / `sourcesFailed` are what carry the part that no
+ * longer fits: "two of your three sources answered" is not expressible in a single `fetchStatus`.
+ */
+function summarise(outcomes: SourceOutcome[]): IngestResultDto {
+  const failed = outcomes.filter((outcome) => outcome.failed).length
+
+  return {
+    /** The first row this read created — null when every source was unchanged. */
+    observationId: outcomes.find((outcome) => outcome.observationId)?.observationId ?? null,
+    /** Only when NOTHING moved anywhere: one changed source makes the whole read a change. */
+    unchanged: outcomes.length > 0 && outcomes.every((outcome) => outcome.unchanged),
+    skippedReason: null,
+    /** `failed` only when no source at all could be read; one page answering is still an answer. */
+    fetchStatus: outcomes.length > 0 && failed === outcomes.length ? 'failed' : 'ok',
+    claimsProposed: sum(outcomes, (outcome) => outcome.claimsProposed),
+    claimsSaved: sum(outcomes, (outcome) => outcome.claimsSaved),
+    claimsDroppedNoVerbatimQuote: sum(outcomes, (o) => o.claimsDroppedNoVerbatimQuote),
+    claimsDowngradedFromCertain: sum(outcomes, (o) => o.claimsDowngradedFromCertain),
+    systemEntriesAdded: sum(outcomes, (outcome) => outcome.systemEntriesAdded),
+    sourcesAttempted: outcomes.length,
+    sourcesFailed: failed,
+  }
+}
+
+function sum(outcomes: SourceOutcome[], pick: (outcome: SourceOutcome) => number): number {
+  return outcomes.reduce((total, outcome) => total + pick(outcome), 0)
 }
 
 function toDto(row: typeof observations.$inferSelect): ObservationDto {
@@ -303,5 +507,7 @@ function toDto(row: typeof observations.$inferSelect): ObservationDto {
     rawContent: row.rawContent,
     rawHtml: row.rawHtml,
     fetchStatus: row.fetchStatus as FetchStatus,
+    sourceKind: row.sourceKind as SourceKind,
+    fetchErrorReason: row.fetchErrorReason as FetchErrorReason | null,
   }
 }

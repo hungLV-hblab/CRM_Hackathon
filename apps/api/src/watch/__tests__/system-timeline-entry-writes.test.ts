@@ -13,6 +13,7 @@ import { ObservationService } from '../../domain/observation/observation-service
 import { ProposalService } from '../../domain/proposal/proposal-service'
 import { SystemSettingService } from '../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../system-timeline-entry-service'
+import { liveSourceThatMustNotRun } from '../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * Autonomy zone 4 — the watch cycle writing to the official timeline WITHOUT asking anyone.
@@ -75,6 +76,7 @@ function buildService(): ObservationService {
     snapshots,
     settings,
     reactions,
+    liveSourceThatMustNotRun(),
   )
 }
 

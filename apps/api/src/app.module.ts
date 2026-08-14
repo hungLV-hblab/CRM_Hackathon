@@ -16,6 +16,7 @@ import { DbModule } from './common/db/db.module'
 import { DemoController } from './demo/demo.controller'
 import { DemoSnapshotService } from './demo/demo-snapshot-service'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
+import { liveCrawlSourceProvider } from './ai/observation-source.provider'
 import { MetricsModule } from './domain/metrics/metrics.module'
 import { NotificationController } from './domain/notification/notification.controller'
 import { NotificationService } from './domain/notification/notification-service'
@@ -75,6 +76,7 @@ import { WatchLogModule } from './watch/watch-log.module'
     SystemTimelineEntryService,
     TimelineService,
     claimExtractorProvider,
+    liveCrawlSourceProvider,
     { provide: APP_INTERCEPTOR, useClass: ActorInterceptor },
   ],
 })

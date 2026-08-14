@@ -23,6 +23,12 @@ x-database-urls: &database-urls
 x-llm-access: &llm-access
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+  # Which source a read may use (ADR-0035). Belongs to BOTH containers for the same reason the
+  # key does: the API reads when Sales presses the button and the worker reads on the watch
+  # cycle, and one of them running on stored snapshots while the other fetches live pages would
+  # be invisible from the outside. `:-` because empty is the safe branch — every value other than
+  # the exact string `live_crawl` falls back to the snapshot set, which is what T-1..T-10 expect.
+  OBSERVATION_SOURCE: ${OBSERVATION_SOURCE:-}
 
 x-api-image: &api-image
   build:
