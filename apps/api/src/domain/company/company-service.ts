@@ -12,6 +12,7 @@ import { type CrmDatabase, companies } from '@crm/db'
 
 import { DRIZZLE_APP } from '../../common/db/db.module'
 import { AuditEventService } from '../../common/audit/audit-event-service'
+import { isSeedCompany } from '../../ai/resolve-observation-source'
 import type { Actor } from '../../common/actor/actor-context'
 
 /**
@@ -102,6 +103,57 @@ export class CompanyService {
   }
 
   /**
+   * The per-company gate on the live web source (ADR-0035 · I-16 · I-17).
+   *
+   * A SEPARATE method rather than a field on `update`, for two reasons. It is the only company
+   * write with a refusal condition of its own, and `update` would then carry two unrelated
+   * concerns; and the refusal needs its own audit action so round 2 can find it by name instead
+   * of reading through every `update_company` event.
+   *
+   * WHO MAY CALL IT: any signed-in person, exactly like every other company edit. ADR-0033 keeps
+   * the detailed permission matrix out of round 1, and inventing an owner-or-admin rule here
+   * would be the product's first such rule — on the evening of feature freeze. The `AuditEvent`
+   * records the actor either way, so "who turned this on" stays answerable.
+   */
+  async setLiveSourceEnabled(
+    actor: Actor,
+    companyId: string,
+    enabled: boolean,
+  ): Promise<CompanyDto> {
+    if (actor.kind === 'system') {
+      await this.audit.recordRefusal(actor, 'enable_live_source', 'company', companyId, {
+        reason: 'the AI may not choose which sources it reads (ADR-0022, extended by ADR-0035)',
+      })
+      throw new ForbiddenException('Hệ thống không được tự bật nguồn web thật')
+    }
+
+    /**
+     * I-16, and only in the ENABLING direction. Moving a company toward the snapshot can never
+     * threaten the reproducibility of T-1…T-10, and a symmetric refusal would leave a seed
+     * company stuck on if the flag ever got set by hand or by a migration.
+     */
+    if (enabled && isSeedCompany(companyId)) {
+      await this.audit.recordRefusal(actor, 'enable_live_source', 'company', companyId, {
+        reason:
+          'a seed company must read the stored snapshot only: T-6 and T-8 are triggered by ' +
+          'flipping its snapshot, and an uncontrolled source makes them unrepeatable (I-16)',
+      })
+      throw new ForbiddenException(
+        'Công ty thuộc bộ dữ liệu nghiệm thu chỉ được đọc bản chụp — không bật được nguồn web thật',
+      )
+    }
+
+    const [updated] = await this.db
+      .update(companies)
+      .set({ liveSourceEnabled: enabled, updatedAt: new Date() })
+      .where(and(eq(companies.id, companyId), isNull(companies.deletedAt)))
+      .returning()
+
+    if (!updated) throw new NotFoundException('Không tìm thấy công ty')
+    return toDto(updated)
+  }
+
+  /**
    * SOFT delete, and it stops at the company: opportunities and timeline entries keep their
    * rows and disappear from every screen because their queries join `companies` and filter
    * `deletedAt IS NULL`. Cascading the flag downwards would mean a new column on two more
@@ -132,5 +184,11 @@ function toDto(row: typeof companies.$inferSelect): CompanyDto {
     size: row.size,
     website: row.website,
     isWatched: row.isWatched,
+    /**
+     * Exposed because the company screen has to show whether the live source is on — a switch
+     * whose state is invisible is a switch nobody trusts. `snapshotVariant` stays out (it is demo
+     * scaffolding, ADR-0022); this one is a real product setting a person turned on.
+     */
+    liveSourceEnabled: row.liveSourceEnabled,
   }
 }

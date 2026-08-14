@@ -39,6 +39,17 @@ export const updateCompanySchema = createCompanySchema
 
 export type UpdateCompanyDto = z.infer<typeof updateCompanySchema>
 
+/**
+ * The live-source switch, on its own endpoint rather than as a field of `updateCompanySchema`.
+ *
+ * It is the only company write with a refusal condition of its own (I-16), and folding it into
+ * the general update would mean one request could both edit a profile cell and be refused for an
+ * unrelated reason — leaving the caller unable to tell which half failed.
+ */
+export const setLiveSourceSchema = z.object({ enabled: z.boolean() })
+
+export type SetLiveSourceDto = z.infer<typeof setLiveSourceSchema>
+
 /** Search by name plus the four filters of the list screen. All optional, all combinable. */
 export interface ListCompaniesQuery {
   q?: string
@@ -57,6 +68,12 @@ export interface CompanyDto {
   size: string | null
   website: string | null
   isWatched: boolean
+  /**
+   * Whether this company reads the live web source as well as (never instead of) the stored
+   * snapshot — ADR-0035. Off by default, and refused outright for companies of the seed set
+   * (I-16), so the acceptance suite stays reproducible.
+   */
+  liveSourceEnabled: boolean
 }
 
 export const loginSchema = z.object({

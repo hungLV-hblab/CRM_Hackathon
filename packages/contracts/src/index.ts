@@ -1,6 +1,13 @@
 export * from './enums'
 export * from './ports/claim-extractor'
+/**
+ * Ports are exported ONE BY ONE, not with `export * from './ports'`. Adding a port file without
+ * adding its line here compiles cleanly in this package and fails only where `apps/api` imports
+ * the name — so the line below is part of adding a port, not an afterthought.
+ */
+export * from './ports/source-discovery'
 export * from './dto/company'
+export * from './dto/company-source'
 export * from './dto/contact'
 export * from './dto/opportunity'
 export * from './dto/timeline'

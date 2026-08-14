@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 
+import type { SourceKind } from '@crm/contracts'
+
 import { AutoNextStepService } from '../opportunity/auto-next-step-service'
 import { ProposalService } from '../proposal/proposal-service'
 import { SYSTEM_ACTOR } from '../../common/actor/actor-context'
@@ -50,6 +52,13 @@ export interface ClaimReactionInput {
    * cycle happened to run. `ObservationService` already has it from its own `.returning()`.
    */
   observationCapturedAt: Date
+  /**
+   * Which kind of source these findings came from — the input that sets the autonomy ceiling
+   * (I-15, ADR-0035 · ADR-0036). Required rather than optional: a caller that forgets it would
+   * silently get the snapshot ceiling for a live page, which is the one mistake this parameter
+   * exists to make impossible.
+   */
+  sourceKind: SourceKind
 }
 
 export interface ClaimReactionResult {
@@ -70,22 +79,46 @@ export class ClaimReactionService {
   async react(input: ClaimReactionInput): Promise<ClaimReactionResult> {
     if (input.savedClaims.length === 0) return { systemEntriesAdded: 0 }
 
-    // ── step 1: feature group 4 (auto next step), autonomy zone 3 ───────────────────────────
+    /**
+     * I-15 in one line, read three times below. An unvetted public page lowers the ceiling to
+     * zone 2 for EVERY branch — what changes per branch is only how each one steps down:
+     * group 4 proposes instead of writing, group 3 flips its watched-company gate, group 5 does
+     * not run. Computing it once here keeps the three from drifting apart.
+     */
+    const fromLiveSource = input.sourceKind === 'live_crawl'
+
+    // ── step 1: feature group 4 (auto next step), zone 3 → zone 2 for a live source ─────────
     const autoNextStep = await this.autoNextSteps.react(SYSTEM_ACTOR, {
       companyId: input.companyId,
       savedClaims: input.savedClaims,
+      proposeOnly: fromLiveSource,
     })
 
     // ── step 2: feature group 3 (the review queue), autonomy zone 2 ─────────────────────────
-    // I-7 refusals arrive here as `next_step` suggestions, in the same unit of work.
+    // I-7 refusals arrive here as `next_step` suggestions, in the same unit of work. For a live
+    // source EVERY open deal arrives that way, which is what keeps the implication reachable.
     await this.proposals.generate({
       companyId: input.companyId,
       observationId: input.observationId,
       savedClaims: input.savedClaims,
       blockedNextSteps: autoNextStep.blocked,
+      fromLiveSource,
     })
 
     // ── step 3: feature group 5 (the watch cycle's own entry), autonomy zone 4 ──────────────
+    /**
+     * I-15. Zone 4 is the one branch with no zone-2 equivalent to step down to — its whole
+     * content is "write without asking" — so for a live source it simply does not run, and
+     * step 2 above has already taken over by flipping its gate.
+     */
+    if (fromLiveSource) {
+      this.logger.log(
+        `Công ty ${input.companyId}: nguồn thật nên không thêm mục dòng thời gian nào — ` +
+          'phát hiện đi vào hàng đợi duyệt (I-15)',
+      )
+      return { systemEntriesAdded: 0 }
+    }
+
     /**
      * Wrapped, and the swallow is the decision rather than laziness. Steps 1 and 2 have already
      * committed by now; letting a zone-4 failure propagate would abort `ingest()` after those

@@ -16,6 +16,7 @@ import { SystemSettingService } from '../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../system-timeline-entry-service'
 import { WatchCycleRollup } from '../watch-cycle-rollup'
 import { WatchCycleService } from '../watch-cycle-service'
+import { liveSourceThatMustNotRun } from '../../ai/__tests__/live-crawl-source-doubles'
 
 /**
  * The closed loop of feature group 5: a timer fires, sources are read, entries appear, and the
@@ -97,6 +98,7 @@ function createWorker(extractor: ClaimExtractor): WatchCycleService {
     snapshots,
     settings,
     reactions,
+    liveSourceThatMustNotRun(),
   )
   worker = new WatchCycleService(
     settings,

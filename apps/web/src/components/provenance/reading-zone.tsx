@@ -2,7 +2,14 @@
 
 import { useState } from 'react'
 
-import { SIGNAL_TYPE, type ClaimDto, type ObservationWithClaimsDto } from '@crm/contracts'
+import {
+  FETCH_ERROR_REASON,
+  SIGNAL_TYPE,
+  SOURCE_KIND,
+  SOURCE_TIER,
+  type ClaimDto,
+  type ObservationWithClaimsDto,
+} from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
 import { ConfidenceBadge } from '@/components/provenance/quote-block'
@@ -42,6 +49,17 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
     <article className="rounded-card border border-machine-200 bg-machine-50 p-4">
       <header className="mb-3 flex flex-wrap items-center gap-2">
         <Badge tone="inference">Vùng đọc — do AI sinh</Badge>
+        {/*
+          Rule 2 applied to the SOURCE, not only to fact-versus-inference. A finding drawn from a
+          public page nobody on the team has read carries a different weight from one drawn from
+          the vetted snapshot set, and the reader has to see which is which without opening a
+          drawer. `warning` on the live kind is not decoration: it is the visual half of I-15,
+          whose other half is that these findings can only ever reach the review queue.
+        */}
+        <Badge tone={observation.sourceKind === 'live_crawl' ? 'warning' : 'neutral'}>
+          {SOURCE_KIND[observation.sourceKind]}
+        </Badge>
+        <Badge tone="neutral">{sourceTierLabel(observation.sourceTier)}</Badge>
         {observation.fetchStatus === 'failed' ? (
           <Badge tone="neutral">Không đọc được nguồn</Badge>
         ) : null}
@@ -58,7 +76,7 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
       {observation.claims.length === 0 ? (
         <p className="mb-3 text-sm text-ink-500">
           {observation.fetchStatus === 'failed'
-            ? 'Nguồn không đọc được nên không có phát hiện nào. Hệ thống không đoán.'
+            ? failedReadSentence(observation.fetchErrorReason)
             : 'Đã đọc nguồn, không có phát hiện nào đáng chú ý.'}
         </p>
       ) : (
@@ -104,4 +122,31 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
       />
     </article>
   )
+}
+
+/**
+ * Unknown tiers print themselves rather than vanishing. A tier added to the database before this
+ * map catches up would otherwise render as an empty badge — a blank where a word belongs reads as
+ * a bug in the page, not as a gap in a lookup table.
+ */
+function sourceTierLabel(sourceTier: string): string {
+  return SOURCE_TIER[sourceTier as keyof typeof SOURCE_TIER] ?? sourceTier
+}
+
+/**
+ * Why the read failed, in a sentence a Sales person can act on — never an HTTP code.
+ *
+ * This is the payoff for the whole `fetch_error_reason` column. Specs group 2 has ONE state for
+ * an unreadable source, and "không đọc được" sends the reader nowhere: a site that blocks
+ * automated readers needs a different source, a page that renders in the browser needs a
+ * different URL, and a company that published nothing needs neither. A blocked page is
+ * INFORMATION about that source, not a broken product, and it has to read that way.
+ */
+function failedReadSentence(fetchErrorReason: string | null): string {
+  const label = FETCH_ERROR_REASON[fetchErrorReason as keyof typeof FETCH_ERROR_REASON]
+  if (!label) {
+    // No reason on file — every stored snapshot predates the column. Say only what is known.
+    return 'Nguồn không đọc được nên không có phát hiện nào. Hệ thống không đoán.'
+  }
+  return `${label}. Không có phát hiện nào được sinh — hệ thống không đoán.`
 }

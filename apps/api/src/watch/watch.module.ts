@@ -6,6 +6,7 @@ import { ClaimReactionService } from '../domain/claim/claim-reaction-service'
 import { ClaimService } from '../domain/claim/claim-service'
 import { DbModule } from '../common/db/db.module'
 import { DemoSnapshotSource } from '../ai/demo-snapshots'
+import { liveCrawlSourceProvider } from '../ai/observation-source.provider'
 import { ObservationService } from '../domain/observation/observation-service'
 import { ProposalService } from '../domain/proposal/proposal-service'
 import { SystemSettingService } from '../settings/system-setting-service'
@@ -50,6 +51,7 @@ import { claimExtractorProvider } from '../ai/claim-extractor.provider'
     WatchCycleRollup,
     WatchCycleService,
     claimExtractorProvider,
+    liveCrawlSourceProvider,
   ],
 })
 export class WatchModule {}

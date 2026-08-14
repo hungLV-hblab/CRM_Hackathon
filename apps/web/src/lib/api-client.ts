@@ -2,6 +2,9 @@ import type {
   AiStatusDto,
   AutoNextStepMap,
   CompanyDto,
+  CompanySourceDto,
+  SaveCompanySourcesDto,
+  SourceCandidateDto,
   MetricsDto,
   SystemParametersDto,
   UpdateSystemSettingsDto,
@@ -170,6 +173,37 @@ export const api = {
     call<IngestResultDto>(`/companies/${companyId}/observations`, {
       method: 'POST',
       body: JSON.stringify(dto),
+    }),
+
+  /**
+   * The reading list of a company — the pages the live path is allowed to fetch.
+   *
+   * Note there is no "find and save" call, and that absence is the design (ADR-0036): finding
+   * candidates and keeping them are separate requests because only the second may write. A model
+   * that saved its own reading list would be choosing which evidence it then reports on.
+   */
+  listCompanySources: (companyId: string) =>
+    call<CompanySourceDto[]>(`/companies/${companyId}/sources`),
+
+  /** Runs `web_search`. Takes 10–20 seconds, spends money, and persists nothing. */
+  findSourceCandidates: (companyId: string) =>
+    call<SourceCandidateDto[]>(`/companies/${companyId}/source-candidates`, { method: 'POST' }),
+
+  /** The click that writes. Everything saved here carries the person who kept it. */
+  saveCompanySources: (companyId: string, dto: SaveCompanySourcesDto) =>
+    call<CompanySourceDto[]>(`/companies/${companyId}/sources`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    }),
+
+  removeCompanySource: (companyId: string, sourceId: string) =>
+    call<void>(`/companies/${companyId}/sources/${sourceId}`, { method: 'DELETE' }),
+
+  /** The per-company live-source switch. Off by default; refused outright for a seed company. */
+  setLiveSource: (companyId: string, enabled: boolean) =>
+    call<CompanyDto>(`/companies/${companyId}/live-source`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
     }),
 
   /** The review queue — everything still waiting for a person (autonomy zone 2). */

@@ -10,12 +10,16 @@ import { ClaimReactionService } from './domain/claim/claim-reaction-service'
 import { ClaimService } from './domain/claim/claim-service'
 import { CompanyController } from './domain/company/company.controller'
 import { CompanyService } from './domain/company/company-service'
+import { CompanySourceController } from './domain/company/company-source.controller'
+import { CompanySourceService } from './domain/company/company-source-service'
 import { ContactController } from './domain/contact/contact.controller'
 import { ContactService } from './domain/contact/contact-service'
 import { DbModule } from './common/db/db.module'
 import { DemoController } from './demo/demo.controller'
 import { DemoSnapshotService } from './demo/demo-snapshot-service'
 import { DemoSnapshotSource } from './ai/demo-snapshots'
+import { liveCrawlSourceProvider } from './ai/observation-source.provider'
+import { sourceDiscoveryProvider } from './ai/source-discovery.provider'
 import { MetricsModule } from './domain/metrics/metrics.module'
 import { NotificationController } from './domain/notification/notification.controller'
 import { NotificationService } from './domain/notification/notification-service'
@@ -46,6 +50,7 @@ import { WatchLogModule } from './watch/watch-log.module'
   controllers: [
     AutoNextStepController,
     CompanyController,
+    CompanySourceController,
     ContactController,
     DemoController,
     NotificationController,
@@ -62,6 +67,7 @@ import { WatchLogModule } from './watch/watch-log.module'
     ClaimReactionService,
     ClaimService,
     CompanyService,
+    CompanySourceService,
     ContactService,
     DemoSnapshotService,
     DemoSnapshotSource,
@@ -75,6 +81,8 @@ import { WatchLogModule } from './watch/watch-log.module'
     SystemTimelineEntryService,
     TimelineService,
     claimExtractorProvider,
+    liveCrawlSourceProvider,
+    sourceDiscoveryProvider,
     { provide: APP_INTERCEPTOR, useClass: ActorInterceptor },
   ],
 })

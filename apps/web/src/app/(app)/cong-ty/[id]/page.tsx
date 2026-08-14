@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
 import { PageBody } from '@/components/shell/page-body'
 import { SectionCard } from '@/components/ui/section-card'
+import { SourceDiscoverySection } from './source-discovery-section'
 import { api } from '@/lib/api-client'
 
 /**
@@ -122,6 +123,16 @@ export default function CompanyDetailPage() {
             {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
             {readingZone.data && <ReadingZone observations={readingZone.data} />}
           </SectionCard>
+
+          {/*
+            Below the read zone on purpose: this is where the pages ABOVE came from, so it reads
+            in the order someone thinks in — what was found, then where it was found.
+          */}
+          {company && (
+            <SectionCard title="Nguồn đọc">
+              <SourceDiscoverySection company={company} />
+            </SectionCard>
+          )}
         </div>
       </div>
     </PageBody>

@@ -1,10 +1,15 @@
 name: crm-hackathon
 
 # The database URLs are built HERE rather than taken from `.env`, and that is deliberate.
-# The `.env` copies point at `localhost:5432` because the host-side tools need them there —
+# The `.env` copies point at `localhost:5403` because the host-side tools need them there —
 # `pnpm test:unit`, `pnpm seed`, psql. Inside the compose network the same database answers
-# to the name `postgres`. One file cannot hold both, so the host keeps `.env` and the
+# to `postgres:5432`. One file cannot hold both, so the host keeps `.env` and the
 # containers get their addresses from the block below.
+#
+# BOTH halves of the address differ, not just the host. `5403:5432` publishes 5403 on the
+# HOST only; container-to-container traffic reaches the container's own port, which is 5432.
+# Copying the host port in here dials a port nothing listens on and every service that waits
+# on `migrate` never starts.
 x-database-urls: &database-urls
   DATABASE_URL_OWNER: postgres://crm_owner:${CRM_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-crm}
   DATABASE_URL_APP: postgres://crm_app:${CRM_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-crm}
@@ -18,6 +23,12 @@ x-database-urls: &database-urls
 x-llm-access: &llm-access
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+  # Which source a read may use (ADR-0035). Belongs to BOTH containers for the same reason the
+  # key does: the API reads when Sales presses the button and the worker reads on the watch
+  # cycle, and one of them running on stored snapshots while the other fetches live pages would
+  # be invisible from the outside. `:-` because empty is the safe branch — every value other than
+  # the exact string `live_crawl` falls back to the snapshot set, which is what T-1..T-10 expect.
+  OBSERVATION_SOURCE: ${OBSERVATION_SOURCE:-}
 
 x-api-image: &api-image
   build:
@@ -37,7 +48,7 @@ services:
       CRM_DB_PASSWORD: ${CRM_DB_PASSWORD:?CRM_DB_PASSWORD is missing from .env}
     ports:
       # Exposed to the host so `pnpm test:unit` and `pnpm seed` can run from the machine.
-      - '5432:5432'
+      - '5403:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # Init scripts only run on an EMPTY volume. An old volume means no roles → `down -v` first.

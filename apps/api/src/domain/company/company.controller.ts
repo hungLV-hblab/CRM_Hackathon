@@ -15,8 +15,10 @@ import {
 
 import {
   type CreateCompanyDto,
+  type SetLiveSourceDto,
   type UpdateCompanyDto,
   createCompanySchema,
+  setLiveSourceSchema,
   updateCompanySchema,
 } from '@crm/contracts'
 
@@ -70,6 +72,22 @@ export class CompanyController {
     @Body(new ZodValidationPipe(updateCompanySchema)) dto: UpdateCompanyDto,
   ) {
     return this.companies.update(this.actor(), id, dto)
+  }
+
+  /**
+   * The live-source switch (ADR-0035). Its own route rather than a field of `PATCH :id`, so a
+   * refusal under I-16 cannot be confused with a failed profile edit.
+   *
+   * Guarded by `JwtGuard` and nothing more: any signed-in person may flip it, exactly like every
+   * other company edit (ADR-0033 keeps the permission matrix out of round 1). The refusal for a
+   * seed company and the `AuditEvent` both live in the service.
+   */
+  @Patch(':id/live-source')
+  setLiveSource(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(setLiveSourceSchema)) dto: SetLiveSourceDto,
+  ) {
+    return this.companies.setLiveSourceEnabled(this.actor(), id, dto.enabled)
   }
 
   /** Soft: the row stays, and everything hanging off it disappears through the join. */

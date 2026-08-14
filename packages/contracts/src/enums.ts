@@ -228,6 +228,79 @@ export const QUALIFICATION_CHECKED_STAGES = [
 ] as const
 
 /**
+ * Which kind of source produced an `Observation` (ADR-0035 · ADR-0036 · ontology 3.6).
+ *
+ * OUTSIDE the `ENUMS` registry, same as `USER_ROLE` and `OPPORTUNITY_WARNING`, and the reason is
+ * the criterion stated above: ontology 3.5 lists the enums that exist as a POSTGRES TYPE.
+ * `source_kind` is `text` + CHECK, exactly like `source_tier` on the same table and
+ * `snapshot_variant` on `companies` — neither of which is in 3.5 either. Two columns describing
+ * the same axis ("where did this row come from") must not be split across the two conventions.
+ *
+ * ADR-0035 originally promised a 3.5 row here; that promise assumed a `pgEnum`. Keeping the
+ * column as `text` + CHECK means adding a third source kind never needs an `ALTER TYPE`, and the
+ * closed list is held by the constraint in `0008_live_source.sql`.
+ *
+ * The labels are what Sales reads, and they carry rule 2 of CLAUDE.md: a finding drawn from an
+ * unvetted public page must be distinguishable from one drawn from the acceptance snapshot set
+ * BY EYE, not by reading a tooltip.
+ */
+export const SOURCE_KIND = {
+  demo_snapshot: 'Bản chụp',
+  live_crawl: 'Nguồn thật',
+} as const
+export type SourceKind = keyof typeof SOURCE_KIND
+
+/**
+ * The tier of a source — "cấp nguồn" of ontology 3.2. Outside `ENUMS` for the same reason as
+ * `SOURCE_KIND`: `text` + CHECK, not a Postgres type. `observations.ts` records the ADR that
+ * closed the question of why this is not the 1–6 integer tower the ontology first sketched.
+ *
+ * `company_website` was the only tier that existed while the snapshot set was the only source.
+ * The other two arrive with the live path, and `observations.ts:35-38` predicted exactly that:
+ * "a second tier (news, LinkedIn) is a new value, not an `ALTER TYPE`".
+ */
+export const SOURCE_TIER = {
+  company_website: 'Trang công ty',
+  news: 'Tin tức',
+  social: 'Mạng xã hội',
+} as const
+export type SourceTier = keyof typeof SOURCE_TIER
+
+/**
+ * Why a read failed — the closed list held by the CHECK in `0008_live_source.sql`.
+ *
+ * Outside `ENUMS` for the same Postgres-type reason, plus one of its own: this is diagnostic
+ * detail, not business vocabulary. ADR-0036 records that the opposite reading is defensible —
+ * these DO have labels a Sales person reads — and that keeping them out is a choice rather than
+ * a rule.
+ *
+ * The labels say what a person can DO about it, and never leak an HTTP status code: a page that
+ * blocks robots is information about the source, not a broken product. `js_required` is the
+ * valuable one — it is the only value that separates "the site refused our reader" from "the
+ * company genuinely published nothing", which is the distinction Specs group 2 cannot express.
+ */
+export const FETCH_ERROR_REASON = {
+  timeout: 'Trang không phản hồi kịp',
+  http_4xx: 'Trang từ chối máy đọc tự động',
+  http_5xx: 'Máy chủ của trang đang lỗi',
+  redirect_loop: 'Trang chuyển hướng vòng quanh',
+  js_required: 'Trang cần chạy JavaScript mới hiện nội dung',
+  not_html: 'Nguồn không phải trang web đọc được',
+  too_large: 'Trang quá lớn để đọc an toàn',
+  blocked_url: 'Địa chỉ không được phép đọc',
+  invalid_url: 'Địa chỉ nguồn không hợp lệ',
+  /**
+   * Added by `0009` after the first real read, not by the original list. DNS that does not
+   * resolve, a refused connection, a failed TLS handshake — nine reasons had no room for any of
+   * them, and the two near misses both state something false: `timeout` claims the page did not
+   * answer in time when it was never answered at all, and `invalid_url` sends someone to fix an
+   * address that is perfectly correct and merely down today.
+   */
+  unreachable: 'Không kết nối được tới trang',
+} as const
+export type FetchErrorReason = keyof typeof FETCH_ERROR_REASON
+
+/**
  * Registry keyed by the exact enum names used in ontology 3.5. The parity test walks this
  * object, so adding an enum here without adding it to the ontology (or the reverse) fails.
  */
