@@ -31,11 +31,45 @@ Mở `.env` và điền **ba** biến bắt buộc, thiếu một cái là `pnpm
 
 ```bash
 docker compose -f infra/docker-compose.yml logs api | grep ClaimExtractor
-# Dùng AnthropicClaimExtractor (model ...)   ← LLM thật
-# ANTHROPIC_API_KEY trống → dùng FixtureClaimExtractor
+# Dùng AgentClaimExtractor qua agent-runtime tại ...  ← Claude CLI trong container
+# Dùng AnthropicClaimExtractor (model ...)            ← SDK, LLM thật
+# Không có agent-runtime và ANTHROPIC_API_KEY trống → dùng FixtureClaimExtractor
 ```
 
 Đổi key trong `.env` thì phải `docker compose ... up -d api worker` lại — container đọc biến môi trường một lần lúc khởi động.
+
+#### Tuỳ chọn — chạy lớp rút phát hiện bằng Claude CLI thay vì SDK
+
+Đường thứ ba, **mặc định tắt** ([ADR-0038](docs/decisions/0038-agent-runtime-la-container-rieng-giu-credential-claude-khong-giu-csdl.md)). Bật khi muốn dùng tài khoản Claude có subscription thay cho API key:
+
+```bash
+claude setup-token          # trên máy đã đăng nhập Claude, in ra một token dài
+```
+
+Điền **cả ba** biến vào `.env` — thiếu một cái là coi như tắt:
+
+| Biến | Điền gì |
+| --- | --- |
+| `AGENT_RUNTIME_URL` | `http://agent-runtime:4700` |
+| `AGENT_TOKEN` | Chuỗi bí mật tự đặt, để `api` chứng minh với `agent-runtime` rằng nó là ai. `openssl rand -hex 16` |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Token vừa in ra ở trên |
+
+Rồi `pnpm start` như bình thường — `agent-runtime` là service trong cùng compose, không phải chạy tay.
+
+Kiểm nó lên chưa:
+
+```bash
+docker compose -f infra/docker-compose.yml exec api wget -qO- http://agent-runtime:4700/health
+# {"ok":true,"skills":["extract-claims"],"authMode":"oauth",...}
+```
+
+Ba điều nên biết trước khi bật:
+
+- **Vòng quét không dùng đường này.** Hạn mức subscription tính theo phiên, mà vòng quét quét mọi công ty mỗi 60s. `worker` đọc cùng biến rồi ghi log rằng nó từ chối — `docker compose logs worker | grep ClaimExtractor` thấy dòng đó là đúng, không phải lỗi.
+- **Mỗi lần gọi tốn thêm ~3,4s** khởi động tiến trình, nằm trên đường Sales bấm nút.
+- **Dùng subscription làm backend là ngoài điều khoản của Anthropic.** Được cho demo nội bộ, không mang lên production.
+
+Luật rút phát hiện lúc này nằm ở [`apps/agent-runtime/skills/extract-claims/SKILL.md`](apps/agent-runtime/skills/extract-claims/SKILL.md) — sửa file đó rồi `docker compose ... up -d --build agent-runtime` là đổi được cách AI đọc, không cần sửa TypeScript.
 
 ### Bước 2 — bật hệ thống (terminal 1)
 

@@ -1,44 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
-import { Injectable, Logger } from '@nestjs/common'
-
-import {
-  PROPOSAL_TARGET_FIELDS,
-  SIGNAL_TYPE,
-  type ClaimDraft,
-  type ClaimExtractor,
-  type ObservationInput,
-  enumCodes,
-} from '@crm/contracts'
-
-import { buildObservationPrompt } from './build-observation-prompt'
-import { parseClaimDrafts } from './parse-claim-drafts'
-
-/**
- * The real adapter behind `CLAIM_EXTRACTOR` (ADR-0014).
- *
- * The split this class obeys, and the reason it is so short: **where the Specs ask for
- * understanding context, the LLM decides; where they ask for a guarantee, code decides.**
- *
- *   LLM  → `statement`, `signalType`, `confidence`, which passage to quote
- *   code → is `quoteText` a verbatim substring, the offsets, whether to save at all
- *
- * So this file returns `ClaimDraft[]` and NOTHING else. It does not compute offsets (the
- * `ClaimDraft` type has no fields for them), it does not touch the database, and it never
- * decides that a claim is good enough to keep. `ClaimService` does all three.
- *
- * `company_type` goes into the prompt because a finding is read under the lens of the company
- * type (ontology section 4): "hiring 200 engineers" means something different for an IT
- * outsourcing prospect than for a traditional manufacturer.
- */
-
-const DEFAULT_MODEL = 'claude-sonnet-5'
-
-/**
- * The same rules live as prose in `apps/agent-runtime/skills/extract-claims/SKILL.md`, for the
- * adapter that reaches the model through the Claude CLI. Two transports, one set of rules —
- * change one and change the other, or two demos will disagree about what a finding is.
- */
-const SYSTEM_PROMPT = `Bạn đọc bản chụp trang web của một công ty B2B và rút ra các phát hiện đáng chú ý cho đội Sales ITO.
+Bạn đọc bản chụp trang web của một công ty B2B và rút ra các phát hiện đáng chú ý cho đội Sales ITO.
 
 QUY TẮC TUYỆT ĐỐI về câu trích:
 - "quoteText" PHẢI là một đoạn COPY NGUYÊN VĂN, cắt trực tiếp từ nội dung được cung cấp.
@@ -55,7 +15,7 @@ Câu trích thì giữ nguyên ngôn ngữ của nguồn, vì nó phải khớp 
 - speculative: phải đoán thêm
 
 GỢI Ý SỬA Ô HỒ SƠ (không bắt buộc, thêm "fieldSuggestion" vào phát hiện):
-- Chỉ khi bản chụp nói rõ một trong bốn ô: ${PROPOSAL_TARGET_FIELDS.join(' | ')}.
+- Chỉ khi bản chụp nói rõ một trong bốn ô: {{PROPOSAL_TARGET_FIELDS}}.
 - CHỈ đề xuất khi ô đó đang TRỐNG hoặc giá trị hiện tại KHÁC với điều bản chụp ghi. Giá trị hiện tại được cung cấp bên dưới.
 - **Mỗi đề xuất phải nằm trên một phát hiện RIÊNG, và "quoteText" của chính phát hiện đó phải là dòng dữ kiện chứa giá trị.** Đừng gắn đề xuất sửa ô vào một phát hiện về tin tức: câu trích của tin tức không chứa giá trị của ô, và hệ thống sẽ bỏ đề xuất đó.
 - "proposedValue" PHẢI là một đoạn CẮT NGUYÊN VĂN từ chính "quoteText" của phát hiện đó. Viết lại là mất trắng: hệ thống bỏ phần đề xuất.
@@ -75,33 +35,5 @@ GỢI Ý SỬA Ô HỒ SƠ (không bắt buộc, thêm "fieldSuggestion" vào ph
 - Tin mở rộng sang một thị trường KHÔNG phải là đổi quốc gia trụ sở. Chỉ đổi "country" khi bản chụp ghi trụ sở chính.
 
 Chỉ trả JSON: {"claims":[{"statement","signalType","confidence","quoteText","fieldSuggestion":{"targetField","proposedValue"}}]}
-signalType ∈ ${enumCodes(SIGNAL_TYPE).join(' | ')}
-Không có phát hiện nào thì trả {"claims":[]} — trả về rỗng là câu trả lời hợp lệ và tốt hơn là bịa.`
-
-@Injectable()
-export class AnthropicClaimExtractor implements ClaimExtractor {
-  private readonly logger = new Logger('AnthropicClaimExtractor')
-  private readonly client: Anthropic
-  private readonly model: string
-
-  constructor(apiKey: string, model: string = DEFAULT_MODEL) {
-    this.client = new Anthropic({ apiKey })
-    this.model = model
-  }
-
-  async extract(observation: ObservationInput): Promise<ClaimDraft[]> {
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildObservationPrompt(observation) }],
-    })
-
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('')
-
-    return parseClaimDrafts(text, this.logger, `observation ${observation.id}`)
-  }
-}
+signalType ∈ {{SIGNAL_TYPES}}
+Không có phát hiện nào thì trả {"claims":[]} — trả về rỗng là câu trả lời hợp lệ và tốt hơn là bịa.

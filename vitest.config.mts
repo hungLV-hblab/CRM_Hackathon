@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config'
  */
 export default defineConfig({
   test: {
-    projects: ['packages/*', 'apps/api'],
+    projects: ['packages/*', 'apps/api', 'apps/agent-runtime'],
     /**
      * REQUIRED at the ROOT config, not inside a project — Vitest only reads this option at
      * the top level. Every integration test shares one `crm_test` database and every one of
