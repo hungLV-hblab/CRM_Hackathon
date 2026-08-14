@@ -71,6 +71,21 @@ const NEXT_STEP_OPENER: Record<AutoWriteSignal, string> = {
 export interface AutoNextStepInput {
   companyId: string
   savedClaims: SavedClaim[]
+  /**
+   * I-15 (ADR-0035 · ADR-0036) — the source lowered the ceiling to zone 2, so this service may
+   * still DECIDE what the next step should be but may not write it. Every open deal comes back
+   * as a `BlockedNextStep` and feature group 3 files it as a suggestion.
+   *
+   * Why propose rather than skip: `blocked` is the ONLY route by which a next-step implication
+   * becomes a `next_step` suggestion. Skipping this service entirely for a live source would make
+   * that implication vanish with no log, no count and no exception — the shape of the hole
+   * ADR-0028 closed, one level up. I-15 says a live finding may only ever become a `Proposal`,
+   * which requires the suggestion to exist rather than to disappear.
+   *
+   * It is also not a new mechanism: this is exactly what I-7 already does for a human-typed cell,
+   * applied to every cell instead of one.
+   */
+  proposeOnly?: boolean
 }
 
 export interface AutoNextStepResult {
@@ -114,8 +129,13 @@ export class AutoNextStepService {
      * buy zone 3 its privilege. So the write does not happen — it does not happen QUIETLY
      * either, which is what the reason code and the log line below are for. The queue still
      * gets its suggestions; only the unasked write is withheld.
+     *
+     * Skipped in propose-only mode, and that is not a shortcut: nothing is written there, so
+     * there is nothing to notify anybody about. Keeping the gate would refuse a SUGGESTION over a
+     * missing notification recipient, which is the wrong trade — the suggestion is what makes the
+     * finding reachable at all under I-15.
      */
-    if (!company.ownerId) {
+    if (!input.proposeOnly && !company.ownerId) {
       this.logger.warn(
         `Công ty ${input.companyId} không có người phụ trách — không tự đặt Việc tiếp theo ` +
           'vì không có ai để báo. Gợi ý vẫn vào hàng đợi.',
@@ -133,6 +153,22 @@ export class AutoNextStepService {
     const result: AutoNextStepResult = { written: 0, blocked: [], skippedReason: null }
 
     for (const opportunity of open) {
+      /**
+       * I-15 first, then I-7 — and the order matters. An unvetted source removes the authority to
+       * write ANY cell, so it is checked before the narrower question of whose cell this is.
+       * `currentNextStepText` is passed through as-is: `null` for an empty cell is the honest
+       * "hiện tại" for the reviewer to see, not a value to invent.
+       */
+      if (input.proposeOnly) {
+        result.blocked.push({
+          claim,
+          opportunityId: opportunity.id,
+          currentNextStepText: opportunity.nextStepText,
+          proposedNextStepText: text,
+        })
+        continue
+      }
+
       /**
        * I-7. An overdue human-typed cell is a debt Sales is carrying, not a stale cell to
        * clean up — so it is not touched, and the case is handed on rather than dropped.
@@ -152,7 +188,8 @@ export class AutoNextStepService {
         claim,
         text,
         dueDate,
-        ownerId: company.ownerId,
+        /** Unreachable in propose-only mode: the loop above `continue`s before getting here. */
+        ownerId: company.ownerId as string,
         companyName: company.name,
         signalType,
       })
@@ -160,8 +197,11 @@ export class AutoNextStepService {
     }
 
     this.logger.log(
-      `Công ty ${input.companyId}: tự đặt Việc tiếp theo cho ${result.written} cơ hội · ` +
-        `${result.blocked.length} không đè vì ô do người gõ (I-7)`,
+      input.proposeOnly
+        ? `Công ty ${input.companyId}: nguồn thật nên KHÔNG tự đặt Việc tiếp theo — ` +
+            `${result.blocked.length} cơ hội chuyển thành gợi ý chờ duyệt (I-15)`
+        : `Công ty ${input.companyId}: tự đặt Việc tiếp theo cho ${result.written} cơ hội · ` +
+            `${result.blocked.length} không đè vì ô do người gõ (I-7)`,
     )
 
     return result

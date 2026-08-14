@@ -44,8 +44,44 @@ export const observations = pgTable(
     /** Computed over `rawContent`, per ADR-0012. */
     contentHash: text('content_hash').notNull(),
     fetchStatus: fetchStatusEnum('fetch_status').notNull(),
+    /**
+     * Which kind of source produced this row (ADR-0035 · ontology 3.6): `demo_snapshot` for the
+     * stored pages every acceptance check runs on, `live_crawl` for a real public page.
+     *
+     * NOT decoration — it is read at runtime to lower the autonomy ceiling. A finding drawn from
+     * `live_crawl` may only ever become a `Proposal` (I-15): no timeline entry, no auto next
+     * step, however watched the company is. Zones 3 and 4 are safe because the CONTENT of the
+     * snapshot set was vetted by a human, not because an undo button exists.
+     *
+     * `text` + CHECK rather than a pg enum, matching `source_tier` and `snapshot_variant`: adding
+     * a value must not need an `ALTER TYPE`.
+     */
+    sourceKind: text('source_kind').notNull().default('demo_snapshot'),
+    /**
+     * Why the read failed, when it did. NULL on every successful read — and the CHECK in
+     * `0008_live_source.sql` enforces that pairing, because a reason attached to a successful
+     * read would let the failure dashboard count reads that worked.
+     *
+     * The valuable value is `js_required`: Specs group 2 has ONE state for an unreadable source,
+     * which cannot separate "the site blocked our reader" from "the company published nothing".
+     * That distinction is what a Sales Manager asked for in the 14/08 requirement challenge.
+     */
+    fetchErrorReason: text('fetch_error_reason'),
   },
-  (table) => [index('observations_company_captured_at_idx').on(table.companyId, table.capturedAt)],
+  (table) => [
+    index('observations_company_captured_at_idx').on(table.companyId, table.capturedAt),
+    /**
+     * I-3 compares against the latest observation OF THE SAME URL, not of the company
+     * (ADR-0036). With several sources per company the per-company comparison cross-checks URL A
+     * against URL B's row, so every read would store N new rows and pay for N LLM calls. Still
+     * enforced in the service, never as a UNIQUE index — ADR-0017 explains why.
+     */
+    index('observations_company_source_url_captured_at_idx').on(
+      table.companyId,
+      table.sourceUrl,
+      table.capturedAt,
+    ),
+  ],
 )
 
 export type Observation = typeof observations.$inferSelect

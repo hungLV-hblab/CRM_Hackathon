@@ -43,6 +43,22 @@ export const companies = pgTable(
      * the API.
      */
     snapshotVariant: text('snapshot_variant').notNull().default('before'),
+    /**
+     * The per-company gate on the live web source (ADR-0035 · I-17). Off by default, so a company
+     * nobody opted in can never be crawled and reseeding (I-14) returns everything to "off" with
+     * no clean-up code.
+     *
+     * Protected by exactly the same privilege as `snapshotVariant` above, and for the same
+     * reason: `crm_system` holds SELECT on this table and NO UPDATE, so the AI can read the
+     * switch and can never set it. An AI able to turn on its own uncontrolled source would be
+     * choosing which evidence it then reports on. Measured in
+     * `live-source-columns-and-grants.test.ts`, not assumed.
+     *
+     * Turning it on for a company of the seed set is REFUSED (I-16) and audited: the acceptance
+     * suite must stay reproducible, and it is only reproducible while every company a judge
+     * touches reads the stored snapshot.
+     */
+    liveSourceEnabled: boolean('live_source_enabled').notNull().default(false),
     /** Soft delete: `actor=system` may never delete human-created data (ontology section 5). */
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 
 import {
   CLAIM_EXTRACTOR,
@@ -102,7 +102,7 @@ export class ObservationService {
     const rawContent = normalizeSnapshotText(snapshot.rawHtml)
     const contentHash = hashSnapshotContent(rawContent)
 
-    const latest = await this.latestObservation(companyId)
+    const latest = await this.latestObservationForUrl(companyId, snapshot.sourceUrl)
     if (latest?.contentHash === contentHash) {
       this.logger.log(`Đã đọc, không đổi: công ty ${companyId} — không tạo bản lưu, không gọi LLM`)
       return { ...EMPTY_RESULT, unchanged: true }
@@ -166,6 +166,14 @@ export class ObservationService {
       observationId: created.id,
       savedClaims: result.saved,
       observationCapturedAt: created.capturedAt,
+      /**
+       * Hard-coded, and only for as long as this method reads through `DemoSnapshotSource`.
+       * `resolveObservationSource` (I-16/I-17) is what decides this value, and it is wired in
+       * together with `LiveCrawlSource` — resolving to `live_crawl` before a crawler exists would
+       * label snapshot content as a live read, which is a lie in the one column the autonomy
+       * ceiling is computed from.
+       */
+      sourceKind: 'demo_snapshot',
     })
 
     return {
@@ -235,11 +243,25 @@ export class ObservationService {
     }
   }
 
-  private async latestObservation(companyId: string) {
+  /**
+   * I-3, scoped to ONE URL (ADR-0036).
+   *
+   * It used to compare against the latest observation of the COMPANY, which is the same thing
+   * while every company has exactly one source — every snapshot company does. Add a second URL
+   * and the two readings cross-check: URL A's hash is compared against URL B's row, never
+   * matches, so every read stores a new row for every URL and pays for an LLM call on each. The
+   * invariant reads "different from the most recent snapshot", and with several sources the most
+   * recent snapshot is per source.
+   *
+   * Still enforced here rather than by a UNIQUE index, unchanged from ADR-0017: a global unique
+   * also rejects the before → after → before sequence a judge produces when replaying T-6/T-8 a
+   * second time.
+   */
+  private async latestObservationForUrl(companyId: string, sourceUrl: string) {
     const [latest] = await this.dbSystem
       .select({ contentHash: observations.contentHash })
       .from(observations)
-      .where(eq(observations.companyId, companyId))
+      .where(and(eq(observations.companyId, companyId), eq(observations.sourceUrl, sourceUrl)))
       .orderBy(desc(observations.capturedAt))
       .limit(1)
 

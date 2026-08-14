@@ -73,6 +73,16 @@ export interface GenerateProposalsInput {
   savedClaims: SavedClaim[]
   /** Claims group 4 refused to write over (I-7). Each becomes a `next_step` proposal instead. */
   blockedNextSteps?: BlockedNextStep[]
+  /**
+   * I-15 (ADR-0035 · ADR-0036) — the finding came from an unvetted public page, so the timeline
+   * gate below FLIPS: a watched company gets the suggestion instead of the system entry.
+   *
+   * This is the second of the two sign-flips I-15 needs, and the one that is easy to forget.
+   * Blocking the entry without flipping this leaves a watched company's live finding with no
+   * route out at all — I-15 refuses the entry, I-5 refuses the suggestion — and I-3 then makes
+   * that permanent, because the unchanged page yields no findings on the next read.
+   */
+  fromLiveSource?: boolean
 }
 
 /** The I-7 hand-off from feature group 4 (ADR-0023). */
@@ -131,7 +141,12 @@ export class ProposalService {
         if (row) rows.push(row)
       }
 
-      const timelineRow = this.buildTimelineEntry(claim, company, result)
+      const timelineRow = this.buildTimelineEntry(
+        claim,
+        company,
+        result,
+        input.fromLiveSource ?? false,
+      )
       if (timelineRow) rows.push(timelineRow)
     }
 
@@ -246,12 +261,20 @@ export class ProposalService {
     claim: ClaimDto,
     company: CompanyForProposals,
     result: GenerateProposalsResult,
+    fromLiveSource: boolean,
   ): (typeof proposals.$inferInsert) | null {
     if (!isQueueableConfidence(claim.confidence)) return null
     /** `other` is "nothing a Sales person acts on" — a profile line, typically. */
     if (claim.signalType === 'other') return null
 
-    if (company.isWatched) {
+    /**
+     * I-15 · the flip. Đang theo dõi delegates news-writing to the system (ADR-0006), but that
+     * delegation was granted over a source a human had vetted. An unvetted page does not carry
+     * it, so the finding comes back here as a suggestion — which is also why
+     * `SystemTimelineEntryService` refuses the entry for the same row. Exactly one of the two
+     * runs, as ever; a live source just moves which one.
+     */
+    if (company.isWatched && !fromLiveSource) {
       result.blockedByWatchedCompany += 1
       return null
     }
