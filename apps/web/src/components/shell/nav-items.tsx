@@ -5,7 +5,7 @@ import {
   Eye,
   Inbox,
   LayoutDashboard,
-  ScrollText,
+  SlidersHorizontal,
   Target,
   type LucideIcon,
 } from 'lucide-react'
@@ -27,10 +27,10 @@ export interface NavItem {
  * Next's 404 inside the shell, which reads as a broken shell rather than as a missing screen,
  * and `e2e/app-shell-navigation.spec.ts` fails the build for it on purpose.
  *
- * "Quản trị" points straight at `/quan-tri/nhat-ky-vong-quet` because that is the only screen
- * living under `/quan-tri` — there is no index page there, and aiming the item at the bare
- * segment would 404. When the admin dashboard adds `/quan-tri/page.tsx`, this href moves up to
- * it and the log becomes a link inside that screen rather than a second top-level item.
+ * "Quản trị" points at the bare `/quan-tri` now that the admin dashboard exists there. It used to
+ * aim at `/quan-tri/nhat-ky-vong-quet`, the only screen under that segment at the time; the log is
+ * a link INSIDE the dashboard rather than a second top-level item. `activeHref` matches by
+ * longest prefix, so the log screen still lights this item up.
  *
  * Icons carry labels, never replace them. Eight unlabelled glyphs is a guessing game, and
  * design-guidelines forbids icon-only navigation outright.
@@ -42,7 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/hang-doi', label: 'Hàng đợi', icon: Inbox, showsPendingCount: true },
   { href: '/tong-quan', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/thong-bao', label: 'Thông báo', icon: Bell },
-  { href: '/quan-tri/nhat-ky-vong-quet', label: 'Nhật ký vòng quét', icon: ScrollText },
+  { href: '/quan-tri', label: 'Quản trị', icon: SlidersHorizontal },
   { href: '/huong-dan', label: 'Hướng dẫn', icon: BookOpen },
 ]
 
