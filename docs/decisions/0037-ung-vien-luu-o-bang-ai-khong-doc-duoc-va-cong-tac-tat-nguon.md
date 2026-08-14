@@ -129,8 +129,8 @@ Câu phân biệt, và đây là chỗ dễ đọc nhầm nhất: ADR-0036 mục
 | Đảo gì | Kỳ vọng | Kết quả thật |
 | --- | --- | --- |
 | Thêm tay `GRANT SELECT ON company_source_candidates TO crm_system` | test 20 đỏ | ✅ **đúng 1 test đỏ** (20), 22 test còn lại xanh. Đã `REVOKE` lại và xác nhận 23/23 xanh |
-| Sửa view thành `WHERE true` | test 24 đỏ | *(cập nhật sau khi chạy phase 2)* |
-| `.from(companySourcesEnabled)` → `.from(companySources)` | test đường đọc đỏ **bằng `permission denied`** | *(cập nhật sau khi chạy phase 2)* |
+| Sửa view thành `WHERE true` | test 24 đỏ | ✅ **đúng 1 test đỏ** (24), 24 test còn lại xanh. Đã khôi phục `WHERE enabled` và xác nhận 25/25 xanh |
+| `.from(companySourcesEnabled)` → `.from(companySources)` | test đường đọc đỏ **bằng `permission denied`** | ✅ cả 3 test của `disabled-source-not-read.test.ts` đỏ, và đỏ đúng bằng `permission denied for table company_sources` — **không** phải bằng assertion sai. Đã khôi phục |
 | Bỏ dòng `DELETE` trong transaction thay ứng viên | test 10 đỏ | *(cập nhật sau khi chạy phase 3)* |
 | Bỏ một cửa gác `system` | test 13 hoặc 14 đỏ | *(cập nhật sau khi chạy phase 3)* |
 

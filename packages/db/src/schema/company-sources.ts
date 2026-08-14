@@ -1,4 +1,14 @@
-import { check, index, pgTable, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  check,
+  index,
+  pgTable,
+  pgView,
+  text,
+  timestamp,
+  uuid,
+  unique,
+} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 import { companies } from './companies'
@@ -45,6 +55,16 @@ export const companySources = pgTable(
      */
     addedBy: uuid('added_by').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Pause reading this page without losing why it was chosen (ADR-0037). `true` by default so
+     * shipping the switch changes no existing company's behaviour.
+     *
+     * READ THIS BEFORE WRITING A QUERY: do NOT filter on this column to decide what to fetch. The
+     * read path goes through `companySourcesEnabled` below, and `crm_system` has no SELECT on this
+     * table at all (`0011_source_enabled_view.sql`) — so a reader that tries to filter here gets
+     * `permission denied` instead of quietly fetching a page somebody switched off.
+     */
+    enabled: boolean('enabled').notNull().default(true),
   },
   (table) => [
     unique('company_sources_company_id_url_unique').on(table.companyId, table.url),
@@ -61,3 +81,29 @@ export const companySources = pgTable(
 )
 
 export type CompanySource = typeof companySources.$inferSelect
+
+/**
+ * THE ONLY WAY THE AI IDENTITY SEES THE READING LIST (`0011_source_enabled_view.sql`).
+ *
+ * `crm_system` lost `SELECT` on `company_sources` and holds `SELECT` on this view instead, so
+ * "don't read a page somebody switched off" stopped being a filter someone has to remember and
+ * became a privilege. A read path that queries the table by mistake fails with `permission denied`
+ * rather than succeeding quietly against a switched-off URL.
+ *
+ * `.existing()` because the view is created by the hand-written migration, where the REVOKE and
+ * the GRANT live next to it and can be read as one mechanism. Drizzle only needs the shape so
+ * `select().from(companySourcesEnabled)` types correctly.
+ *
+ * No `enabled` column here on purpose: every row this view returns is on, and exposing the column
+ * would only invite a second filter downstream.
+ */
+export const companySourcesEnabled = pgView('company_sources_enabled', {
+  id: uuid('id').notNull(),
+  companyId: uuid('company_id').notNull(),
+  url: text('url').notNull(),
+  sourceTier: text('source_tier').notNull(),
+  discoveredVia: text('discovered_via').notNull(),
+  searchSnippet: text('search_snippet'),
+  addedBy: uuid('added_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+}).existing()

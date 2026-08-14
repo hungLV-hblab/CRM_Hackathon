@@ -78,6 +78,13 @@
       "when": 1786662600000,
       "tag": "0010_source_candidates",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786663200000,
+      "tag": "0011_source_enabled_view",
+      "breakpoints": true
     }
   ]
 }
