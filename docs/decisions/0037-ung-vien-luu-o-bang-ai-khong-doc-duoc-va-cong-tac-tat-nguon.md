@@ -123,7 +123,8 @@ Câu phân biệt, và đây là chỗ dễ đọc nhầm nhất: ADR-0036 mục
 | Nguồn đã tắt không được đọc | `disabled-source-not-read.test.ts` — tắt 1 trong 2 → đọc đúng nguồn đang bật; tắt cả 2 → rơi về `companies.website` |
 | Cửa `system` đóng ở cả bốn route ghi | Cùng file test 14, 15 — và test 14 chứng minh **tìm bị chặn trước khi search chạy** (`discovery.calls = 0`) |
 | Công tắc giữ lại snippet qua hai lần bật/tắt | Cùng file test 16 |
-| Ứng viên sống qua reload | e2e `source-candidates-survive-reload.spec.ts` bước 3 |
+| Ứng viên sống qua reload | e2e `source-candidates-survive-reload.spec.ts` bước 3 — chạy trên stack **không có** `ANTHROPIC_API_KEY`, đúng đường một giám khảo chạy |
+| Đổi layout không vỡ gì | **40/40 e2e xanh** (39 cũ + 1 mới) và **466/466 test unit + tích hợp xanh**, kể cả `ui-invariants` kiểm thang token |
 | **Test có răng** | Xem mục dưới — từng lần đảo, và **đúng bao nhiêu test đỏ** |
 
 ### Đảo code để chứng minh test có răng

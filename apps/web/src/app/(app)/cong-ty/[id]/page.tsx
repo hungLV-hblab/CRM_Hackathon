@@ -122,18 +122,23 @@ export default function CompanyDetailPage() {
             {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
             {readingZone.data && <ReadingZone observations={readingZone.data} />}
           </SectionCard>
-
-          {/*
-            Below the read zone on purpose: this is where the pages ABOVE came from, so it reads
-            in the order someone thinks in — what was found, then where it was found.
-          */}
-          {company && (
-            <SectionCard title="Nguồn đọc">
-              <SourceDiscoverySection company={company} />
-            </SectionCard>
-          )}
         </div>
       </div>
+
+      {/*
+        AFTER the grid, so it gets the full width — and still after the read zone in DOM order,
+        which is the order someone thinks in: what was found, then where it was found. Nothing above
+        moves, so the read zone keeps the position it had.
+
+        It was inside the 24rem column until 14/08 and could not fit what it holds: every candidate
+        carries a tier, a URL, a reason and a quoted snippet, which is three or four lines each, and
+        the two lists are only useful when they can be read side by side.
+      */}
+      {company && (
+        <SectionCard title="Nguồn đọc">
+          <SourceDiscoverySection company={company} />
+        </SectionCard>
+      )}
     </PageBody>
   )
 }
