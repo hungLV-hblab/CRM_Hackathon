@@ -82,10 +82,13 @@ test('ứng viên nguồn sống qua reload, tick vào danh sách đọc, tắt 
   // Still listed. Losing the list on save was the second half of the original complaint.
   await expect(panel.getByRole('listitem').filter({ hasText: 'example.com' }).first()).toBeVisible()
 
-  // 5 — the switch on a kept source says its state in WORDS, not only by looking faded.
+  // 5 — the switch on a kept source says its state in WORDS, not only by looking faded. And the row
+  // is still THERE: switching off is not a delete, which is the reason it exists as a separate act.
+  await expect(panel.getByTestId('company-source')).toHaveCount(1)
   await panel.getByRole('button', { name: 'Tạm tắt' }).first().click()
   await expect(panel.getByText('Đang tạm tắt — không đọc trang này')).toBeVisible()
   await expect(panel.getByRole('button', { name: 'Bật lại' }).first()).toBeVisible()
+  await expect(panel.getByTestId('company-source')).toHaveCount(1)
 
   // 6 — a candidate can be dropped, and the drop survives a reload like everything else here.
   const before = await panel.getByTestId('source-candidate').count()
