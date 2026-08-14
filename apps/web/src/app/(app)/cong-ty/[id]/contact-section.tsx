@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { SectionCard } from '@/components/ui/section-card'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -59,22 +61,19 @@ export function ContactSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-surface p-4">
-      <header className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
-          Người liên hệ
-        </h2>
+    <SectionCard
+      title="Người liên hệ"
+      actions={
         <Button variant="secondary" onClick={() => setDialogOpen(true)}>
           Thêm người liên hệ
         </Button>
-      </header>
+      }
+    >
 
       {contacts.isPending && <Skeleton className="h-40 w-full rounded-card" />}
 
       {contacts.data?.length === 0 && (
-        <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">
-          Chưa có người liên hệ nào. Thêm đầu mối chính để biết gọi cho ai.
-        </p>
+        <EmptyState message="Chưa có người liên hệ nào. Thêm đầu mối chính để biết gọi cho ai." compact />
       )}
 
       <ul className="flex flex-col divide-y divide-ink-200">
@@ -158,6 +157,6 @@ export function ContactSection({ companyId }: { companyId: string }) {
           </div>
         </form>
       </Dialog>
-    </section>
+    </SectionCard>
   )
 }

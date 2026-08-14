@@ -1,5 +1,6 @@
 'use client'
 
+import { Search } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
@@ -20,6 +21,8 @@ import { Dialog } from '@/components/ui/dialog'
 import { FilterBar, type FilterChip } from '@/components/ui/filter-bar'
 import { Input, Select } from '@/components/ui/input'
 import { Cell, Table } from '@/components/ui/table'
+import { ErrorState } from '@/components/ui/error-state'
+import { EmptyState } from '@/components/ui/empty-state'
 import { api, ApiError } from '@/lib/api-client'
 
 const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: 'traditional' }
@@ -156,23 +159,14 @@ export default function CompanyListPage() {
       {companies.isPending && <Skeleton className="h-64 w-full rounded-card" />}
 
       {companies.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {companies.error instanceof ApiError
-            ? companies.error.message
-            : 'Không tải được danh sách công ty'}
-        </p>
+        <ErrorState error={companies.error} fallback={'Không tải được danh sách công ty'} />
       )}
 
       {/* No "Xoá bộ lọc" button here any more. The filter bar above carries one whenever a
           filter is on, and two buttons with the same name are ambiguous to a screen reader and
           to `getByRole` alike — the way out has to be in exactly one place. */}
       {companies.data?.length === 0 && (
-        <div className="rounded-card border border-dashed border-ink-300 p-6 text-center">
-          <p className="text-sm text-ink-600">
-            Không có công ty nào khớp bộ lọc đang chọn. Bỏ bớt điều kiện ở thanh lọc phía trên để
-            xem lại danh sách.
-          </p>
-        </div>
+        <EmptyState message="Không có công ty nào khớp bộ lọc đang chọn. Bỏ bớt điều kiện ở thanh lọc phía trên để xem lại danh sách." icon={Search} />
       )}
 
       {companies.data && companies.data.length > 0 && (

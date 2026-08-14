@@ -1,11 +1,13 @@
 'use client'
 
+import { ScrollText } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import type { WatchCycleRunDto } from '@crm/contracts'
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -56,10 +58,7 @@ export default function WatchCycleLogPage() {
       {runs.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
 
       {rows.length === 0 && !runs.isPending && (
-        <p className="rounded-control border border-dashed border-ink-300 p-4 text-sm text-ink-600">
-          Chưa có vòng quét nào được ghi. Nếu worker đang chạy thì dòng đầu tiên xuất hiện trong
-          vòng một chu kỳ.
-        </p>
+        <EmptyState message="Chưa có vòng quét nào được ghi. Nếu worker đang chạy thì dòng đầu tiên xuất hiện trong vòng một chu kỳ." icon={ScrollText} />
       )}
 
       <ol className="flex flex-col gap-2">
@@ -80,7 +79,7 @@ function RunRow({ run }: { run: WatchCycleRunDto }) {
         /** The rolled-up line is made prominent — it is the one a reader scans for. */
         run.isRollup
           ? 'rounded-card border-2 border-machine-300 bg-machine-50 p-3'
-          : 'rounded-card border border-ink-200 bg-white p-3'
+          : 'rounded-card border border-ink-200 bg-surface p-3'
       }
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">

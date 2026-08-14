@@ -17,7 +17,8 @@ import { ContactSection } from './contact-section'
 import { ReadingZone } from '@/components/provenance/reading-zone'
 import { TimelineSection } from './timeline-section'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, ApiError } from '@/lib/api-client'
+import { ErrorState } from '@/components/ui/error-state'
+import { api } from '@/lib/api-client'
 
 /**
  * Company detail. TWO clearly separated regions, which is the point of the screen:
@@ -103,9 +104,7 @@ export default function CompanyDetailPage() {
         </div>
 
         {ingest.isError && (
-          <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-            {ingest.error instanceof ApiError ? ingest.error.message : 'Không đọc được nguồn'}
-          </p>
+          <ErrorState error={ingest.error} fallback={'Không đọc được nguồn'} />
         )}
         {ingest.data && <IngestSummary result={ingest.data} />}
 

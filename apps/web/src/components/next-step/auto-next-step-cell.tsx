@@ -11,6 +11,7 @@ import { ConfidenceBadge } from '@/components/provenance/quote-block'
 import { Dialog } from '@/components/ui/dialog'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -127,9 +128,7 @@ export function AutoNextStepCell({ autoNextStep, opportunityName }: AutoNextStep
       )}
 
       {undo.isError ? (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-xs text-danger">
-          {(undo.error as Error).message}
-        </p>
+        <ErrorState error={undo.error} fallback="Không hoàn tác được Việc tiếp theo" compact />
       ) : null}
 
       {sourceOpen ? (

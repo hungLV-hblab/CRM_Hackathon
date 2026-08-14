@@ -107,6 +107,24 @@
   --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
 
+  /**
+   * The scale was always documented as 12·14·16·18·24·32, and the app was using two of them:
+   * 194 of 210 size classes were `text-sm` or `text-xs`. With no size hierarchy the eye has
+   * nothing to grab and every screen reads the same — flat and grey — which is exactly the
+   * complaint that started this pass. Colour cannot fix it either: the guidelines rule out
+   * colour as a hierarchy device.
+   *
+   * Named by ROLE, not by size, so nobody has to relitigate 16-versus-18 at the call site.
+   * The 18px tier was missing entirely: section headings were 14px uppercase grey, i.e.
+   * SMALLER than the text they introduced.
+   */
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+  --text-body-lg: 1rem;
+  --text-section: 1.125rem;
+  --text-page: 1.5rem;
+  --text-metric: 2rem;
+
   /* ------------------------------------------------------------- shape, depth, and time */
 
   /**

@@ -15,6 +15,7 @@ import { NotificationStrip } from '@/components/notification/notification-strip'
 import { StageBoard } from './stage-board'
 import { StageTransitionDialog } from './stage-transition-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { api, ApiError } from '@/lib/api-client'
 
 /** The two stages the Specs want extra cells for. Everything else moves with no questions. */
@@ -117,18 +118,10 @@ export default function OpportunityBoardPage() {
 
       {opportunities.isPending && <Skeleton className="h-40 w-full rounded-card" />}
       {opportunities.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {opportunities.error instanceof ApiError
-            ? opportunities.error.message
-            : 'Không tải được danh sách cơ hội'}
-        </p>
+        <ErrorState error={opportunities.error} fallback={'Không tải được danh sách cơ hội'} />
       )}
       {changeStage.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {changeStage.error instanceof ApiError
-            ? changeStage.error.message
-            : 'Không đổi được giai đoạn'}
-        </p>
+        <ErrorState error={changeStage.error} fallback={'Không đổi được giai đoạn'} />
       )}
 
       {opportunities.data && <StageBoard opportunities={visible} onStageChange={onStageChange} />}

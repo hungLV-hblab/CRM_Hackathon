@@ -1,5 +1,6 @@
 'use client'
 
+import { CircleCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
@@ -9,7 +10,9 @@ import { Cell, Table } from '@/components/ui/table'
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
 import { PageHeader } from '@/components/shell/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, ApiError } from '@/lib/api-client'
+import { ErrorState } from '@/components/ui/error-state'
+import { EmptyState } from '@/components/ui/empty-state'
+import { api } from '@/lib/api-client'
 
 /**
  * The overview. Four blocks, and two of them exist to keep a number honest:
@@ -38,11 +41,7 @@ export default function OverviewPage() {
         </div>
       )}
       {overview.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {overview.error instanceof ApiError
-            ? overview.error.message
-            : 'Không tải được màn tổng quan'}
-        </p>
+        <ErrorState error={overview.error} fallback={'Không tải được màn tổng quan'} />
       )}
 
       {overview.data && <Blocks data={overview.data} />}
@@ -69,10 +68,7 @@ function OverdueBlock({ data }: { data: OverviewDto }) {
         Việc tiếp theo quá hạn
       </h2>
       {data.overdueNextSteps.length === 0 ? (
-        <p className="rounded-card border border-dashed border-ink-300 p-4 text-sm text-ink-600">
-          Không có việc nào quá hạn. Cơ hội chưa có Việc tiếp theo không nằm ở đây — chúng mang
-          cờ cảnh báo trên bảng cơ hội.
-        </p>
+        <EmptyState message="Không có việc nào quá hạn. Cơ hội chưa có Việc tiếp theo không nằm ở đây — chúng mang cờ cảnh báo trên bảng cơ hội." icon={CircleCheck} />
       ) : (
         <Table headers={['Cơ hội', 'Công ty', 'Việc tiếp theo', 'Hạn', 'Cờ']}>
           {data.overdueNextSteps.map((opportunity) => (
@@ -170,9 +166,7 @@ function LostReasonBlock({ data }: { data: OverviewDto }) {
     <section className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">Lý do thua</h2>
       {data.lostReasons.length === 0 ? (
-        <p className="rounded-card border border-dashed border-ink-300 p-4 text-sm text-ink-600">
-          Chưa có cơ hội Thua nào có lý do được ghi.
-        </p>
+        <EmptyState message="Chưa có cơ hội Thua nào có lý do được ghi." icon={CircleCheck} />
       ) : (
         <Table headers={['Lý do', 'Số cơ hội']}>
           {data.lostReasons.map((row) => (

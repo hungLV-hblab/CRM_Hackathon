@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
+import { SectionCard } from '@/components/ui/section-card'
 
 /**
  * What the machine is allowed to do on its own, and what stops it in each case.
@@ -86,7 +87,7 @@ export default function GuidePage() {
           className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-ink-900">{zone.title}</h2>
+            <h2 className="text-section font-semibold text-ink-900">{zone.title}</h2>
             <Badge tone="neutral">Nghiệm thu {zone.checks}</Badge>
           </div>
 
@@ -126,8 +127,7 @@ export default function GuidePage() {
         </ul>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
-        <h2 className="text-lg font-semibold text-ink-900">Tắt sạch AI</h2>
+      <SectionCard title="Tắt sạch AI">
         <p className="text-sm text-ink-700">
           Có một công tắc tắt sạch cả bốn vùng, hiệu lực ngay. Dữ liệu AI đã sinh{' '}
           <strong>không bị xoá</strong> — hệ thống chỉ dừng sinh mới. Giá trị nằm ở{' '}
@@ -151,7 +151,7 @@ export default function GuidePage() {
           cùng với các chỉ số đo. Khi AI tắt, mọi màn đều hiện một dải băng nói rõ — Sales không
           cần quyền Quản trị để biết máy đang dừng.
         </p>
-      </section>
+      </SectionCard>
     </main>
   )
 }

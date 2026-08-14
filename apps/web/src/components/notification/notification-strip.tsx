@@ -7,6 +7,7 @@ import type { NotificationDto } from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ErrorState } from '@/components/ui/error-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -140,9 +141,7 @@ export function NotificationStrip({ show, showLink = false }: NotificationStripP
       </ul>
 
       {undo.isError ? (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-sm text-danger">
-          {(undo.error as Error).message}
-        </p>
+        <ErrorState error={undo.error} fallback="Không hoàn tác được" />
       ) : null}
     </section>
   )

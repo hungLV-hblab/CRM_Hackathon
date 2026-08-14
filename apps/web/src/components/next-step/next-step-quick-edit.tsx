@@ -7,6 +7,7 @@ import type { OpportunityDto } from '@crm/contracts'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ErrorState } from '@/components/ui/error-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -92,9 +93,7 @@ export function NextStepQuickEdit({ opportunity }: { opportunity: OpportunityDto
         </Button>
       </div>
       {save.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-xs text-danger">
-          {(save.error as Error).message}
-        </p>
+        <ErrorState error={save.error} fallback="Không lưu được Việc tiếp theo" compact />
       )}
     </div>
   )

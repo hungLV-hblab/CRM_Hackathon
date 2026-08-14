@@ -7,6 +7,7 @@ import { SIGNAL_TYPE, type ClaimDto, type ObservationWithClaimsDto } from '@crm/
 import { Badge } from '@/components/ui/badge'
 import { ConfidenceBadge } from '@/components/provenance/quote-block'
 import { SourceViewer } from '@/components/provenance/source-viewer'
+import { EmptyState } from '@/components/ui/empty-state'
 
 /**
  * The READ ZONE — everything on this screen was produced by the AI, and it is kept visually
@@ -20,9 +21,7 @@ import { SourceViewer } from '@/components/provenance/source-viewer'
 export function ReadingZone({ observations }: { observations: ObservationWithClaimsDto[] }) {
   if (observations.length === 0) {
     return (
-      <p className="rounded-control border border-dashed border-ink-300 p-4 text-sm text-ink-500">
-        Chưa đọc nguồn nào cho công ty này. Bấm “Đọc lại nguồn” để hệ thống đọc bản chụp.
-      </p>
+      <EmptyState message="Chưa đọc nguồn nào cho công ty này. Bấm “Đọc lại nguồn” để hệ thống đọc bản chụp." compact />
     )
   }
 

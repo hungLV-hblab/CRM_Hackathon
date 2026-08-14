@@ -8,7 +8,9 @@ import type { CompanyDto } from '@crm/contracts'
 import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { api, ApiError } from '@/lib/api-client'
+import { ErrorState } from '@/components/ui/error-state'
+import { EmptyState } from '@/components/ui/empty-state'
+import { api } from '@/lib/api-client'
 
 /**
  * "Đang theo dõi" — the screen where a person hands the machine permission to write.
@@ -84,11 +86,7 @@ export default function WatchedCompaniesPage() {
       </section>
 
       {toggle.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {toggle.error instanceof ApiError
-            ? toggle.error.message
-            : 'Không đổi được trạng thái theo dõi'}
-        </p>
+        <ErrorState error={toggle.error} fallback={'Không đổi được trạng thái theo dõi'} />
       )}
 
       {companies.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
@@ -98,10 +96,7 @@ export default function WatchedCompaniesPage() {
           Hệ thống đang tự ghi tin cho {watched.length} công ty
         </h2>
         {watched.length === 0 ? (
-          <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">
-            Chưa uỷ quyền cho công ty nào. Vòng quét vẫn chạy nhưng không có gì để đọc, và mọi tin
-            đi vào hàng đợi duyệt.
-          </p>
+          <EmptyState message="Chưa uỷ quyền cho công ty nào. Vòng quét vẫn chạy nhưng không có gì để đọc, và mọi tin đi vào hàng đợi duyệt." compact />
         ) : (
           <ul className="flex flex-col gap-2">
             {watched.map((company) => (
@@ -121,9 +116,7 @@ export default function WatchedCompaniesPage() {
           Chưa theo dõi — tin đi vào hàng đợi duyệt
         </h2>
         {unwatched.length === 0 ? (
-          <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">
-            Mọi công ty đều đang được theo dõi.
-          </p>
+          <EmptyState message="Mọi công ty đều đang được theo dõi." compact />
         ) : (
           <ul className="flex flex-col gap-2">
             {unwatched.map((company) => (
@@ -160,7 +153,7 @@ function CompanyRow({
   return (
     <li
       className={`flex flex-wrap items-center gap-3 rounded-card border p-3 ${
-        company.isWatched ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-white'
+        company.isWatched ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-surface'
       }`}
     >
       <div className="min-w-0 flex-1">

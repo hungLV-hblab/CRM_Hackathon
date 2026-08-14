@@ -18,6 +18,8 @@ import { Dialog } from '@/components/ui/dialog'
 import { Input, Select } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SourceViewer } from '@/components/provenance/source-viewer'
+import { EmptyState } from '@/components/ui/empty-state'
+import { SectionCard } from '@/components/ui/section-card'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -92,10 +94,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-surface p-4">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
-        Dòng thời gian
-      </h2>
+    <SectionCard title="Dòng thời gian">
 
       <form onSubmit={submit} className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <Select
@@ -140,9 +139,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
       {timeline.isPending && <Skeleton className="h-40 w-full rounded-card" />}
 
       {timeline.data?.length === 0 && (
-        <p className="rounded-control border border-dashed border-ink-300 p-3 text-sm text-ink-600">
-          Chưa có gì trong dòng thời gian. Ghi lại cuộc gọi hoặc buổi gặp đầu tiên.
-        </p>
+        <EmptyState message="Chưa có gì trong dòng thời gian. Ghi lại cuộc gọi hoặc buổi gặp đầu tiên." compact />
       )}
 
       <ol className="flex flex-col gap-2">
@@ -156,7 +153,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
           />
         ))}
       </ol>
-    </section>
+    </SectionCard>
   )
 }
 
@@ -220,7 +217,7 @@ function TimelineRow({
       )}
 
       {showSource && provenance && (
-        <div className="mt-3 rounded-control border border-machine-200 bg-white p-3">
+        <div className="mt-3 rounded-control border border-machine-200 bg-surface p-3">
           <p className="mb-2 text-xs text-ink-600">
             Mục này được rút từ đoạn dưới đây, phần được đánh dấu là câu trích nguyên văn.
           </p>

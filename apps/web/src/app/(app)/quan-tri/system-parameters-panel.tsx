@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ErrorState } from '@/components/ui/error-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -60,7 +61,7 @@ export function SystemParametersPanel({ settings }: { settings: SystemParameters
   return (
     <section className="flex flex-col gap-4 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-base font-semibold text-ink-900">Tham số hệ thống</h2>
+        <h2 className="text-section font-semibold text-ink-900">Tham số hệ thống</h2>
         <Badge tone={settings.aiEnabled ? 'inference' : 'warning'}>
           <span aria-hidden className="mr-1">
             {settings.aiEnabled ? '●' : '■'}
@@ -122,9 +123,7 @@ export function SystemParametersPanel({ settings }: { settings: SystemParameters
       </div>
 
       {save.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-sm text-danger">
-          {(save.error as Error).message}
-        </p>
+        <ErrorState error={save.error} fallback="Không lưu được tham số" />
       )}
     </section>
   )
