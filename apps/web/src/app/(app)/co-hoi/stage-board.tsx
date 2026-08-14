@@ -19,6 +19,7 @@ import {
 import { STAGE, type OpportunityDto, type Stage } from '@crm/contracts'
 
 import { OpportunityCard } from './opportunity-card'
+import { EmptyState } from '@/components/ui/empty-state'
 
 const STAGES = Object.keys(STAGE) as Stage[]
 
@@ -112,9 +113,7 @@ function StageColumn({ stage, opportunities }: { stage: Stage; opportunities: Op
             <OpportunityCard key={opportunity.id} opportunity={opportunity} />
           ))}
           {opportunities.length === 0 && (
-            <p className="rounded-control border border-dashed border-ink-300 p-3 text-xs text-ink-500">
-              Chưa có cơ hội nào ở giai đoạn này
-            </p>
+            <EmptyState message="Chưa có cơ hội nào ở giai đoạn này" compact />
           )}
         </div>
       </SortableContext>

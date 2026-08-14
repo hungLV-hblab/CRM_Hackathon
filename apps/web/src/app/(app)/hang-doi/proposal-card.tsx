@@ -52,7 +52,7 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
     <article
       data-testid="proposal-card"
       data-tour="proposal-card"
-      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-card p-4"
+      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-surface p-4 transition-colors duration-(--duration-state) hover:border-ink-300"
     >
       <header className="flex flex-wrap items-center gap-2">
         <Badge tone="inference">{PROPOSAL_TYPE[proposal.proposalType]}</Badge>
@@ -69,7 +69,9 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
 
       {/* Câu trích: the evidence, with a way back to the exact characters of the source. */}
       <figure className="border-l-4 border-machine-200 pl-3">
-        <blockquote className="text-sm text-fact">“{proposal.claim.quoteText}”</blockquote>
+        <blockquote className="max-w-[65ch] text-body-lg leading-relaxed text-fact">
+          “{proposal.claim.quoteText}”
+        </blockquote>
         <figcaption className="mt-1 text-xs text-ink-500">
           <button
             type="button"
@@ -136,7 +138,11 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
             {reasonsOpen ? (
               <ul
                 data-testid="reject-reasons"
-                className="absolute left-0 top-full z-10 mt-1 w-64 rounded-control border border-ink-200 bg-card p-1 shadow-lg"
+                // `shadow-float` is the tier for things that lift off the page; `shadow-lg`
+                // was a third shadow scale in a system that declares two. The z-index comes
+                // from the one declared scale for the same reason — a hand-picked `z-10` is
+                // how a menu ends up under a sticky header two weeks later.
+                className="absolute left-0 top-full z-(--z-dropdown) mt-1 w-64 rounded-control border border-ink-200 bg-surface p-1 shadow-float"
               >
                 {(Object.keys(REJECT_REASON) as RejectReason[]).map((reason) => (
                   <li key={reason}>

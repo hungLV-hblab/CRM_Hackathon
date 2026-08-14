@@ -2,7 +2,7 @@
 
 > **Đọc file này trước khi gõ dòng JSX đầu tiên.** Mọi việc chạm tới giao diện — thêm màn hình, sửa component, chọn màu, chọn khoảng cách, thêm animation — đều phải theo file này.
 > Token thật nằm ở [`apps/web/src/app/globals.css`](../apps/web/src/app/globals.css). File md này giải thích **vì sao** và **dùng lúc nào**; file css là nguồn sự thật của **giá trị**.
-> Cập nhật lần cuối: 2026-08-13.
+> Cập nhật lần cuối: 2026-08-14 (vòng nâng cấp thứ hai — [ADR-0034](decisions/0034-mo-thang-token-nhip-chu-container-mat-do-va-dua-cua-gac-vao-test.md): mở thang chữ, thang container, mật độ control, và chuyển cửa gác thang vào bộ test).
 
 ## 1. Hai nghĩa giữ toàn bộ hệ thống
 
@@ -48,11 +48,30 @@ Lấy trực tiếp từ file logo, không phải ước lượng bằng mắt: 
 - Cỡ nền **16px**, thân dòng **1.5**. Không có chữ nào dưới **12px**.
 - Thang cỡ: `12 · 14 · 16 · 18 · 24 · 32`. Không chen cỡ lẻ.
 - Cấp bậc bằng **cỡ + độ đậm + khoảng trắng**, không bằng màu. Đậm: tiêu đề 600, nhãn 500, thân 400.
+
+**Token đặt tên theo vai trò, không theo cỡ.** Lý do: nếu chỗ gọi viết `text-lg` thì "tiêu đề section 16 hay 18" là câu hỏi mở lại ở mỗi file; viết `text-section` thì nó đã được trả lời một lần.
+
+| Token | Cỡ | Dùng cho |
+| --- | --- | --- |
+| `text-caption` | 12 | chú thích, nhãn chip, nhãn ô chỉ số |
+| `text-body` | 14 | thân, ô bảng — cỡ mặc định của màn CRM |
+| `text-body-lg` | 16 | thứ **đọc thật**: câu trích, vùng đọc, trang hướng dẫn |
+| `text-section` | 18 | **tiêu đề section** |
+| `text-page` | 24 | `h1` của màn |
+| `text-metric` | 32 | chỉ ô chỉ số ở Tổng quan — con số mang đi họp |
+
+**Hai luật của tiêu đề section:**
+
+- **18px, đậm, màu `ink-900`.** Trước 14/08 nó là `text-sm text-ink-500` — **nhỏ hơn** nội dung nó mở đầu và phân biệt bằng **màu**, đúng thứ dòng trên cấm. Kết quả đo được lúc đó: 194 trong 210 lần dùng cỡ chữ là `text-sm` hoặc `text-xs`, tức app chỉ có hai cỡ và mọi màn đọc lên như nhau.
+- **Không `uppercase`.** Tiếng Việt viết hoa toàn bộ khó quét hơn: `ĐANG THEO DÕI` bắt mắt đọc từng chữ, `Đang theo dõi` đọc bằng hình dạng — dấu thôi làm đúng việc mà Be Vietnam Pro được chọn để làm.
+
+- Đoạn văn dài giới hạn `max-w-[65ch]`. Quá ~75 ký tự một dòng thì mắt mất chỗ về khi xuống dòng.
 - **Cột số phải dùng `tabular`** (utility có sẵn): tiền, số đếm, ngày. Không thì con số nhảy cột mỗi lần đổi giá trị.
 
 ## 4. Khoảng cách, bo góc, đổ bóng, thời gian
 
 - Nhịp **4/8px**. Khoảng cách trong section: `16 · 24 · 32 · 48`.
+- **`--size-control` = 44px, một con số cho hai việc.** Nó vừa là vùng chạm tối thiểu (mục 6) vừa là chiều cao ô nhập. Ô nhập và nút **phải cao bằng nhau** khi đứng cạnh nhau trên một hàng lọc: trước 14/08 ô nhập 38px cạnh nút 44px, lệch 6px trên mọi hàng lọc — thứ không ai báo lỗi nhưng ai cũng thấy.
 - Bo góc **đúng ba giá trị, không có giá trị thứ tư**:
 
   | Token | Giá trị | Dùng cho |
@@ -101,15 +120,46 @@ Khi **tắt AI**: banner đứng đầu mọi màn có AI, dữ liệu cũ **v�
 - Vùng bấm tối thiểu **44×44px** (`min-h-11` đã có sẵn trong `Button`). Icon nhỏ hơn thì nới vùng bấm, không nới icon.
 - Icon dùng **SVG** (Lucide). **Cấm dùng emoji làm icon** — nó đổi hình theo hệ điều hành và không nhuộm màu theo token được.
 - Ô nhập: **luôn có label nhìn thấy được**, không dùng placeholder thay label. Lỗi hiện **ngay dưới ô sai**, kèm cách sửa chứ không chỉ "Dữ liệu không hợp lệ".
-- Bảng: header dính, cột số căn phải + `tabular`, hàng hover đổi nền. Danh sách trên 50 dòng thì phân trang hoặc ảo hoá.
+- Bảng: header dính, cột số căn phải + `tabular`, hàng hover đổi nền. Danh sách trên 50 dòng thì phân trang hoặc ảo hoá — **chưa màn nào làm**, xem [câu hỏi chưa giải quyết](#câu-hỏi-chưa-giải-quyết).
+  - **Header cột số cũng căn phải**, không chỉ ô. Đó là chỗ duy nhất trong bảng mà canh lề là *thông tin* chứ không phải sở thích: header lệch thì cột không có gì để mắt căn vào.
+  - Header dính cần hộp bọc **có trần chiều cao và tự cuộn**. `sticky top-0` trong một hộp không giới hạn chiều cao thì không có cuộn nào để dính vào — nó **im lặng không làm gì**, và mọi con số bị đọc dưới một tiêu đề đã trôi khỏi màn hình.
+  - `Table` **không tự sắp xếp dữ liệu**. Nó bắn `onSort`, màn hình quyết định. Component sở hữu thứ tự dữ liệu là nguồn sự thật thứ hai về trình tự.
 - Trạng thái rỗng luôn có câu giải thích + một hành động, không để trang trắng.
+
+### Ba component trạng thái — không viết tay lại
+
+`EmptyState` · `ErrorState` · `SectionCard`. Chúng tồn tại vì ba khái niệm này từng được viết tay ở **31 chỗ** và đã trôi khác nhau: 10 trạng thái rỗng với hai bo góc, bốn padding, hai cỡ chữ và hai màu xám; 13 khối lỗi cùng một phép ba ngôi copy tay; 11 thẻ panel chia thành `p-4` và `p-5`.
+
+Không bản nào trong số đó là *quyết định*. Chúng là hệ quả của việc **không có chỗ nào để đặt quyết định** — nên thứ được thêm là chỗ đặt, không phải thêm giá trị.
+
+| Component | Ép được gì |
+| --- | --- |
+| `EmptyState` | `message` **bắt buộc và phải là câu**. Không nhánh render nào vẽ ra hộp rỗng không chữ → luật 4 thôi phụ thuộc thiện chí |
+| `ErrorState` | `role="alert"` + phép chọn giữa `ApiError.message` (câu viết cho Sales) và câu dự phòng, ở **một** chỗ |
+| `SectionCard` | một padding, một cỡ tiêu đề. Thẻ có tiêu đề thành `<section>` có tên; thẻ không tiêu đề là `<div>` — **không bịa `aria-label`** |
+
+**Cấm** nhận `className` để tuỳ biến màu/padding. Muốn khác thì thêm biến thể, không vá tại chỗ.
+
+### Thang container — ba tầng, khai một lần
+
+`PageBody` là chỗ duy nhất quyết định bề rộng và gutter. Trước 14/08 mười màn đã trôi thành **năm** giá trị `max-w` (3xl/4xl/5xl/6xl/100rem), và màn hàng đợi duyệt — tâm điểm demo — dùng 62% màn 1440px.
+
+| Tầng | Bề rộng | Cho màn | Vì sao |
+| --- | --- | --- | --- |
+| `reading` | 768px | `/huong-dan` | đoạn văn dài, quá ~75 ký tự/dòng là mỏi mắt |
+| `standard` | 1280px | 8 màn CRM | hàng dày dữ liệu cần chiều ngang |
+| `wide` | 1600px | `/co-hoi` | bảng 7 cột kéo thả |
+
+Ba tầng vì có **đúng ba loại màn**, không phải vì ba là số đẹp. Gutter co theo khổ (`px-4` → `sm:px-6` → `lg:px-8`): `p-6` cứng tiêu 13% chiều ngang một màn 375px.
 - Focus ring đã khai báo toàn cục. **Cấm `outline: none`** ở bất cứ đâu.
 
 ### Từ vựng alias của shadcn — chỉ sống trong `components/ui/`
 
 `globals.css` có một khối `@theme inline` ánh xạ tên semantic của shadcn (`background`, `primary`, `muted-foreground`, …) về token của dự án. Nó tồn tại để component copy từ shadcn về chạy được **mà không phải sửa từng dòng class**, không phải để trở thành cách gọi màu thứ hai.
 
-**Luật:** `bg-background`, `text-primary`, `text-muted-foreground` và họ hàng chỉ được dùng **trong `src/components/ui/`**. Code màn hình viết `ink-*` / `brand-*` / `machine-*`.
+**Luật:** `bg-background`, `text-primary`, `text-muted-foreground` và họ hàng chỉ được dùng **trong `src/components/ui/`**. Code màn hình viết `ink-*` / `brand-*` / `machine-*`, và dùng **`bg-surface`** cho nền thẻ — token có tên theo vai trò, thay cho `bg-card` của lớp alias.
+
+Chuyện đã xảy ra đúng như đoạn dưới dự đoán: `bg-card` được dùng **17 lần** trong `app/` và **lọt qua đúng cái grep** ở checklist mục 7. Vì vậy luật này giờ có test chặn, không chỉ có lời dặn.
 
 Vì sao chặt thế: nếu `bg-background` viết được ở mọi nơi thì repo có hai từ vựng cho một màu, và điều cấm "không dùng class màu thô" **mất hiệu lực trong im lặng** — `bg-background` lọt qua mọi lần grep trong khi không nói cho người đọc biết đó là màu gì. Mục 7 của checklist có một dòng kiểm việc này.
 
@@ -117,7 +167,14 @@ Một chỗ lớp alias **cố ý cãi lại upstream**: `--color-primary-foregr
 
 ## 7. Trước khi merge một thay đổi giao diện
 
-- [ ] Không còn class màu thô (`slate-*`, `amber-*`, `bg-[#...]`) — chỉ token
+- [ ] `pnpm test` xanh — **bốn luật thang token nằm trong `e2e/ui-invariants.spec.ts`**, không phải trong một lệnh grep ai đó phải nhớ chạy: màu thô · bo góc ngoài ba giá trị · bóng ngoài hai mức · alias shadcn rò ra ngoài `components/ui/`
+- [ ] Nếu cần grep tay, dùng bản **neo theo tiền tố utility**, không dùng bản cũ:
+
+  ```bash
+  grep -rEn "(bg|text|border|ring|fill|stroke|from|to|via|divide|accent|outline|caret)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]|bg-\[#" apps/web/src
+  ```
+
+  Bản cũ (`slate-|amber-|indigo-|bg-\[#`) hỏng **hai chiều**: nó **sót** `red-*` — nên `bg-red-50` ship thẳng vào production — và **báo nhầm** vì `slate-` khớp bên trong `-tran`**`slate-`**`y-1/2`, nên người chạy học cách bỏ qua kết quả. *Một cửa vừa sót vừa báo nhầm tệ hơn không có cửa: nó tạo cảm giác đã kiểm.*
 - [ ] Chữ thân ≥14px, tương phản ≥4.5:1; đã thử ở 375px và 1440px
 - [ ] Mọi nút bấm được có phản hồi khi bấm và vùng chạm ≥44px
 - [ ] Nhận định AI nào cũng bấm ra được nguồn
@@ -131,6 +188,9 @@ Một chỗ lớp alias **cố ý cãi lại upstream**: `--color-primary-foregr
 **Chỉ làm nền sáng.** Token đặt tên theo vai trò nên thêm nền tối sau này là thêm một khối biến, không phải sửa component — nhưng trong phạm vi hackathon thì không làm, và không nửa vời: **không** có component nào tự chế màu nền tối riêng.
 
 ## Câu hỏi chưa giải quyết
+
+- **Phân trang bảng.** Mục 6 đòi danh sách >50 dòng phải phân trang hoặc ảo hoá; **hiện 0 màn làm**. Seed dưới ngưỡng nên chưa vỡ. Nếu BTC nạp bộ dữ liệu lớn thì đây là chỗ vỡ đầu tiên — nói thẳng nếu bị hỏi. Cố ý không làm trong vòng 14/08 vì không màn nào chạm ngưỡng trong demo.
+- **`dropdown-menu.tsx`** (Radix vendored, 257 dòng) vẫn mang thang bo góc/bóng riêng và nhánh `dark:` là mã chết. Có **miễn trừ khai tường minh** trong `ui-invariants`, không phải bỏ sót. Sửa hay giữ: cần người chốt.
 
 - Vàng thuần `#FFFF00` trong logo chưa có vai trò nào trong giao diện. Đang cố ý để trống — nó chói và gần như không thể đạt tương phản. Nếu cần dải thương hiệu đậm hơn thì bàn trước khi dùng.
 

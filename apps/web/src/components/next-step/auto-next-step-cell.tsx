@@ -1,5 +1,6 @@
 'use client'
 
+import { Undo2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -11,6 +12,7 @@ import { ConfidenceBadge } from '@/components/provenance/quote-block'
 import { Dialog } from '@/components/ui/dialog'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { api } from '@/lib/api-client'
 
 /**
@@ -114,6 +116,7 @@ export function AutoNextStepCell({ autoNextStep, opportunityName }: AutoNextStep
             onClick={() => undo.mutate()}
             data-testid="undo-auto-next-step"
           >
+            <Undo2 className="size-4" aria-hidden />
             {undo.isPending ? 'Đang hoàn tác…' : 'Hoàn tác'}
           </Button>
           <span className="text-xs text-ink-600">
@@ -127,9 +130,7 @@ export function AutoNextStepCell({ autoNextStep, opportunityName }: AutoNextStep
       )}
 
       {undo.isError ? (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-xs text-danger">
-          {(undo.error as Error).message}
-        </p>
+        <ErrorState error={undo.error} fallback="Không hoàn tác được Việc tiếp theo" compact />
       ) : null}
 
       {sourceOpen ? (

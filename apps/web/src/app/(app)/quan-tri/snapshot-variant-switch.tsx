@@ -6,6 +6,8 @@ import { useState } from 'react'
 import type { CompanyDto } from '@crm/contracts'
 
 import { Button } from '@/components/ui/button'
+import { ErrorState } from '@/components/ui/error-state'
+import { SectionCard } from '@/components/ui/section-card'
 import { api } from '@/lib/api-client'
 
 /**
@@ -35,8 +37,7 @@ export function SnapshotVariantSwitch() {
   const rows = companies.data ?? []
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card">
-      <h2 className="text-base font-semibold text-ink-900">Bản chụp nguồn (dùng khi demo)</h2>
+    <SectionCard title="Bản chụp nguồn (dùng khi demo)">
       <p className="text-sm text-ink-600">
         Đổi bản chụp là <strong>nguồn của công ty đổi</strong>, không phải AI đổi ý. Bản{' '}
         <code className="rounded bg-ink-100 px-1 py-0.5 text-xs">sau</code> mang tin mới; vòng quét
@@ -58,11 +59,9 @@ export function SnapshotVariantSwitch() {
       </ul>
 
       {flip.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface p-2 text-sm text-danger">
-          {(flip.error as Error).message}
-        </p>
+        <ErrorState error={flip.error} fallback="Không đổi được bản chụp" />
       )}
-    </section>
+    </SectionCard>
   )
 }
 

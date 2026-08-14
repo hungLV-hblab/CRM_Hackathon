@@ -1,3 +1,5 @@
+import { TriangleAlert } from 'lucide-react'
+
 import { OPPORTUNITY_WARNING, type OpportunityWarning } from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
@@ -44,20 +46,14 @@ export function OverdueFlag({ dueDate }: { dueDate: string }) {
   )
 }
 
-/** SVG, not an emoji: an emoji changes shape per OS and cannot take a token colour. */
+/**
+ * Lucide, like every other icon in the app. This used to be a hand-drawn triangle at stroke
+ * width 1.6 while Lucide draws at 2 — two stroke weights sitting next to each other is the
+ * kind of thing nobody names and everybody registers as unfinished.
+ *
+ * Still an SVG and still never an emoji: an emoji changes shape per operating system and
+ * cannot take a token colour.
+ */
 function WarningIcon() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-      className="size-3.5 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    >
-      <path d="M8 2.8 1.8 13.2h12.4L8 2.8Z" strokeLinejoin="round" />
-      <path d="M8 6.6v3.1M8 11.6h.01" />
-    </svg>
-  )
+  return <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
 }

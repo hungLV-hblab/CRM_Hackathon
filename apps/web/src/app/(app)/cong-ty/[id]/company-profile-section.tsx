@@ -7,6 +7,7 @@ import { COMPANY_TYPE, type CompanyDto, type UpdateCompanyDto } from '@crm/contr
 
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
+import { SectionCard } from '@/components/ui/section-card'
 import { api, ApiError } from '@/lib/api-client'
 
 /**
@@ -52,13 +53,14 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
 
   if (!isEditing) {
     return (
-      <section className="rounded-card border border-ink-200 bg-card p-4">
-        <header className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">Hồ sơ</h2>
+      <SectionCard
+        title="Hồ sơ"
+        actions={
           <Button variant="secondary" onClick={startEditing}>
             Sửa hồ sơ
           </Button>
-        </header>
+        }
+      >
         <dl className="grid gap-3 sm:grid-cols-2">
           <Field label="Ngành" value={company.industry} />
           <Field
@@ -70,15 +72,12 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
           <Field label="Website" value={company.website} />
           <Field label="Theo dõi" value={company.isWatched ? 'Đang theo dõi' : 'Không theo dõi'} />
         </dl>
-      </section>
+      </SectionCard>
     )
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-card p-4">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
-        Sửa hồ sơ
-      </h2>
+    <SectionCard title="Sửa hồ sơ">
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
@@ -146,7 +145,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
           </Button>
         </div>
       </form>
-    </section>
+    </SectionCard>
   )
 }
 
@@ -154,7 +153,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-ink-500">{label}</dt>
+      <dt className="text-caption font-medium text-ink-600">{label}</dt>
       <dd className="text-fact">
         {value ?? <span className="text-sm text-ink-500">Chưa có, Sales bổ sung sau</span>}
       </dd>

@@ -82,7 +82,17 @@ test('T-3 · bấm phát hiện mở đúng đoạn nguồn và có đánh dấu
 
   await openSource.click()
 
-  const highlight = page.getByTestId('quote-highlight').first()
+  /**
+   * Both locators are scoped to the ONE snapshot card that is open, and that is a correctness
+   * fix rather than tidying. The read zone mounts a `SourceViewer` for every snapshot it lists,
+   * so `getByTestId('source-text').first()` is whichever snapshot happens to be listed first —
+   * while the highlight belongs to the card whose finding was just clicked. For a watched
+   * company those are the same card only until the watch cycle adds another snapshot, which
+   * means how many cycles fired during the earlier specs decided whether this line passed.
+   * It failed exactly once that way before being pinned down.
+   */
+  const openedCard = page.locator('article', { has: page.getByTestId('quote-highlight') }).first()
+  const highlight = openedCard.getByTestId('quote-highlight').first()
   await expect(highlight).toBeVisible()
 
   // THE ASSERTION THIS SPEC EXISTS FOR: the marked text is a real, non-trivial passage of the
@@ -91,7 +101,7 @@ test('T-3 · bấm phát hiện mở đúng đoạn nguồn và có đánh dấu
   const quoted = (await highlight.innerText()).trim()
   expect(quoted.length).toBeGreaterThan(10)
 
-  const sourceText = (await page.getByTestId('source-text').first().innerText()).trim()
+  const sourceText = (await openedCard.getByTestId('source-text').first().innerText()).trim()
   expect(sourceText).toContain(quoted)
   expect(sourceText.length).toBeGreaterThan(quoted.length)
 

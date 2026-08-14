@@ -12,6 +12,8 @@ import { Dialog } from '@/components/ui/dialog'
 import { ProposalCard } from './proposal-card'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
 
 /**
@@ -91,19 +93,22 @@ export default function ProposalQueuePage() {
   const rows = proposals.data ?? []
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       <PageHeader
         title="Hàng đợi gợi ý"
         description="Máy chuẩn bị sẵn, bạn là người quyết. Không duyệt thì hồ sơ giữ nguyên — gợi ý không tự hết hạn thành hành động."
       />
 
       {decide.isError ? (
-        <p role="alert" className="rounded-control bg-danger-surface p-3 text-sm text-danger">
-          {(decide.error as Error).message}
-        </p>
+        <ErrorState error={decide.error} fallback="Không ghi được quyết định" />
       ) : null}
 
-      {proposals.isLoading ? <Skeleton className="h-40 w-full rounded-card" /> : null}
+      {proposals.isLoading ? (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-36 w-full rounded-control" />
+          <Skeleton className="h-36 w-full rounded-control" />
+        </div>
+      ) : null}
 
       {!proposals.isLoading && rows.length === 0 ? (
         <p className="rounded-control bg-ink-50 p-4 text-sm text-ink-600" data-testid="queue-empty">
@@ -127,7 +132,7 @@ export default function ProposalQueuePage() {
       </section>
 
       {source ? <SourceDialog proposal={source} onClose={() => setSource(null)} /> : null}
-    </main>
+    </PageBody>
   )
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { CONFIDENCE, REJECT_REASON, type DistributionRow, type MetricsDto, type RateDto } from '@crm/contracts'
+import { SectionCard } from '@/components/ui/section-card'
 
 /**
  * The seven measurements of ontology section 7, under the names the ontology gives them.
@@ -54,8 +55,7 @@ export function MetricsPanel({ metrics }: { metrics: MetricsDto }) {
         The error-detection rate itemised, because its denominator is a DECISION (ADR-0031) and
         not an obvious total. Anyone reading the number is entitled to see which rows are in it.
       */}
-      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card">
-        <h2 className="text-base font-semibold text-ink-900">Error-detection rate — đếm những gì</h2>
+      <SectionCard title="Error-detection rate — đếm những gì">
         <div className="grid gap-4 sm:grid-cols-2">
           <Breakdown
             title="Tử số · người bác lại máy"
@@ -81,7 +81,7 @@ export function MetricsPanel({ metrics }: { metrics: MetricsDto }) {
           <strong>Phát hiện</strong> không nằm trong mẫu số. Chúng chưa đến tay ai nên không ai bác
           được — cộng vào thì mẫu số phồng 5–10 lần và tỉ lệ nằm gần 0 vĩnh viễn.
         </p>
-      </section>
+      </SectionCard>
 
       <section className="grid gap-3 lg:grid-cols-3">
         <DistributionCard
@@ -148,7 +148,7 @@ function RateTile({
   formula: string
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-card border border-ink-200 bg-card p-4 shadow-card">
+    <div className="flex flex-col gap-1 rounded-card border border-ink-200 bg-surface p-4 shadow-card">
       <p className="text-sm font-medium text-ink-700">{label}</p>
       {rate.rate === null ? (
         // Rule 4 — an empty cell says WHY it is empty, and never gets filled with a stand-in.
@@ -206,11 +206,9 @@ function DistributionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-ink-200 bg-card p-5 shadow-card">
-      <h2 className="text-base font-semibold text-ink-900">{title}</h2>
-      <p className="text-xs text-ink-600">{description}</p>
+    <SectionCard title={title} description={description}>
       {children}
-    </section>
+    </SectionCard>
   )
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -7,12 +8,16 @@ import { STAGE, type CreateOpportunityDto, type Stage, type UpdateStageDto } fro
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog } from '@/components/ui/dialog'
+import { FilterBar } from '@/components/ui/filter-bar'
 import { Input, Select } from '@/components/ui/input'
 import { NotificationStrip } from '@/components/notification/notification-strip'
 import { StageBoard } from './stage-board'
 import { StageTransitionDialog } from './stage-transition-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api, ApiError } from '@/lib/api-client'
 
 /** The two stages the Specs want extra cells for. Everything else moves with no questions. */
@@ -62,13 +67,18 @@ export default function OpportunityBoardPage() {
   })
 
   return (
-    <main className="mx-auto flex max-w-[100rem] flex-col gap-6 p-6">
+    <PageBody width="wide">
       {/* The hand-rolled "← Công ty" link is gone: the shell's breadcrumb says where this
           screen sits, and three screens each inventing their own idea of "up" is how they
           came to disagree about it. */}
       <PageHeader
         title="Cơ hội"
-        actions={<Button onClick={() => setCreateOpen(true)}>Thêm cơ hội</Button>}
+        actions={
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Thêm cơ hội
+          </Button>
+        }
       />
 
       {/*
@@ -79,7 +89,18 @@ export default function OpportunityBoardPage() {
       */}
       <NotificationStrip show="unread" showLink />
 
-      <section className="flex flex-wrap items-end gap-3">
+      <FilterBar
+        chips={[
+          ...(stageFilter
+            ? [{ label: `Giai đoạn: ${STAGE[stageFilter]}`, onRemove: () => setStageFilter('') }]
+            : []),
+          ...(overdueOnly ? [{ label: 'Chỉ quá hạn', onRemove: () => setOverdueOnly(false) }] : []),
+        ]}
+        onReset={() => {
+          setStageFilter('')
+          setOverdueOnly(false)
+        }}
+      >
         <Select
           label="Giai đoạn"
           value={stageFilter}
@@ -92,31 +113,22 @@ export default function OpportunityBoardPage() {
             </option>
           ))}
         </Select>
-        <label className="flex min-h-11 items-center gap-2 text-sm text-ink-700">
-          <input
-            type="checkbox"
+        {/* Sits on the grid row with the select, so it lines up instead of floating beside it. */}
+        <div className="flex items-end">
+          <Checkbox
+            label="Chỉ hiện quá hạn"
             checked={overdueOnly}
-            onChange={(event) => setOverdueOnly(event.target.checked)}
-            className="size-4 accent-brand-500"
+            onCheckedChange={setOverdueOnly}
           />
-          Chỉ hiện quá hạn
-        </label>
-      </section>
+        </div>
+      </FilterBar>
 
-      {opportunities.isPending && <Skeleton className="h-40 w-full rounded-card" />}
+      {opportunities.isPending && <BoardSkeleton />}
       {opportunities.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {opportunities.error instanceof ApiError
-            ? opportunities.error.message
-            : 'Không tải được danh sách cơ hội'}
-        </p>
+        <ErrorState error={opportunities.error} fallback={'Không tải được danh sách cơ hội'} />
       )}
       {changeStage.isError && (
-        <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-          {changeStage.error instanceof ApiError
-            ? changeStage.error.message
-            : 'Không đổi được giai đoạn'}
-        </p>
+        <ErrorState error={changeStage.error} fallback={'Không đổi được giai đoạn'} />
       )}
 
       {opportunities.data && <StageBoard opportunities={visible} onStageChange={onStageChange} />}
@@ -137,7 +149,22 @@ export default function OpportunityBoardPage() {
         companies={(companies.data ?? []).map((row) => ({ id: row.id, name: row.name }))}
         onClose={() => setCreateOpen(false)}
       />
-    </main>
+    </PageBody>
+  )
+}
+
+/** Shaped like the board: four columns at column width, two cards each. */
+function BoardSkeleton() {
+  return (
+    <div className="flex gap-3 overflow-hidden">
+      {[0, 1, 2, 3].map((column) => (
+        <div key={column} className="flex w-72 shrink-0 flex-col gap-2 rounded-card bg-ink-50 p-3">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      ))}
+    </div>
   )
 }
 

@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ErrorState } from '@/components/ui/error-state'
 import { api, ApiError } from '@/lib/api-client'
 
 export default function LoginPage() {
@@ -38,7 +39,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <form
         onSubmit={onSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-ink-200 bg-card p-6"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-ink-200 bg-surface p-6"
       >
         <h1 className="text-xl font-semibold">Đăng nhập</h1>
 
@@ -61,9 +62,7 @@ export default function LoginPage() {
 
         {/* `role="alert"` so the failure is announced, not just drawn in red. */}
         {error && (
-          <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
+          <ErrorState error={error} fallback="Không đăng nhập được" />
         )}
 
         <Button type="submit" disabled={pending}>
