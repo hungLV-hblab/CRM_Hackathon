@@ -4,7 +4,7 @@
 | --- | --- |
 | **Ngày** | 2026-08-14 10:12 |
 | **Giai đoạn** | Design (nhóm 6, bảng điều khiển) |
-| **Trạng thái** | Chấp nhận — **kiểm bằng đọc mã nguồn + số đo cũ của phiên 6; nợ đo đóng trong P8 bằng test đơn vị** |
+| **Trạng thái** | Chấp nhận — **đã đo 14/08 11:00, nợ đo đã trả** (9 test đơn vị + 1 phép đo đột biến) |
 | **Người quyết định** | HungLV |
 | **Prompt log** | phiên phản biện phase 8 ngày 14/08 10:12 — [báo cáo](../../plans/reports/from-brainstorm-to-planner-260814-1012-phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu-report.md) |
 
@@ -50,7 +50,18 @@ Kèm hai luật hiển thị, cùng một lý do:
 
 1. **Đọc mã nguồn, ghi số dòng, để đối chiếu tử số với mẫu số:** cả bốn số hạng tử số đều có nguồn riêng — `proposal_decisions.reject_reason` (`packages/db/src/schema/proposal-decisions.ts:30`), `auto_next_step_events.undone_at`, và `audit_events.action = 'delete_system_timeline_entry'` (hợp đồng P7, **đã chạy thật từ 14/08 03:38**). Không số hạng nào đọc từ `claims` ⇒ khẳng định "tử số không phát sinh trên `claims`" là đọc được từ schema, không phải suy đoán.
 2. **Đối chiếu với số đo cũ, không bịa số mới:** phiên 6 (13/08 22:32, LLM thật, 3 lượt) ghi 11 draft claim và 3 thẻ hàng đợi trên cùng bộ bản chụp ⇒ mẫu số B lớn hơn mẫu số A ít nhất 2 lần **ngay trên bộ demo 5 công ty**, và khoảng cách chỉ rộng ra khi dữ liệu thật vào.
-3. **Nợ đo, đóng trong P8** (không phải nợ ADR): test đơn vị của `domain/metrics` khẳng định ba việc — `edit` không cộng vào `accept` (I-12) · mẫu số EDR đếm đúng ba tập, không gồm `claims` · mẫu số 0 trả `null` chứ không trả 0. Chưa có ba test đó thì ADR này ở trạng thái "chấp nhận, chưa đo".
+3. **Nợ đo đã trả, 14/08 11:00** — `apps/api/src/domain/metrics/__tests__/metrics-counts-what-reached-a-person.test.ts`, 9 test xanh trên CSDL thật:
+
+   | Khẳng định | Test |
+   | --- | --- |
+   | `edit` không cộng vào `accept`, và nằm trong mẫu số của auto-accept (I-12) | test 1 |
+   | Mẫu số 0 → `null`, không phải 0 | test 2 · test 9 |
+   | Mẫu số đếm **đúng ba tập**, itemised | test 3 |
+   | 9 phát hiện thêm **không** làm mẫu số nhúc nhích | test 4 |
+   | Tử số đếm đúng bốn nguồn; `reject[irrelevant]` **không** vào tử số | test 5 |
+   | Lần hệ thống **bị chặn** xoá không tính là người bắt được lỗi | test 6 |
+
+4. **Phép đo đột biến, chạy 14/08 11:05:** đổi auto-accept thành `accept / (accept + reject)` → test 1 đỏ ngay với `expected { rate: 0.666… } to deeply equal { rate: 0.5 }`. Đã hoàn nguyên. Đây là bằng chứng I-12 được **đo** chứ không chỉ được viết trong comment.
 
 ## Rollback
 

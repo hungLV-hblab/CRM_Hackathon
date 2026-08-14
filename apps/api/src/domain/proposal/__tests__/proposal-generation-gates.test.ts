@@ -36,7 +36,11 @@ const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
 const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const settings = new SystemSettingService(appConnection.db, systemConnection.db)
+const settings = new SystemSettingService(
+  appConnection.db,
+  systemConnection.db,
+  new AuditEventService(appConnection.db, systemConnection.db),
+)
 const snapshots = new DemoSnapshotSource()
 
 function buildIngest(extractor: ClaimExtractor = new FixtureClaimExtractor()): ObservationService {

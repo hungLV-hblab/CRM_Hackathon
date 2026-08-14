@@ -136,13 +136,20 @@ export default function GuidePage() {
           ở nhịp kế tiếp. Nghiệm thu T-9.
         </p>
         {/*
-          No link to the admin screen yet: `/quan-tri` ships with the admin dashboard, and a
-          link written ahead of it would send a reader to a 404 from the one page whose job is
-          to explain the system. `e2e/guide-page.spec.ts` fails the build if one appears early.
+          The link waited for `/quan-tri/page.tsx` to exist. `e2e/guide-page.spec.ts` walks every
+          link on this page and fails the build on a 404 — writing one ahead of its screen would
+          send a judge to Next's not-found from the one page whose job is to explain the system.
         */}
-        <p className="text-sm text-ink-500">
-          Màn quản trị đang được làm. Khi có, công tắc sẽ nằm ở đó và mục Quản trị xuất hiện trên
-          thanh bên.
+        <p className="text-sm text-ink-700">
+          Công tắc nằm ở{' '}
+          <Link
+            href="/quan-tri"
+            className="underline underline-offset-2 hover:text-ink-900"
+          >
+            màn Quản trị
+          </Link>{' '}
+          cùng với các chỉ số đo. Khi AI tắt, mọi màn đều hiện một dải băng nói rõ — Sales không
+          cần quyền Quản trị để biết máy đang dừng.
         </p>
       </section>
     </main>

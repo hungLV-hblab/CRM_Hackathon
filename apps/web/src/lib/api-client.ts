@@ -1,6 +1,10 @@
 import type {
+  AiStatusDto,
   AutoNextStepMap,
   CompanyDto,
+  MetricsDto,
+  SystemParametersDto,
+  UpdateSystemSettingsDto,
   ContactDto,
   CreateCompanyDto,
   DecideProposalDto,
@@ -237,5 +241,33 @@ export const api = {
    * 403 here, not a payload. Callers must check the role first (`api.me()`) rather than
    * firing this on every page load and swallowing the failure.
    */
-  systemSettings: () => call<{ aiEnabled: boolean; watchCycleSeconds: number }>('/settings'),
+  systemSettings: () => call<SystemParametersDto>('/settings'),
+
+  /**
+   * EVERY logged-in account, Sales included (ADR-0032). This is what the "AI đang tắt" banner
+   * reads, and the reason it is a second endpoint rather than a looser guard on the one above:
+   * T-9 requires SALES to see the notice, and Sales must keep getting a 403 on the admin payload.
+   */
+  aiStatus: () => call<AiStatusDto>('/settings/ai-status'),
+
+  /** ADMIN ONLY. Effective on the next read — no restart, nothing cached (ADR-0011). */
+  updateSystemSettings: (dto: UpdateSystemSettingsDto) =>
+    call<SystemParametersDto>('/settings', { method: 'PATCH', body: JSON.stringify(dto) }),
+
+  /** ADMIN ONLY — every number of ontology section 7, each rate carrying its denominator. */
+  metrics: () => call<MetricsDto>('/metrics'),
+
+  /**
+   * The demo control: which stored snapshot counts as a company's source right now. On the admin
+   * screen so a live demo never has to leave the browser for a terminal.
+   *
+   * The response is the ONLY place the variant is readable from the client: `CompanyDto`
+   * deliberately does not carry the column, because it is demo scaffolding rather than part of
+   * Sales' data model, and no Sales screen has any business reading it.
+   */
+  setSnapshotVariant: (companyId: string, variant: 'before' | 'after') =>
+    call<{ id: string; name: string; snapshotVariant: 'before' | 'after' }>(
+      `/demo/companies/${companyId}/snapshot-variant`,
+      { method: 'POST', body: JSON.stringify({ variant }) },
+    ),
 }

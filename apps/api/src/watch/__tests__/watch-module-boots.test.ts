@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { AppModule } from '../../app.module'
+import { MetricsController } from '../../domain/metrics/metrics.controller'
 import { ObservationService } from '../../domain/observation/observation-service'
 import { WatchCycleRollup } from '../watch-cycle-rollup'
 import { WatchCycleService } from '../watch-cycle-service'
@@ -63,6 +64,13 @@ describe('the worker module graph', () => {
     const apiModule = await Test.createTestingModule({ imports: [AppModule] }).compile()
     try {
       expect(apiModule.get(WatchLogController)).toBeInstanceOf(WatchLogController)
+      /**
+       * `MetricsModule` is the second module in the API graph that declares a guarded controller,
+       * so it is the second one that must import `AuthModule` itself. Asked for by name for the
+       * same reason as the log controller above: a graph that compiles but cannot hand back the
+       * controller is a container that boots and then 502s.
+       */
+      expect(apiModule.get(MetricsController)).toBeInstanceOf(MetricsController)
     } finally {
       await apiModule.close()
     }

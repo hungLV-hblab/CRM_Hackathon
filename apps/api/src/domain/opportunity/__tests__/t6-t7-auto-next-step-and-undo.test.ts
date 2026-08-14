@@ -58,7 +58,11 @@ const audit = new AuditEventService(appConnection.db, systemConnection.db)
 const autoNextSteps = new AutoNextStepService(systemConnection.db, appConnection.db, audit)
 const notifications = new NotificationService(appConnection.db)
 const opportunityService = new OpportunityService(appConnection.db, systemConnection.db, audit)
-const settings = new SystemSettingService(appConnection.db, systemConnection.db)
+const settings = new SystemSettingService(
+  appConnection.db,
+  systemConnection.db,
+  new AuditEventService(appConnection.db, systemConnection.db),
+)
 const snapshots = new DemoSnapshotSource()
 
 const sales = humanActor(SALES_ID, 'sales')

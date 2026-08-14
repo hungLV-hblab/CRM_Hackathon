@@ -215,7 +215,13 @@ function cardFor(page: Page, opportunityName: string) {
  * (`stageOf` in `stage-board.tsx` resolves the two to the same stage).
  */
 async function dragOneColumnRight(page: Page, opportunityName: string): Promise<void> {
-  const announcements = page.getByRole('status')
+  /**
+   * dnd-kit's OWN live region, not "the status role on the page". This spec runs with the AI
+   * switched off, which is exactly when the "AI đang tắt" banner renders — and that banner is a
+   * status too, so a bare `getByRole('status')` matches two elements and the drag assertions fail
+   * on a board that is working perfectly.
+   */
+  const announcements = page.locator('[id^="DndLiveRegion"]')
   const handle = page.getByRole('button', {
     name: new RegExp(`^Kéo cơ hội ${escapeForRegExp(opportunityName)},`),
   })

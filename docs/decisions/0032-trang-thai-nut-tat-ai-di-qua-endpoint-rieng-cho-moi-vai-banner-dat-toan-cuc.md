@@ -4,7 +4,7 @@
 | --- | --- |
 | **Ngày** | 2026-08-14 10:12 |
 | **Giai đoạn** | Design (nhóm 6, T-9) |
-| **Trạng thái** | Chấp nhận — **kiểm bằng đọc mã nguồn ba file, số dòng ghi ở mục verify; đóng bằng T-9 trong P8** |
+| **Trạng thái** | Chấp nhận — **T-9 xanh trên stack production 14/08 11:20, nợ đo đã trả** |
 | **Người quyết định** | HungLV |
 | **Prompt log** | phiên phản biện phase 8 ngày 14/08 10:12 — [báo cáo](../../plans/reports/from-brainstorm-to-planner-260814-1012-phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu-report.md) |
 
@@ -54,7 +54,8 @@ Màu **`warning`**, không `machine`. Đây là trạng thái của hệ thống
 1. **Đọc ba file, ghi số dòng, dựng lại đường đi của dữ liệu:** `settings.controller.ts:18` (`@Roles('admin')` trên `read()`) → `ai-status-pill.tsx:31` (`enabled: isAdmin`, request **không bao giờ được bắn** cho Sales) → kết luận: hiện không tồn tại đường nào để giao diện Sales biết `ai_enabled`. Đây là lần theo mã nguồn, không phải "thấy hợp lý".
 2. **Kiểm điều kiện làm phương án A rẻ**, vì cả phương án phụ thuộc vào nó: `roles.guard.ts:33` — `if (!allowedRoles?.length) return true` ⇒ handler không có `@Roles` thì đi qua với mỗi `JwtGuard`. Nhờ đó route mới **không cần module mới**, và đó là điều đáng kiểm nhất: P7 vừa mất một lần sập container vì module khai báo controller có guard mà quên `imports: [AuthModule]`, triệu chứng là 502 ở trang đăng nhập **trong khi toàn bộ test đơn vị vẫn xanh**.
 3. **Kiểm rủi ro T-9 làm hỏng spec khác trước khi nhận thiết kế:** `playwright.config.ts:20-22` là `fullyParallel: false` + `workers: 1` ⇒ tắt AI toàn cục an toàn miễn `afterAll` bật lại — đúng khuôn T-1 đã chạy xanh 7 spec liên tiếp.
-4. **Nợ đo, đóng trong P8:** T-9 trên stack production sau Caddy, với một context Sales quan sát banner. Chưa chạy T-9 thì ADR này ở trạng thái "chấp nhận, chưa đo".
+4. **Nợ đo đã trả, 14/08 11:20** — `e2e/t9-ai-kill-switch.spec.ts` xanh trên stack production sau Caddy. Sales quan sát banner từ **context trình duyệt thứ hai** (`browser.newContext()`), không phải tab thứ hai và không phải tài khoản admin: điều phải chứng minh là một PHIÊN khác với một vai khác đọc được trạng thái.
+5. **Phép đo đột biến, chạy 14/08 11:15:** bỏ nhánh `if (!parameters.aiEnabled)` trong `watch-cycle-service.ts:106`, build lại worker → T-9 đỏ sau 120s với `Timed out … waiting for the worker to skip a tick because the AI is off`, và nhật ký cho thấy vòng quét vẫn `companiesScanned: 3, skippedReason: null` mỗi nhịp trong khi AI đang tắt. Đã hoàn nguyên và build lại. Đây là bằng chứng T-9 đo **cơ chế**, không đo cái nhãn trên màn hình.
 
 ## Rollback
 
