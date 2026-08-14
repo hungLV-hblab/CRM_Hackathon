@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { STAGE, type OpportunityDto } from '@crm/contracts'
 
 import { AutoNextStepCell, useAutoNextSteps } from '@/components/next-step/auto-next-step-cell'
+import { NextStepQuickEdit } from '@/components/next-step/next-step-quick-edit'
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
 import {
   PendingProposalMarker,
@@ -81,6 +82,12 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
       ) : (
         <NextStep opportunity={opportunity} />
       )}
+      {/*
+        Present in BOTH branches, including over a machine-written cell. Typing there is the
+        supported way to take the cell back (`update()` stamps `next_step_source = 'human'`), and
+        it is also the only way to refill the cell after "Hoàn tác" empties it.
+      */}
+      <NextStepQuickEdit opportunity={opportunity} />
       <WarningFlags warnings={opportunity.warnings} />
 
       <Link
