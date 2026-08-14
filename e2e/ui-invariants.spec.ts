@@ -274,3 +274,24 @@ function walkTsx(dir: string): string[] {
     return entry.name.endsWith('.tsx') ? [full] : []
   })
 }
+
+test('ô nhập, ô chọn và checkbox đều đạt vùng chạm 44px', async ({ page }) => {
+  /**
+   * 38px and 44px look identical in a screenshot and feel completely different under a thumb,
+   * so this is measured rather than reviewed. The fields used to be 38px while the button
+   * beside them was 44 — the mismatch was visible on every filter row and named by nobody.
+   */
+  await login(page)
+
+  for (const nhan of ['Tìm theo tên', 'Lọc theo ngành', 'Lọc theo loại hình']) {
+    const box = await page.getByLabel(nhan).boundingBox()
+    expect(box, `không tìm thấy ô "${nhan}"`).not.toBeNull()
+    expect(box!.height, `ô "${nhan}" cao ${box!.height}px, dưới vùng chạm 44px`).toBeGreaterThanOrEqual(44)
+  }
+
+  // The checkbox counts the LABEL as the target, which is what a finger actually aims at.
+  await page.goto('/co-hoi')
+  const checkbox = page.getByText('Chỉ hiện quá hạn')
+  const box = await checkbox.boundingBox()
+  expect(box!.height).toBeGreaterThanOrEqual(44)
+})

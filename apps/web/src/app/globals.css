@@ -114,6 +114,14 @@
    * corners: on a CRM screen packed with data, a straight edge is what the eye uses to line
    * columns up, and rounding it costs more legibility than it buys warmth.
    */
+  /**
+   * One number doing two jobs. 44px is the minimum touch target the guidelines require, and
+   * it is also the height a text field must have to line up with the button sitting next to
+   * it on a filter row. Before this existed the input was 38px and the button 44px — a 6px
+   * step nobody files a bug about and everybody sees.
+   */
+  --size-control: 2.75rem;
+
   --radius-control: 0.5rem;
   --radius-card: 1rem;
   --radius-pill: 9999px;

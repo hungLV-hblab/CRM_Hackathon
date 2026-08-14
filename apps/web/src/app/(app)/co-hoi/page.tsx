@@ -7,7 +7,9 @@ import { STAGE, type CreateOpportunityDto, type Stage, type UpdateStageDto } fro
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog } from '@/components/ui/dialog'
+import { FilterBar } from '@/components/ui/filter-bar'
 import { Input, Select } from '@/components/ui/input'
 import { NotificationStrip } from '@/components/notification/notification-strip'
 import { StageBoard } from './stage-board'
@@ -79,7 +81,18 @@ export default function OpportunityBoardPage() {
       */}
       <NotificationStrip show="unread" showLink />
 
-      <section className="flex flex-wrap items-end gap-3">
+      <FilterBar
+        chips={[
+          ...(stageFilter
+            ? [{ label: `Giai đoạn: ${STAGE[stageFilter]}`, onRemove: () => setStageFilter('') }]
+            : []),
+          ...(overdueOnly ? [{ label: 'Chỉ quá hạn', onRemove: () => setOverdueOnly(false) }] : []),
+        ]}
+        onReset={() => {
+          setStageFilter('')
+          setOverdueOnly(false)
+        }}
+      >
         <Select
           label="Giai đoạn"
           value={stageFilter}
@@ -92,16 +105,15 @@ export default function OpportunityBoardPage() {
             </option>
           ))}
         </Select>
-        <label className="flex min-h-11 items-center gap-2 text-sm text-ink-700">
-          <input
-            type="checkbox"
+        {/* Sits on the grid row with the select, so it lines up instead of floating beside it. */}
+        <div className="flex items-end">
+          <Checkbox
+            label="Chỉ hiện quá hạn"
             checked={overdueOnly}
-            onChange={(event) => setOverdueOnly(event.target.checked)}
-            className="size-4 accent-brand-500"
+            onCheckedChange={setOverdueOnly}
           />
-          Chỉ hiện quá hạn
-        </label>
-      </section>
+        </div>
+      </FilterBar>
 
       {opportunities.isPending && <Skeleton className="h-40 w-full rounded-card" />}
       {opportunities.isError && (

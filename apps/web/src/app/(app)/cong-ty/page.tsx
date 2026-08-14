@@ -17,6 +17,7 @@ import {
 } from '@/components/proposal/pending-proposal-marker'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { FilterBar, type FilterChip } from '@/components/ui/filter-bar'
 import { Input, Select } from '@/components/ui/input'
 import { Cell, Table } from '@/components/ui/table'
 import { api, ApiError } from '@/lib/api-client'
@@ -90,7 +91,7 @@ export default function CompanyListPage() {
         actions={<Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>}
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <FilterBar chips={filterChips(filters, setFilters)} onReset={() => setFilters(EMPTY_FILTERS)}>
         <Input
           label="Tìm theo tên"
           value={filters.q ?? ''}
@@ -150,7 +151,7 @@ export default function CompanyListPage() {
           <option value="true">Đang theo dõi</option>
           <option value="false">Không theo dõi</option>
         </Select>
-      </section>
+      </FilterBar>
 
       {companies.isPending && <Skeleton className="h-64 w-full rounded-card" />}
 
@@ -162,12 +163,15 @@ export default function CompanyListPage() {
         </p>
       )}
 
+      {/* No "Xoá bộ lọc" button here any more. The filter bar above carries one whenever a
+          filter is on, and two buttons with the same name are ambiguous to a screen reader and
+          to `getByRole` alike — the way out has to be in exactly one place. */}
       {companies.data?.length === 0 && (
         <div className="rounded-card border border-dashed border-ink-300 p-6 text-center">
-          <p className="text-sm text-ink-600">Không có công ty nào khớp bộ lọc đang chọn.</p>
-          <Button variant="secondary" className="mt-3" onClick={() => setFilters(EMPTY_FILTERS)}>
-            Xoá bộ lọc
-          </Button>
+          <p className="text-sm text-ink-600">
+            Không có công ty nào khớp bộ lọc đang chọn. Bỏ bớt điều kiện ở thanh lọc phía trên để
+            xem lại danh sách.
+          </p>
         </div>
       )}
 
@@ -247,6 +251,38 @@ export default function CompanyListPage() {
       </Dialog>
     </main>
   )
+}
+
+/**
+ * One chip per filter that is actually on, each able to remove just itself. The labels repeat
+ * the words on the controls above rather than inventing shorter ones — a chip that says
+ * something the control does not is a second vocabulary for one idea.
+ */
+function filterChips(
+  filters: ListCompaniesQuery,
+  setFilters: (next: ListCompaniesQuery) => void,
+): FilterChip[] {
+  const chips: FilterChip[] = []
+  const without = (key: keyof ListCompaniesQuery) => () =>
+    setFilters({ ...filters, [key]: undefined })
+
+  if (filters.q) chips.push({ label: `Tên: ${filters.q}`, onRemove: without('q') })
+  if (filters.industry)
+    chips.push({ label: `Ngành: ${filters.industry}`, onRemove: without('industry') })
+  if (filters.companyType)
+    chips.push({
+      label: `Loại hình: ${COMPANY_TYPE[filters.companyType as keyof typeof COMPANY_TYPE]}`,
+      onRemove: without('companyType'),
+    })
+  if (filters.country)
+    chips.push({ label: `Quốc gia: ${filters.country}`, onRemove: without('country') })
+  if (filters.isWatched !== undefined)
+    chips.push({
+      label: filters.isWatched ? 'Đang theo dõi' : 'Không theo dõi',
+      onRemove: without('isWatched'),
+    })
+
+  return chips
 }
 
 function unique(values: string[]): string[] {
