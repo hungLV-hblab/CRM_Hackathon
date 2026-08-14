@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 
 import {
   CLAIM_EXTRACTOR,
@@ -13,7 +13,7 @@ import {
   type SourceTier,
   type TriggerContext,
 } from '@crm/contracts'
-import { type CrmDatabase, companies, observations } from '@crm/db'
+import { type CrmDatabase, companies, companySources, observations } from '@crm/db'
 
 import { ClaimReactionService } from '../claim/claim-reaction-service'
 import { ClaimService } from '../claim/claim-service'
@@ -200,19 +200,19 @@ export class ObservationService {
     }
 
     const reads: SourceRead[] = []
-    for (const url of this.liveSourceUrls(company)) {
-      const result = await this.live.read(url)
+    for (const source of await this.liveSourceUrls(company)) {
+      const result = await this.live.read(source.url)
       reads.push(
         result.ok
           ? {
               sourceUrl: result.sourceUrl,
-              sourceTier: 'company_website',
+              sourceTier: source.sourceTier,
               rawHtml: result.rawHtml,
               fetchErrorReason: null,
             }
           : {
               sourceUrl: result.sourceUrl,
-              sourceTier: 'company_website',
+              sourceTier: source.sourceTier,
               rawHtml: null,
               fetchErrorReason: result.reason,
             },
@@ -222,16 +222,42 @@ export class ObservationService {
   }
 
   /**
-   * Phase 2: the address Sales already typed when they created the company. Phase 3 reads
-   * `company_sources` first and falls back to this — a list of one is the shape that makes that
-   * a one-line change.
+   * WHICH pages to read, in precedence order (decision V4).
+   *
+   *   1. `company_sources` — the list a person ticked and kept. Always wins when it has entries.
+   *   2. `companies.website` — the address Sales typed when they created the company.
+   *
+   * Two sources of truth for one question is a cost, taken deliberately: the fall-back is what
+   * lets someone switch a company on and press read without first being made to run a source
+   * search, and it is what keeps every phase-2 test meaningful. The price is that the precedence
+   * has to be pinned by a test rather than by there being only one answer — see
+   * `multi-source-ingest.test.ts` tests 4 to 6.
    *
    * An empty `website` is NOT skipped. It comes back as one failed read carrying `invalid_url`,
    * because "this company has no address on file" is a fact worth showing, and a silent empty
    * list would leave the screen looking as though nothing had been asked for.
+   *
+   * Read under `DRIZZLE_SYSTEM`, and that is the point rather than an accident: `crm_system` holds
+   * SELECT on `company_sources` and no INSERT, so the identity that reads the list provably
+   * cannot have written it.
    */
-  private liveSourceUrls(company: CompanyForReading): (string | null)[] {
-    return [company.website]
+  private async liveSourceUrls(
+    company: CompanyForReading,
+  ): Promise<{ url: string | null; sourceTier: SourceTier }[]> {
+    const saved = await this.dbSystem
+      .select({ url: companySources.url, sourceTier: companySources.sourceTier })
+      .from(companySources)
+      .where(eq(companySources.companyId, company.id))
+      .orderBy(asc(companySources.createdAt))
+
+    if (saved.length > 0) {
+      return saved.map((source) => ({
+        url: source.url,
+        sourceTier: source.sourceTier as SourceTier,
+      }))
+    }
+
+    return [{ url: company.website, sourceTier: 'company_website' }]
   }
 
   /** One source → at most one row, its findings, and whatever those findings were allowed to do. */
