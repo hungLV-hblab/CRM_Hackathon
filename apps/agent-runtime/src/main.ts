@@ -43,9 +43,21 @@ const skills = loadSkills(SKILLS_DIR, {
   SIGNAL_TYPES: enumCodes(SIGNAL_TYPE).join(' | '),
 })
 
-if (!TOKEN) {
-  throw new Error('AGENT_TOKEN chưa đặt — service này ghi được vào quota của một tài khoản thật, không để mở')
-}
+/**
+ * No token means DISABLED, not dead — and that distinction is the whole reason this is not a
+ * `throw`.
+ *
+ * The feature ships off: `.env.example` leaves all three variables empty, so the default state
+ * of every checkout, including a judge's, has no `AGENT_TOKEN`. A process that exits at boot
+ * under `restart: unless-stopped` becomes a restart loop, and `docker compose ps` then shows a
+ * container flapping next to five healthy ones — which reads as "their stack is broken", not as
+ * "that feature is switched off". Exactly the trap `watch-cycle-service.ts` documents for the
+ * unref'd timer: almost right in the log is worse than plainly wrong.
+ *
+ * So it stays up, says so on /health, and refuses every run. Serving without a token is the one
+ * thing it must not do — /run would be an open endpoint spending a real person's quota.
+ */
+const ENABLED = Boolean(TOKEN)
 
 interface RunRequest {
   userPrompt?: unknown
@@ -67,7 +79,8 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
      * on" from the outside, which ADR-0014 established must never be a guess.
      */
     return send(res, 200, {
-      ok: true,
+      ok: ENABLED,
+      enabled: ENABLED,
       skills: [...skills.keys()],
       authMode: process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'oauth' : 'api_key',
       sandbox: sandboxPath(),
@@ -77,6 +90,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
 
   const runMatch = url.pathname.match(/^\/run\/([a-z0-9-]+)$/)
   if (req.method === 'POST' && runMatch) {
+    if (!ENABLED) {
+      return send(res, 503, {
+        reason: 'disabled',
+        message: 'AGENT_TOKEN chưa đặt — agent-runtime đang tắt, không nhận lượt chạy nào',
+      })
+    }
     if (req.headers.authorization !== `Bearer ${TOKEN}`) {
       return send(res, 401, { reason: 'unauthorized', message: 'Thiếu hoặc sai AGENT_TOKEN' })
     }
@@ -159,6 +178,12 @@ function send(res: ServerResponse, status: number, body: unknown): void {
 }
 
 server.listen(PORT, () => {
+  if (!ENABLED) {
+    return console.warn(
+      `[agent] nghe cổng ${PORT} nhưng ĐANG TẮT: chưa có AGENT_TOKEN. ` +
+        'Mọi lượt chạy bị từ chối; api sẽ tự dùng SDK hoặc fixture.',
+    )
+  }
   console.log(
     `[agent] nghe cổng ${PORT} · skill: ${[...skills.keys()].join(', ')} · ` +
       `auth: ${process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'OAuth subscription' : 'API key'}`,
