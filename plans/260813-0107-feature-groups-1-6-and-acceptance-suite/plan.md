@@ -1,6 +1,6 @@
 ---
 title: "Sáu nhóm tính năng + bộ nghiệm thu 10 điểm"
-status: in-progress
+status: done
 priority: P1
 effort: large
 branch: master
@@ -24,7 +24,7 @@ source: plans/reports/project-status-post-skeleton-260813-0101-feature-groups-cr
 
 ## Mục tiêu
 
-Sáu nhóm tính năng của Specs mục 4 chạy được trên stack production, và **bộ nghiệm thu 10 điểm** của Specs mục 6 chạy bằng một lệnh. Hiện có 1/10 (T-10 mini).
+Sáu nhóm tính năng của Specs mục 4 chạy được trên stack production, và **bộ nghiệm thu 10 điểm** của Specs mục 6 chạy bằng một lệnh. ~~Hiện có 1/10 (T-10 mini).~~ **Đạt 10/10 lúc 14/08 11:30.**
 
 **Feature freeze tối 14/08.** 15/08 chỉ hardening + demo, vòng 1 chốt 15:00.
 
@@ -32,7 +32,7 @@ Sáu nhóm tính năng của Specs mục 4 chạy được trên stack productio
 
 3 người × 2 ngày. Cộng ước lượng: **~27h việc / ~24h năng lực**. Âm đệm.
 
-Đường găng: **P1a (1.5h) → P2 nhóm 2 (3h) → P6 nhóm 4 (~~3h~~ 4h) → P8 nghiệm thu (4h) = ~~11.5h~~ 12.5h**, phần lớn trên vai A. **Bốn chặng đầu đã xong, chỉ còn P8.** P1b (1.5h) chạy song song nên không vào đường găng, nhưng **phải xanh trước P5/P6/P7**.
+Đường găng: **P1a (1.5h) → P2 nhóm 2 (3h) → P6 nhóm 4 (~~3h~~ 4h) → P8 nghiệm thu (4h) = ~~11.5h~~ 12.5h**, phần lớn trên vai A. **Cả năm chặng đã xong, đường găng đóng 14/08 11:30.** P1b (1.5h) chạy song song nên không vào đường găng, nhưng **phải xanh trước P5/P6/P7**.
 
 Ước lượng P1 đã sửa từ 60' lên 1.5h + 1.5h sau phiên phản biện 13/08 — cộng thật là ~3h, và 60' là con số đoán.
 
@@ -59,7 +59,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | **done** | B | ~~3h~~ 4.5h (thực: ~1h20') | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | **done** | A | ~~3h~~ 4h (thực: ~30') | 2, 5, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | **done** | C | ~~2h~~ 3h (thực: ~1h10') | 2, 4, **1b** |
-| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội, **song song ~2.5h** | 4h30 (A 2h · B 1.5h · C 2h) | 5, 6, 7 |
+| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | **done** | cả đội, **song song ~2.5h** | 4h30 (thực: ~50') | 5, 6, 7 |
 
 ```
 P1a (cả đội chờ, 1.5h)
@@ -83,7 +83,7 @@ Ba phụ thuộc cứng:
 | 13/08 hết ngày | ~~P2~~ · ~~P3~~ · ~~P4~~ — **cả ba xong 13/08 20:35. P5/P6/P7 mở khoá hết** |
 | ~~14/08 trưa~~ | ~~P5~~ · ~~P6~~ — **P6 xong 14/08 00:44**. Còn P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
 | ~~14/08 trưa~~ | ~~P7~~ — **xong 14/08 03:38. P8 mở khoá hết** |
-| 14/08 tối | P8, **freeze** |
+| ~~14/08 tối~~ | ~~P8~~ — **xong 14/08 11:30, sớm hơn freeze gần một ngày. 10/10 điểm nghiệm thu xanh** |
 
 ## Chủ quyền file — chống đụng nhau
 
@@ -119,8 +119,10 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 | T-6 | Đổi bản chụp sang bản "sau" → Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống | 6 ✅ e2e |
 | T-7 | Hoàn tác một cú bấm, giá trị cũ trở lại; có bản ghi hai chiều | 6 ✅ e2e |
 | T-8 | 3 công ty Đang theo dõi, đổi nguồn 2 công ty → trong 2 chu kỳ có 2 mục mới, Nhật ký có dòng từng vòng | 7 ✅ e2e |
-| T-9 | Tắt AI giữa lúc vòng quét chạy: 2 chu kỳ sau không thêm gì, dữ liệu còn nguyên, Sales thấy banner; bật lại chạy tiếp, cả hai lần có ghi vết | 8 |
-| T-10 | Đổi giai đoạn / đổi giá trị tiền / xoá công ty dưới danh nghĩa hệ thống, không qua UI → cả ba bị từ chối | 8 (mở rộng T-10 mini) |
+| T-9 | Tắt AI giữa lúc vòng quét chạy: 2 chu kỳ sau không thêm gì, dữ liệu còn nguyên, Sales thấy banner; bật lại chạy tiếp, cả hai lần có ghi vết | 8 ✅ e2e |
+| T-10 | Đổi giai đoạn / đổi giá trị tiền / xoá công ty dưới danh nghĩa hệ thống, không qua UI → cả ba bị từ chối | 8 ✅ hai lớp |
+
+**10/10 xanh bằng một lệnh `pnpm test`** — 281 test đơn vị + 32 e2e, 14/08 11:30.
 
 ## Ngoài phạm vi
 
@@ -376,6 +378,21 @@ Phase 8 viết cùng lúc với plan (13/08 01:07) nên cùng hoàn cảnh đã 
 **T-9 an toàn với các spec khác:** `playwright.config.ts:20-22` là `workers: 1` + `fullyParallel: false` ⇒ tắt AI toàn cục không đụng spec đang chạy, miễn `afterAll` bật lại và trả chu kỳ về 60 — đúng khuôn T-1 đã làm.
 
 **Ước lượng 4h → 4h30**, nhưng chia được ba nhánh song song (**A 2h · B 1.5h · C 2h**, C bị chặn 30' đầu chờ endpoint của A) ⇒ **~2.5h thực tế**. Ba ADR phải viết: 0031 · 0032 · 0033.
+
+### Phiên 13 — 14/08 11:30, P8 đóng, plan đóng
+
+**281 test đơn vị (262 → +19) + 32 e2e (31 → +1) xanh bằng một lệnh**, lint/typecheck sạch, hai phép đo đột biến đều cắn. **10/10 điểm nghiệm thu của Specs mục 6.** Không cắt món nào trong danh sách cắt của P8 — nút đổi bản chụp và ô sửa nhanh Việc tiếp theo đều làm.
+
+Bốn việc đáng mang đi, **ba trong số đó là bẫy locator sẽ gặp lại**:
+
+- **Vai trò ARIA cũng va nhau, không chỉ chuỗi ký tự.** Banner "AI đang tắt" mang `role="status"`; T-1 chạy với AI **đang tắt** nên `getByRole('status')` của nó khớp 2 phần tử (vùng live dnd-kit + banner) và T-1 đỏ trên một màn hình đúng hoàn toàn. Cùng họ với bẫy `getByText` khớp chuỗi con của P4, nhưng ở tầng vai trò — nghĩa là **thêm một phần tử toàn cục có thể làm đỏ một spec không liên quan gì tới nó**. Locator phải trỏ vào thứ mình định trỏ (`[id^="DndLiveRegion"]`), không phải vào loại của nó.
+- **`Duyệt` là tiền tố của `Sửa rồi duyệt`** — đúng bẫy P4 đã ghi thành chữ, gặp lại nguyên hình dạng, vẫn tốn một lượt chạy. Ghi được vào plan **không** bằng chặn được.
+- **Thêm một dependency vào service dùng chung = sửa 7 file test.** `SystemSettingService` cần `AuditEventService` để ghi vết bật/tắt, và nó được `new` bằng tay ở 7 test tích hợp. Chi phí ẩn của câu "chỉ thêm một tham số constructor".
+- **Restart Postgres làm worker restart theo** (đo được: `RestartCount=1`, dòng `Starting Nest application` ngay sau). Vô hại — nhưng khi đọc nhật ký vòng quét sau một lần restart stack, một nhịp lệch không phải là lỗi nhịp.
+
+**Một chỗ lệch phase file có ý thức:** nút đổi bản chụp chỉ hiện trạng thái của công ty **đã bấm trong phiên này**, vì `CompanyDto` cố ý không mang `snapshot_variant` (ADR-0022, và `DemoSnapshotService` ghi rõ lý do). Nới DTO để hiện một nhãn trên một màn quản trị là đẩy ống nước của demo lên mọi màn đọc công ty.
+
+**Tài liệu đã sửa cùng phiên:** [ontology mục 7](../../docs/ontology.md#7-chỉ-số-đo-từ-ngày-đầu) — mẫu số error-detection rate từ "tổng output AI" (không viết được thành SQL) thành ba tập tường minh, kèm hai luật hiển thị. ADR-0031 và ADR-0032 đã trả phần *nợ đo*, mỗi cái kèm tên test và kết quả phép đo đột biến.
 
 ## Câu hỏi chưa giải quyết
 

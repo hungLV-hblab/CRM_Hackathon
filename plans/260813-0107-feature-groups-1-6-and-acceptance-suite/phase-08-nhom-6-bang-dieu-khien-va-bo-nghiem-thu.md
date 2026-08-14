@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Nhóm 6 — bảng điều khiển + đóng bộ nghiệm thu 10 điểm"
-status: pending
+status: done
 priority: P1
 dependencies: [5, 6, 7]
 owner: cả đội
@@ -141,20 +141,41 @@ File dùng chung, sửa nhỏ, pull trước khi push: `packages/contracts/src/i
 
 ## Validation
 
-- [ ] 10/10 điểm nghiệm thu xanh bằng **một lệnh** `pnpm test`
-- [ ] T-9 xanh trên stack production sau Caddy
-- [ ] **Sales (không phải admin) thấy banner** — chứng minh bằng context thứ hai trong T-9, không bằng tài khoản admin
-- [ ] T-10 ba nhánh xanh, chặn ở **cả hai lớp** (bỏ lớp domain → vẫn đỏ nhờ lớp CSDL)
-- [ ] Khẳng định "không có adapter gửi tin" xanh, quét cả `package.json` lẫn source
-- [ ] Đổi `watch_cycle_seconds` từ UI Quản trị → nhịp đổi, **không** restart
-- [ ] Tắt AI → dữ liệu đã sinh còn nguyên; hàng đợi tồn vẫn duyệt được; hai chiều đều có `AuditEvent`
-- [ ] Chỉ số hiện **đúng tên** ontology mục 7; `edit` không cộng vào `accept`
-- [ ] **Mọi tỉ lệ hiện kèm mẫu số**; mẫu số 0 → "chưa có dữ liệu", không phải `0%`
-- [ ] `watch-module-boots.test.ts` giải được `MetricsModule`
-- [ ] `pnpm lint` · `pnpm typecheck` · `pnpm build` sạch
-- [ ] 6 điểm nghiệm thu của plan skeleton chạy lại vẫn đạt
-- [ ] Sales gõ được Việc tiếp theo + ngày hạn từ giao diện; ô lưu xong mang `next_step_source = 'human'`
-- [ ] Gõ đè ô do máy điền → dấu hiệu máy và nút Hoàn tác **biến mất ngay**, không phải tải lại trang
+- [x] 10/10 điểm nghiệm thu xanh bằng **một lệnh** `pnpm test` — **281 test đơn vị + 32 e2e xanh** (14/08 11:30)
+- [x] T-9 xanh trên stack production sau Caddy — `e2e/t9-ai-kill-switch.spec.ts`
+- [x] **Sales (không phải admin) thấy banner** — context trình duyệt thứ hai trong T-9
+- [x] T-10 ba nhánh xanh, chặn ở **cả hai lớp** — `t10-system-actor-blocked-at-both-layers.test.ts`, 10 test
+- [x] Khẳng định "không có adapter gửi tin" xanh, quét cả 5 `package.json` lẫn mọi file `apps/api/src`
+- [x] Đổi `watch_cycle_seconds` từ UI Quản trị → nhịp đổi, **không** restart — đo trên log worker: 10s trong lúc T-9 chạy, 60s ngay sau `afterAll`, không có dòng boot nào ở giữa
+- [x] Tắt AI → bốn con số đầu ra **bằng nhau tuyệt đối** trước/sau; gợi ý tồn vẫn duyệt được (T-9 duyệt thật một thẻ lúc AI đang tắt); hai chiều đều có `AuditEvent`
+- [x] Chỉ số hiện **đúng tên** ontology mục 7; `edit` không cộng vào `accept`
+- [x] **Mọi tỉ lệ hiện kèm mẫu số**; mẫu số 0 → "chưa có dữ liệu", không phải `0%`
+- [x] `watch-module-boots.test.ts` giải được `MetricsModule`
+- [x] `pnpm lint` · `pnpm typecheck` sạch. `pnpm build`: web đỏ **EPERM symlink trên Windows** — có sẵn từ trước P6, không phải hồi quy; bản Linux trong container build xanh và toàn bộ e2e chạy trên nó
+- [x] 6 điểm nghiệm thu của plan skeleton chạy lại vẫn đạt (đo trên stack đang chạy, xem báo cáo)
+- [x] Sales gõ được Việc tiếp theo + ngày hạn từ giao diện; `update()` tự đặt `next_step_source = 'human'`
+- [x] Gõ đè ô do máy điền → invalidate cả `['opportunities']` lẫn `['auto-next-steps']` nên dấu hiệu máy và nút Hoàn tác biến mất ngay
+
+## Kết quả — 14/08 11:30
+
+**Đóng đủ:** T-9 · T-10 · bảng điều khiển 7 chỉ số · banner toàn cục · ô sửa nhanh Việc tiếp theo · nút đổi bản chụp (**không cắt món nào**).
+
+Ba thứ lộ ra lúc gõ code, đáng mang đi:
+
+- **`role="status"` va nhau.** Banner mới mang `role="status"`, và T-1 chạy với AI **đang tắt** nên `getByRole('status')` của nó khớp 2 phần tử — vùng live của dnd-kit và banner. T-1 đỏ trên một bàn kéo thả hoạt động hoàn hảo. Đã thu hẹp locator về `[id^="DndLiveRegion"]`. **Cùng họ với bẫy `getByText` khớp chuỗi con của P4**: một locator rộng là một quả bom hẹn giờ, nổ khi màn hình mọc thêm phần tử.
+- **`Duyệt` là tiền tố của `Sửa rồi duyệt`.** Đúng bẫy P4 đã ghi, gặp lại nguyên hình dạng, tốn một lượt chạy. `{ exact: true }` cho mọi nhãn là tiền tố của nhãn khác.
+- **Thêm tham số vào constructor của một service dùng chung = sửa 7 file test.** `SystemSettingService` cần `AuditEventService` để ghi vết, và nó được `new` bằng tay ở 7 test tích hợp. Không có gì sai, nhưng nó là chi phí ẩn của "chỉ thêm một dependency".
+
+**Hai phép đo đột biến, cả hai đều cắn:**
+
+| Đột biến | Hệ quả |
+| --- | --- |
+| auto-accept → `accept/(accept+reject)` | test 1 của metrics đỏ ngay: `expected { rate: 0.666… } to deeply equal { rate: 0.5 }` |
+| bỏ `if (!parameters.aiEnabled)` ở `watch-cycle-service.ts:106` | T-9 đỏ sau 120s; nhật ký cho thấy vòng quét vẫn `companiesScanned: 3, skippedReason: null` trong khi AI tắt |
+
+**Một chỗ lệch phase file có ý thức:** `SnapshotVariantSwitch` chỉ hiện bản chụp hiện tại của công ty **đã bấm trong phiên này**, vì `CompanyDto` cố ý không mang `snapshot_variant` (`DemoSnapshotService` ghi rõ lý do: nó là giàn giáo demo, không thuộc mô hình dữ liệu của Sales). Nới DTO để hiện một cái nhãn trên một màn quản trị là đẩy ống nước của demo lên mọi màn đọc công ty.
+
+**Ba ADR đã có sẵn từ phiên phản biện 10:12** — P8 trả nốt phần *nợ đo* của [0031](../../docs/decisions/0031-mau-so-error-detection-rate-la-ba-tap-ai-dua-ra-truoc-mat-nguoi.md) và [0032](../../docs/decisions/0032-trang-thai-nut-tat-ai-di-qua-endpoint-rieng-cho-moi-vai-banner-dat-toan-cuc.md), và sửa [ontology mục 7](../../docs/ontology.md#7-chỉ-số-đo-từ-ngày-đầu) để mẫu số EDR viết được thành một câu SQL thay vì "tổng output AI".
 
 ## Risks
 

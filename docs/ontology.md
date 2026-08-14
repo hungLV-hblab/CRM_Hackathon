@@ -180,12 +180,16 @@ Hiện trên bảng điều khiển Quản trị **đúng tên này**, không đ
 | Chỉ số | Công thức | Đo gì |
 | --- | --- | --- |
 | **Auto-accept rate** | `accept / (accept + edit + reject)` | Hệ thống khôn lên |
-| **Error-detection rate** | `(reject[wrong_info] + reject[misread_context] + số lần Hoàn tác + số lần xoá mục hệ thống) / tổng output AI` | **Người** khôn lên |
+| **Error-detection rate** | `(reject[wrong_info] + reject[misread_context] + số lần Hoàn tác + số lần xoá mục hệ thống) / (Proposal + AutoNextStepEvent + TimelineEntry do hệ thống thêm)` | **Người** khôn lên |
 | Tỉ lệ sửa-rồi-duyệt | `edit / tổng` | Tách bạch khỏi accept (I-12) |
 | Phân bố lý do bỏ | đếm theo `reject_reason` | Sai ở đâu |
 | Phân bố mức chắc chắn | đếm theo `confidence` | AI đang tự tin quá mức không |
 | Thời gian quyết trung bình | trung vị `seconds_to_decide` | **Chỉ đọc cùng error-detection rate** — thấp có thể là giao diện tốt, cũng có thể là bấm mù |
 | Tỉ lệ hoàn tác | `undone / tổng AutoNextStepEvent` | Vùng 3 có đáng tin không |
+
+Mẫu số của error-detection rate là **ba tập AI đưa ra trước mặt người**, không phải toàn bộ phát hiện ([ADR-0031](decisions/0031-mau-so-error-detection-rate-la-ba-tap-ai-dua-ra-truoc-mat-nguoi.md)): mỗi số hạng của tử số phải là một sự kiện xảy ra **trên một phần tử của mẫu số**, và không số hạng nào phát sinh trên `Claim`. Cộng `claims` vào là chia cho một hằng số lớn tuỳ ý — tỉ lệ nằm gần 0 vĩnh viễn và không hành vi nào của người làm nó nhúc nhích.
+
+Hai luật hiển thị áp cho **mọi** tỉ lệ ở bảng trên: hiện **kèm mẫu số** (`3/12`, không phải `25%` trơ trọi), và **mẫu số 0 thì hiện "chưa có dữ liệu"**, không hiện `0%` — `0%` cạnh error-detection rate đọc lên thành "người không bắt được lỗi nào" trong khi sự thật là "chưa có gì để bắt".
 
 Mốc bắt đầu đo `seconds_to_decide`: **lúc rảnh tay** — lúc mở màn hình hàng đợi với gợi ý đầu tiên, và lúc quyết xong gợi ý trước với mỗi gợi ý tiếp theo. Gợi ý hiện đủ tại chỗ nên không có động tác "mở gợi ý" để bấm mốc; nhưng một mốc **chung** cho cả lượt sẽ làm trung vị thành hàm của độ dài hàng đợi, không còn là thời gian quyết một gợi ý ([ADR-0025](decisions/0025-moc-do-thoi-gian-quyet-dat-lai-sau-moi-quyet-dinh.md)). Duyệt liên tiếp 6 gợi ý thu được **6 khoảng**, không phải một khoảng cộng dồn. Mốc **kết thúc** theo [ADR-0008](decisions/0008-bo-goi-y-bang-menu-ly-do-tai-cho.md): nhánh Bỏ tính tới **lúc chọn lý do**, không phải lúc bấm nút Bỏ. Reload trang giữa lúc quyết thì mốc mất → cột **để trống**, không gửi số bịa.
 
