@@ -57,6 +57,18 @@
   --color-ink-100: #f1f1f4;
   --color-ink-50: #f8f8fa;
 
+  /**
+   * The background of anything sitting ON TOP of the page: cards, dialogs, popovers, table
+   * bodies, input fields. White — and it earns a name of its own because screen code was
+   * reaching for shadcn's `bg-card` alias instead, seventeen times.
+   *
+   * That alias is legal only inside `components/ui/` (see the translation layer below), and
+   * what happened is exactly the failure that rule was written to prevent: an alias passes
+   * every grep for a raw colour while telling the reader nothing about which colour it is,
+   * so the drift stayed invisible to the one check meant to catch it.
+   */
+  --color-surface: #ffffff;
+
   /* ------------------------------------------------------- origin: who produced this row */
 
   /**

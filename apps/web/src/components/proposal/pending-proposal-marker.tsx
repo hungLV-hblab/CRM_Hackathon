@@ -30,7 +30,7 @@ export function PendingProposalMarker({ count }: { count: number | undefined }) 
   if (!count) return null
 
   return (
-    <Link href="/hang-doi" className="rounded-full" data-testid="pending-proposal-marker">
+    <Link href="/hang-doi" className="rounded-pill" data-testid="pending-proposal-marker">
       <Badge tone="system">
         {count} gợi ý chờ duyệt
       </Badge>

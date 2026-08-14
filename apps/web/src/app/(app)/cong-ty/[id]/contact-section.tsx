@@ -59,7 +59,7 @@ export function ContactSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-card p-4">
+    <section className="rounded-card border border-ink-200 bg-surface p-4">
       <header className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
           Người liên hệ

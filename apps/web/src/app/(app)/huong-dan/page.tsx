@@ -83,7 +83,7 @@ export default function GuidePage() {
       {ZONES.map((zone) => (
         <section
           key={zone.id}
-          className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card"
+          className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card"
         >
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-ink-900">{zone.title}</h2>
@@ -126,7 +126,7 @@ export default function GuidePage() {
         </ul>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card">
+      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
         <h2 className="text-lg font-semibold text-ink-900">Tắt sạch AI</h2>
         <p className="text-sm text-ink-700">
           Có một công tắc tắt sạch cả bốn vùng, hiệu lực ngay. Dữ liệu AI đã sinh{' '}

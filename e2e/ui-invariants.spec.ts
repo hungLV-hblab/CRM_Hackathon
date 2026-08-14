@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 /**
@@ -168,3 +171,106 @@ test('T-F · cờ cảnh báo mang chữ đọc được, không chỉ có màu'
   await expect(flag).toBeVisible()
   expect((await flag.innerText()).trim().length).toBeGreaterThan(3)
 })
+
+/**
+ * THE GATE ITSELF, because the old one was broken in both directions at once.
+ *
+ * The interface checklist has always ended with a grep for raw colours:
+ *
+ *     grep -rE "slate-|amber-|indigo-|bg-\[#" apps/web/src
+ *
+ * It missed `bg-red-50` in the watched-companies screen, because the pattern never covered
+ * `red-*`. And it matched twice on `-tran`+`slate-`+`y-1/2`, so whoever ran it saw two junk
+ * hits, concluded "translate again", and stopped reading — including past the real violation
+ * sitting in the same list.
+ *
+ * A gate that both misses violations and cries wolf is worse than no gate: it manufactures
+ * the feeling of having checked. So the patterns are anchored to a utility prefix and a
+ * trailing digit, and they live in a test rather than in a doc somebody remembers to run.
+ */
+const SOURCE_DIR = path.join(process.cwd(), 'apps', 'web', 'src')
+
+/** Vendored Radix menu, ~257 lines written against shadcn's own radius and shadow scale.
+ *  Rewriting it buys nothing a reader can see; the exemption is declared in ADR-0034. */
+const VENDORED = ['dropdown-menu.tsx']
+
+const TAILWIND_PALETTES =
+  'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose'
+const UTILITY_PREFIXES = 'bg|text|border|ring|fill|stroke|from|to|via|divide|accent|outline|caret'
+
+const SCALE_RULES = [
+  {
+    ten: 'màu thô của Tailwind',
+    // The trailing `-[0-9]` is the second anchor: `bg-brand-400` survives because `brand` is
+    // not a Tailwind palette, and `text-danger` survives because it carries no scale number.
+    pattern: new RegExp(
+      String.raw`\b(${UTILITY_PREFIXES})-(${TAILWIND_PALETTES})-[0-9]|bg-\[#`,
+    ),
+    cach_sua: 'dùng token ink-* / brand-* / machine-* hoặc bốn màu trạng thái',
+    scope: 'src',
+    exempt: [] as string[],
+  },
+  {
+    ten: 'bo góc ngoài thang ba giá trị',
+    pattern: /\brounded-(sm|md|lg|xl|2xl|3xl|full)\b/,
+    cach_sua: 'dùng rounded-control (nút, ô nhập) · rounded-card (thẻ) · rounded-pill (chip)',
+    scope: 'src',
+    exempt: VENDORED,
+  },
+  {
+    ten: 'đổ bóng ngoài thang hai mức',
+    pattern: /\bshadow-(sm|md|lg|xl|2xl)\b/,
+    cach_sua: 'dùng shadow-card (nằm trên trang) · shadow-float (nổi lên trên)',
+    scope: 'src',
+    exempt: VENDORED,
+  },
+  {
+    ten: 'từ vựng alias của shadcn rò ra ngoài components/ui/',
+    pattern: /\b(bg-card|bg-background|text-primary|text-muted-foreground|border-border)\b/,
+    cach_sua: 'code màn hình viết bg-surface / ink-* / brand-* / machine-*',
+    scope: 'app',
+    exempt: [],
+  },
+]
+
+test('thang token không bị phá — màu, bo góc, đổ bóng, từ vựng alias', () => {
+  for (const rule of SCALE_RULES) {
+    const root = rule.scope === 'app' ? path.join(SOURCE_DIR, 'app') : SOURCE_DIR
+    const viPham: string[] = []
+
+    for (const file of walkTsx(root)) {
+      if (rule.exempt.some((name) => file.endsWith(name))) continue
+
+      fs.readFileSync(file, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          // Comments are prose, and prose about a banned class is not a use of it — several
+          // of these files explain WHY `rounded-md` is wrong, and a gate that goes red on its
+          // own documentation is a gate that gets widened. A class always reaches the DOM
+          // through an attribute, so no real usage begins a line with a comment marker.
+          if (isComment(line)) return
+
+          if (rule.pattern.test(line)) {
+            viPham.push(`${path.relative(process.cwd(), file)}:${index + 1}  ${line.trim()}`)
+          }
+        })
+    }
+
+    // The message carries the fix, not just the failure: a gate that only says "no" gets
+    // widened by the next person in a hurry, and widening the gate is how the rule dies.
+    expect(viPham, `${rule.ten} — ${rule.cach_sua}\n${viPham.join('\n')}`).toEqual([])
+  }
+})
+
+function isComment(line: string): boolean {
+  const trimmed = line.trim()
+  return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')
+}
+
+function walkTsx(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) return walkTsx(full)
+    return entry.name.endsWith('.tsx') ? [full] : []
+  })
+}

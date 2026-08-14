@@ -35,7 +35,7 @@ export function SnapshotVariantSwitch() {
   const rows = companies.data ?? []
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card">
+    <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
       <h2 className="text-base font-semibold text-ink-900">Bản chụp nguồn (dùng khi demo)</h2>
       <p className="text-sm text-ink-600">
         Đổi bản chụp là <strong>nguồn của công ty đổi</strong>, không phải AI đổi ý. Bản{' '}

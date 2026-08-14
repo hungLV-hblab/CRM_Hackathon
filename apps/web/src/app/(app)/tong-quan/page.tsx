@@ -128,7 +128,7 @@ function PipelineBlock({ data }: { data: OverviewDto }) {
         ))}
       </Table>
 
-      <div className="rounded-card border border-ink-200 bg-card p-4">
+      <div className="rounded-card border border-ink-200 bg-surface p-4">
         <p className="text-sm font-medium text-ink-900">
           Pipeline đang chạy:{' '}
           <span className="tabular">{runningTotal.toLocaleString('vi-VN')} ₫</span>
@@ -187,7 +187,7 @@ function LostReasonBlock({ data }: { data: OverviewDto }) {
       )}
 
       {data.lostWithoutReason > 0 && (
-        <p className="rounded-card border border-ink-200 bg-card p-4 text-sm text-ink-700">
+        <p className="rounded-card border border-ink-200 bg-surface p-4 text-sm text-ink-700">
           <span className="tabular">{data.lostWithoutReason}</span> cơ hội Thua chưa ghi lý do —
           đứng ngoài bảng trên, không được cộng vào bất kỳ dòng nào.
         </p>

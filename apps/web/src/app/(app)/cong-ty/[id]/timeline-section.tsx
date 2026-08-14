@@ -92,7 +92,7 @@ export function TimelineSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="rounded-card border border-ink-200 bg-card p-4">
+    <section className="rounded-card border border-ink-200 bg-surface p-4">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
         Dòng thời gian
       </h2>
@@ -183,7 +183,7 @@ function TimelineRow({
   return (
     <li
       className={`rounded-card border p-3 ${
-        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-card'
+        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-surface'
       }`}
     >
       <div className="mb-1 flex flex-wrap items-center gap-2">

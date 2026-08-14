@@ -45,7 +45,7 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
         transition,
         opacity: isDragging ? 0.4 : undefined,
       }}
-      className="flex flex-col gap-2 rounded-card border border-ink-200 bg-card p-3 shadow-card"
+      className="flex flex-col gap-2 rounded-card border border-ink-200 bg-surface p-3 shadow-card"
     >
       <div
         {...attributes}

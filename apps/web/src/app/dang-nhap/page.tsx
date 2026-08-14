@@ -38,7 +38,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <form
         onSubmit={onSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-ink-200 bg-card p-6"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-ink-200 bg-surface p-6"
       >
         <h1 className="text-xl font-semibold">Đăng nhập</h1>
 

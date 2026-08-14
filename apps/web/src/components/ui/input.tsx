@@ -15,8 +15,7 @@ const FIELD =
  *
  * The error message is tied to the field with `aria-describedby` and the field marked
  * `aria-invalid`, so a screen reader reaches the message instead of a sighted-only red line.
- * Its colour is the `danger` token — it used to be Tailwind's raw `text-red-600`, the single
- * raw-colour violation left in the app.
+ * Its colour is the `danger` token rather than a raw Tailwind red.
  */
 export function Input({
   label,

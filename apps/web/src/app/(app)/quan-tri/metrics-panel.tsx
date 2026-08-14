@@ -54,7 +54,7 @@ export function MetricsPanel({ metrics }: { metrics: MetricsDto }) {
         The error-detection rate itemised, because its denominator is a DECISION (ADR-0031) and
         not an obvious total. Anyone reading the number is entitled to see which rows are in it.
       */}
-      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-card p-5 shadow-card">
+      <section className="flex flex-col gap-3 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
         <h2 className="text-base font-semibold text-ink-900">Error-detection rate — đếm những gì</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Breakdown
@@ -148,7 +148,7 @@ function RateTile({
   formula: string
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-card border border-ink-200 bg-card p-4 shadow-card">
+    <div className="flex flex-col gap-1 rounded-card border border-ink-200 bg-surface p-4 shadow-card">
       <p className="text-sm font-medium text-ink-700">{label}</p>
       {rate.rate === null ? (
         // Rule 4 — an empty cell says WHY it is empty, and never gets filled with a stand-in.
@@ -206,7 +206,7 @@ function DistributionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-ink-200 bg-card p-5 shadow-card">
+    <section className="flex flex-col gap-2 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
       <h2 className="text-base font-semibold text-ink-900">{title}</h2>
       <p className="text-xs text-ink-600">{description}</p>
       {children}
