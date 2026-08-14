@@ -18,6 +18,8 @@ import { ReadingZone } from '@/components/provenance/reading-zone'
 import { TimelineSection } from './timeline-section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
+import { PageBody } from '@/components/shell/page-body'
+import { SectionCard } from '@/components/ui/section-card'
 import { api } from '@/lib/api-client'
 
 /**
@@ -64,7 +66,7 @@ export default function CompanyDetailPage() {
   })
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <Link href="/cong-ty" className="text-sm text-ink-600 underline underline-offset-2">
@@ -81,37 +83,48 @@ export default function CompanyDetailPage() {
       {company && <CompanyProfileSection company={company} />}
       {!company && <Skeleton className="h-40 w-full rounded-card" />}
 
-      <ContactSection companyId={companyId} />
-      <TimelineSection companyId={companyId} />
+      {/**
+       * Two columns from `lg` up; below that everything stacks in DOM order, which is also the
+       * reading order. The split uses grid columns rather than `order-*` on purpose: reordering
+       * visually while leaving the DOM alone is exactly what makes a screen reader and a sighted
+       * reader disagree about what comes next.
+       *
+       * The timeline takes the wide column because it is the thing being read. The contacts and
+       * the read zone are reference material beside it — and on a 1440px display they used to be
+       * a thousand pixels further down while 40% of the screen sat empty.
+       */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+        <TimelineSection companyId={companyId} />
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
-            Vùng đọc
-          </h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              disabled={ingest.isPending}
-              onClick={() => ingest.mutate('before')}
-            >
-              Đọc bản chụp trước
-            </Button>
-            <Button disabled={ingest.isPending} onClick={() => ingest.mutate('after')}>
-              {ingest.isPending ? 'Đang đọc…' : 'Đọc bản chụp sau'}
-            </Button>
-          </div>
+        <div className="flex flex-col gap-6">
+          <ContactSection companyId={companyId} />
+
+          <SectionCard
+            title="Vùng đọc"
+            actions={
+              <>
+                <Button
+                  variant="secondary"
+                  disabled={ingest.isPending}
+                  onClick={() => ingest.mutate('before')}
+                >
+                  Đọc bản chụp trước
+                </Button>
+                <Button disabled={ingest.isPending} onClick={() => ingest.mutate('after')}>
+                  {ingest.isPending ? 'Đang đọc…' : 'Đọc bản chụp sau'}
+                </Button>
+              </>
+            }
+          >
+            {ingest.isError && <ErrorState error={ingest.error} fallback="Không đọc được nguồn" />}
+            {ingest.data && <IngestSummary result={ingest.data} />}
+
+            {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
+            {readingZone.data && <ReadingZone observations={readingZone.data} />}
+          </SectionCard>
         </div>
-
-        {ingest.isError && (
-          <ErrorState error={ingest.error} fallback={'Không đọc được nguồn'} />
-        )}
-        {ingest.data && <IngestSummary result={ingest.data} />}
-
-        {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
-        {readingZone.data && <ReadingZone observations={readingZone.data} />}
-      </section>
-    </main>
+      </div>
+    </PageBody>
   )
 }
 

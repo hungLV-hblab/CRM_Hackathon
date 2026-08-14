@@ -153,7 +153,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-ink-500">{label}</dt>
+      <dt className="text-caption font-medium text-ink-600">{label}</dt>
       <dd className="text-fact">
         {value ?? <span className="text-sm text-ink-500">Chưa có, Sales bổ sung sau</span>}
       </dd>

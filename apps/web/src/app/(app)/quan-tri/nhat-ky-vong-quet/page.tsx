@@ -8,6 +8,7 @@ import type { WatchCycleRunDto } from '@crm/contracts'
 import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
 
 /**
@@ -45,7 +46,7 @@ export default function WatchCycleLogPage() {
   const rows = runs.data ?? []
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       {/* The "← Đang theo dõi" link that used to open this header is the shell's job now — the
           sidebar reaches that screen in one press from here. */}
       <PageHeader title="Nhật ký vòng quét" actions={<Badge tone="system">Do hệ thống ghi</Badge>} />
@@ -66,7 +67,7 @@ export default function WatchCycleLogPage() {
           <RunRow key={run.id} run={run} />
         ))}
       </ol>
-    </main>
+    </PageBody>
   )
 }
 

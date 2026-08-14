@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
 
 /**
@@ -51,7 +52,7 @@ export default function WatchedCompaniesPage() {
   const unwatched = rows.filter((row) => !row.isWatched)
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       {/* The "← Danh sách công ty" link that used to open this header is the shell's job now:
           the sidebar reaches every screen and the breadcrumb says where this one sits. */}
       <PageHeader
@@ -92,7 +93,7 @@ export default function WatchedCompaniesPage() {
       {companies.isPending && <p className="text-sm text-ink-500">Đang tải…</p>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+        <h2 className="text-section font-semibold text-ink-900">
           Hệ thống đang tự ghi tin cho {watched.length} công ty
         </h2>
         {watched.length === 0 ? (
@@ -112,7 +113,7 @@ export default function WatchedCompaniesPage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+        <h2 className="text-section font-semibold text-ink-900">
           Chưa theo dõi — tin đi vào hàng đợi duyệt
         </h2>
         {unwatched.length === 0 ? (
@@ -130,7 +131,7 @@ export default function WatchedCompaniesPage() {
           </ul>
         )}
       </section>
-    </main>
+    </PageBody>
   )
 }
 

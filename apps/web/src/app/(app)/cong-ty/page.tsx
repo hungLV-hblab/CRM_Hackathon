@@ -23,6 +23,7 @@ import { Input, Select } from '@/components/ui/input'
 import { Cell, Table } from '@/components/ui/table'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api, ApiError } from '@/lib/api-client'
 
 const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: 'traditional' }
@@ -85,7 +86,7 @@ export default function CompanyListPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <PageBody>
       {/* The three cross-screen links and the logout button that used to sit here are the
           shell's job now — the sidebar reaches every screen and the account menu holds the
           logout. Leaving a second "Đăng xuất" on the page would give the app two of them. */}
@@ -243,7 +244,7 @@ export default function CompanyListPage() {
           </div>
         </form>
       </Dialog>
-    </main>
+    </PageBody>
   )
 }
 

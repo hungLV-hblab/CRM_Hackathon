@@ -13,6 +13,7 @@ import { ProposalCard } from './proposal-card'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
 
 /**
@@ -92,7 +93,7 @@ export default function ProposalQueuePage() {
   const rows = proposals.data ?? []
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       <PageHeader
         title="Hàng đợi gợi ý"
         description="Máy chuẩn bị sẵn, bạn là người quyết. Không duyệt thì hồ sơ giữ nguyên — gợi ý không tự hết hạn thành hành động."
@@ -126,7 +127,7 @@ export default function ProposalQueuePage() {
       </section>
 
       {source ? <SourceDialog proposal={source} onClose={() => setSource(null)} /> : null}
-    </main>
+    </PageBody>
   )
 }
 

@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { MetricsPanel } from './metrics-panel'
 import { PageHeader } from '@/components/shell/page-header'
+import { PageBody } from '@/components/shell/page-body'
 import { SnapshotVariantSwitch } from './snapshot-variant-switch'
 import { SystemParametersPanel } from './system-parameters-panel'
 import { api } from '@/lib/api-client'
@@ -33,7 +34,7 @@ export default function AdminPage() {
   const forbidden = isForbidden(settings.error) || isForbidden(metrics.error)
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
+    <PageBody>
       <PageHeader
         title="Quản trị"
         description="Chỉ số đo, tham số hệ thống, và công tắc tắt sạch AI."
@@ -60,7 +61,7 @@ export default function AdminPage() {
       {metrics.data && <MetricsPanel metrics={metrics.data} />}
 
       {settings.data && <SnapshotVariantSwitch />}
-    </main>
+    </PageBody>
   )
 }
 

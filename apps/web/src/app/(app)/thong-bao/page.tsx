@@ -3,6 +3,7 @@
 import Link from 'next/link'
 
 import { NotificationStrip } from '@/components/notification/notification-strip'
+import { PageBody } from '@/components/shell/page-body'
 
 /**
  * The full history of what the system did without asking — read and unread together.
@@ -17,7 +18,7 @@ import { NotificationStrip } from '@/components/notification/notification-strip'
  */
 export default function NotificationsPage() {
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <PageBody>
       <header>
         <Link href="/co-hoi" className="text-sm text-ink-600 underline underline-offset-2">
           ← Cơ hội
@@ -31,6 +32,6 @@ export default function NotificationsPage() {
       </header>
 
       <NotificationStrip show="all" />
-    </main>
+    </PageBody>
   )
 }

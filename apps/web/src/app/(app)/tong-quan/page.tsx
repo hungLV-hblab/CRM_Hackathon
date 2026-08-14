@@ -12,7 +12,9 @@ import { PageHeader } from '@/components/shell/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
+import { cn } from '@/lib/utils'
 
 /**
  * The overview. Four blocks, and two of them exist to keep a number honest:
@@ -28,7 +30,7 @@ export default function OverviewPage() {
   const overview = useQuery({ queryKey: ['overview'], queryFn: api.overview })
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <PageBody>
       <PageHeader title="Tổng quan" />
 
       {/* Skeletons shaped like the four blocks that are coming, so the page does not jump
@@ -45,13 +47,14 @@ export default function OverviewPage() {
       )}
 
       {overview.data && <Blocks data={overview.data} />}
-    </main>
+    </PageBody>
   )
 }
 
 function Blocks({ data }: { data: OverviewDto }) {
   return (
     <>
+      <MetricRow data={data} />
       {/* Rule 5: what to do this morning comes FIRST, above every count. */}
       <OverdueBlock data={data} />
       <PipelineBlock data={data} />
@@ -61,10 +64,95 @@ function Blocks({ data }: { data: OverviewDto }) {
   )
 }
 
+/**
+ * Won and lost deals are finished, so neither belongs in a figure describing what is still in
+ * play. Declared once because two callers need it, and two copies of one sum is how the tile
+ * and the table below it start disagreeing.
+ */
+function runningPipelineTotal(data: OverviewDto): number {
+  return data.pipelineByStage
+    .filter((row) => row.stage !== 'won' && row.stage !== 'lost')
+    .reduce((sum, row) => sum + Number(row.totalValue), 0)
+}
+
+/**
+ * The three numbers this screen exists to say, at a size you can read from behind a chair.
+ *
+ * The screen used to open with four stacked tables — a report, not an overview. Rule 5 calls the
+ * next step "the heartbeat of a deal", and a heartbeat rendered as an unremarkable table row is
+ * not one. The overdue count is therefore the first thing on the page and the largest type in
+ * the app.
+ *
+ * EVERY NUMBER HERE COMES FROM `OverviewDto`. The one sum this screen performs lives in a single
+ * helper shared with the table below, because a second arithmetic path at the presentation layer
+ * is a second place for the figure someone reads out in a meeting to drift from the database.
+ *
+ * No amber and no violet. There is no AI on this screen at all, and amber marks what a person is
+ * about to press — a tile is read, not pressed.
+ */
+function MetricRow({ data }: { data: OverviewDto }) {
+  const runningTotal = runningPipelineTotal(data)
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <MetricTile
+        label="Việc tiếp theo quá hạn"
+        value={String(data.overdueNextSteps.length)}
+        note={
+          data.overdueNextSteps.length === 0
+            ? 'Không còn việc nào trễ hạn'
+            : 'Cần xử lý trước khi làm việc khác'
+        }
+        alarming={data.overdueNextSteps.length > 0}
+      />
+      <MetricTile
+        label="Pipeline đang chạy"
+        value={`${runningTotal.toLocaleString('vi-VN')} ₫`}
+        note="Không gồm Thắng, Thua, Tạm dừng"
+      />
+      <MetricTile
+        label="Tạm dừng"
+        value={String(data.onHold.count)}
+        note={`${Number(data.onHold.totalValue).toLocaleString('vi-VN')} ₫ — không cộng vào con số mang đi họp`}
+      />
+    </div>
+  )
+}
+
+function MetricTile({
+  label,
+  value,
+  note,
+  alarming,
+}: {
+  label: string
+  value: string
+  note: string
+  alarming?: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-card border border-ink-200 bg-surface p-5 shadow-card">
+      {/* Label above the number, not below it: the reader needs to know what they are looking
+          at before the number means anything. */}
+      <p className="text-caption font-medium text-ink-600">{label}</p>
+      <p
+        className={cn(
+          'tabular text-metric leading-none font-semibold',
+          alarming ? 'text-warning' : 'text-ink-900',
+        )}
+      >
+        {value}
+      </p>
+      {/* Never a bare number: rule 4 says a figure has to say what it does and does not cover. */}
+      <p className="text-caption text-ink-600">{note}</p>
+    </div>
+  )
+}
+
 function OverdueBlock({ data }: { data: OverviewDto }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+      <h2 className="text-section font-semibold text-ink-900">
         Việc tiếp theo quá hạn
       </h2>
       {data.overdueNextSteps.length === 0 ? (
@@ -100,14 +188,11 @@ function OverdueBlock({ data }: { data: OverviewDto }) {
 }
 
 function PipelineBlock({ data }: { data: OverviewDto }) {
-  const running = data.pipelineByStage.filter(
-    (row) => row.stage !== 'won' && row.stage !== 'lost',
-  )
-  const runningTotal = running.reduce((sum, row) => sum + Number(row.totalValue), 0)
+  const runningTotal = runningPipelineTotal(data)
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+      <h2 className="text-section font-semibold text-ink-900">
         Cơ hội theo giai đoạn
       </h2>
       <Table headers={['Giai đoạn', 'Số cơ hội', 'Tổng giá trị']}>
@@ -144,7 +229,7 @@ function PipelineBlock({ data }: { data: OverviewDto }) {
 function IndustryBlock({ data }: { data: OverviewDto }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+      <h2 className="text-section font-semibold text-ink-900">
         Công ty theo ngành
       </h2>
       <Table headers={['Ngành', 'Số công ty']}>
@@ -164,7 +249,7 @@ function IndustryBlock({ data }: { data: OverviewDto }) {
 function LostReasonBlock({ data }: { data: OverviewDto }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">Lý do thua</h2>
+      <h2 className="text-section font-semibold text-ink-900">Lý do thua</h2>
       {data.lostReasons.length === 0 ? (
         <EmptyState message="Chưa có cơ hội Thua nào có lý do được ghi." icon={CircleCheck} />
       ) : (

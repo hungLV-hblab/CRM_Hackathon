@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/shell/page-header'
 import { Badge } from '@/components/ui/badge'
 import { SectionCard } from '@/components/ui/section-card'
+import { PageBody } from '@/components/shell/page-body'
 
 /**
  * What the machine is allowed to do on its own, and what stops it in each case.
@@ -75,7 +76,7 @@ const FORBIDDEN = [
 
 export default function GuidePage() {
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+    <PageBody width="reading">
       <PageHeader
         title="Hướng dẫn"
         description="Máy được làm gì, và cái gì chặn nó lại trong từng trường hợp. Bốn vùng dưới đây là trần tự chủ đã khai báo, không phải mô tả cho đẹp — mỗi vùng có mã nghiệm thu chứng minh nó bị chặn thật."
@@ -115,12 +116,12 @@ export default function GuidePage() {
 
       <section className="flex flex-col gap-3 rounded-card border border-danger/30 bg-danger-surface p-5">
         <h2 className="text-lg font-semibold text-ink-900">✋ Cấm tuyệt đối</h2>
-        <p className="text-sm text-ink-700">
+        <p className="text-body-lg leading-relaxed text-ink-700">
           Năm việc dưới đây AI không làm, ở bất kỳ vùng nào. Chặn ở tầng nghiệp vụ và bằng ràng
           buộc cơ sở dữ liệu, không phải bằng một lời dặn trong prompt — một lời dặn suông với
           phần AI không tính là đã chặn. Nghiệm thu T-10.
         </p>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-ink-700">
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-body-lg leading-relaxed text-ink-700">
           {FORBIDDEN.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -128,7 +129,7 @@ export default function GuidePage() {
       </section>
 
       <SectionCard title="Tắt sạch AI">
-        <p className="text-sm text-ink-700">
+        <p className="text-body-lg leading-relaxed text-ink-700">
           Có một công tắc tắt sạch cả bốn vùng, hiệu lực ngay. Dữ liệu AI đã sinh{' '}
           <strong>không bị xoá</strong> — hệ thống chỉ dừng sinh mới. Giá trị nằm ở{' '}
           <code className="rounded bg-ink-100 px-1 py-0.5 text-xs">system_settings.ai_enabled</code>
@@ -140,7 +141,7 @@ export default function GuidePage() {
           link on this page and fails the build on a 404 — writing one ahead of its screen would
           send a judge to Next's not-found from the one page whose job is to explain the system.
         */}
-        <p className="text-sm text-ink-700">
+        <p className="text-body-lg leading-relaxed text-ink-700">
           Công tắc nằm ở{' '}
           <Link
             href="/quan-tri"
@@ -152,6 +153,6 @@ export default function GuidePage() {
           cần quyền Quản trị để biết máy đang dừng.
         </p>
       </SectionCard>
-    </main>
+    </PageBody>
   )
 }

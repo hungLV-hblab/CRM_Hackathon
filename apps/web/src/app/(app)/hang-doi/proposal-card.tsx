@@ -69,7 +69,9 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
 
       {/* Câu trích: the evidence, with a way back to the exact characters of the source. */}
       <figure className="border-l-4 border-machine-200 pl-3">
-        <blockquote className="text-sm text-fact">“{proposal.claim.quoteText}”</blockquote>
+        <blockquote className="max-w-[65ch] text-body-lg leading-relaxed text-fact">
+          “{proposal.claim.quoteText}”
+        </blockquote>
         <figcaption className="mt-1 text-xs text-ink-500">
           <button
             type="button"

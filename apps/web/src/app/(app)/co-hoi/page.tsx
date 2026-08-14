@@ -16,6 +16,7 @@ import { StageBoard } from './stage-board'
 import { StageTransitionDialog } from './stage-transition-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
+import { PageBody } from '@/components/shell/page-body'
 import { api, ApiError } from '@/lib/api-client'
 
 /** The two stages the Specs want extra cells for. Everything else moves with no questions. */
@@ -65,7 +66,7 @@ export default function OpportunityBoardPage() {
   })
 
   return (
-    <main className="mx-auto flex max-w-[100rem] flex-col gap-6 p-6">
+    <PageBody width="wide">
       {/* The hand-rolled "← Công ty" link is gone: the shell's breadcrumb says where this
           screen sits, and three screens each inventing their own idea of "up" is how they
           came to disagree about it. */}
@@ -142,7 +143,7 @@ export default function OpportunityBoardPage() {
         companies={(companies.data ?? []).map((row) => ({ id: row.id, name: row.name }))}
         onClose={() => setCreateOpen(false)}
       />
-    </main>
+    </PageBody>
   )
 }
 
