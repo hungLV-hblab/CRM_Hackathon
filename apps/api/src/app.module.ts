@@ -32,6 +32,8 @@ import { TimelineController } from './domain/timeline/timeline.controller'
 import { TimelineService } from './domain/timeline/timeline-service'
 import { SettingsController } from './settings/settings.controller'
 import { SystemSettingService } from './settings/system-setting-service'
+import { SystemTimelineEntryService } from './watch/system-timeline-entry-service'
+import { WatchLogModule } from './watch/watch-log.module'
 
 /**
  * The module for the `APP_ROLE=api` branch. It does NOT load `WatchModule` — the watch cycle
@@ -39,7 +41,7 @@ import { SystemSettingService } from './settings/system-setting-service'
  * nobody ends up with two watch cycles by scaling the API container.
  */
 @Module({
-  imports: [DbModule, AuthModule],
+  imports: [DbModule, AuthModule, WatchLogModule],
   controllers: [
     AutoNextStepController,
     CompanyController,
@@ -69,6 +71,7 @@ import { SystemSettingService } from './settings/system-setting-service'
     ProposalDecisionService,
     ProposalService,
     SystemSettingService,
+    SystemTimelineEntryService,
     TimelineService,
     claimExtractorProvider,
     { provide: APP_INTERCEPTOR, useClass: ActorInterceptor },

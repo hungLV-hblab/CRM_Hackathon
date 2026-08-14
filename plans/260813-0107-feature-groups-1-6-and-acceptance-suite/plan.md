@@ -58,7 +58,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 4 | [Seed bản chụp trước/sau + T-1](phase-04-seed-ban-chup-truoc-sau-va-t1.md) | **done** | C | 2h15 (thực: ~1h20') | 1a, (3 cho T-1) |
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | **done** | B | ~~3h~~ 4.5h (thực: ~1h20') | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | **done** | A | ~~3h~~ 4h (thực: ~30') | 2, 5, **1b** |
-| 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | pending | C | 2h | 2, 4, **1b** |
+| 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | **done** | C | ~~2h~~ 3h (thực: ~1h10') | 2, 4, **1b** |
 | 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h + 30' (ô sửa nhanh) | 5, 6, 7 |
 
 ```
@@ -82,6 +82,7 @@ Ba phụ thuộc cứng:
 | ~~13/08 sáng~~ | ~~P1a~~ · ~~P1b~~ — **xong 13/08 02:20, cả hai. Đội mở khoá, fan-out được ngay** |
 | 13/08 hết ngày | ~~P2~~ · ~~P3~~ · ~~P4~~ — **cả ba xong 13/08 20:35. P5/P6/P7 mở khoá hết** |
 | ~~14/08 trưa~~ | ~~P5~~ · ~~P6~~ — **P6 xong 14/08 00:44**. Còn P7 (P1b đã xanh nên không còn chặn). Chưa xong → cắt theo danh sách trên |
+| ~~14/08 trưa~~ | ~~P7~~ — **xong 14/08 03:38. P8 mở khoá hết** |
 | 14/08 tối | P8, **freeze** |
 
 ## Chủ quyền file — chống đụng nhau
@@ -117,7 +118,7 @@ Rút từ hai lỗi thật ngày 12/08 (xem [báo cáo nghiệm thu](../reports/
 | T-5 | Duyệt / Sửa-rồi-duyệt / Bỏ đều có bản ghi; *sửa* không cộng vào *duyệt* | 5 ✅ e2e |
 | T-6 | Đổi bản chụp sang bản "sau" → Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống | 6 ✅ e2e |
 | T-7 | Hoàn tác một cú bấm, giá trị cũ trở lại; có bản ghi hai chiều | 6 ✅ e2e |
-| T-8 | 3 công ty Đang theo dõi, đổi nguồn 2 công ty → trong 2 chu kỳ có 2 mục mới, Nhật ký có dòng từng vòng | 7 |
+| T-8 | 3 công ty Đang theo dõi, đổi nguồn 2 công ty → trong 2 chu kỳ có 2 mục mới, Nhật ký có dòng từng vòng | 7 ✅ e2e |
 | T-9 | Tắt AI giữa lúc vòng quét chạy: 2 chu kỳ sau không thêm gì, dữ liệu còn nguyên, Sales thấy banner; bật lại chạy tiếp, cả hai lần có ghi vết | 8 |
 | T-10 | Đổi giai đoạn / đổi giá trị tiền / xoá công ty dưới danh nghĩa hệ thống, không qua UI → cả ba bị từ chối | 8 (mở rộng T-10 mini) |
 
@@ -135,7 +136,7 @@ CI/CD · triển khai đám mây · phân quyền theo người sở hữu (mộ
 | `UNIQUE (company_id, content_hash)` chặn giám khảo diễn lại T-6/T-8 lần hai | Đã loại ở [ADR-0017](../../docs/decisions/0017-i3-enforce-o-tang-service-rang-buoc-csdl-chi-danh-cho-ranh-gioi.md); P2 phải có test ca trước→sau→trước |
 | Nhóm 1 phình ra ăn hết ngày 13 | Cắt kéo thả trước, cắt màn tổng quan sau. Ranh giới cắt ghi ở mục Ngân sách |
 | Vòng quét gọi LLM chậm hơn nhịp 60s | Đã có luật bỏ nhịp + `skipped_reason` của ADR-0011. P7 test đúng kịch bản này |
-| Ba phép đo đột biến còn nợ từ plan skeleton | P1b trả nợ GRANT + enum (cộng một phép đo mới cho ADR-0015); `@Cron` trả trong P7 |
+| ~~Ba phép đo đột biến còn nợ từ plan skeleton~~ | **Trả hết.** P1b trả GRANT + enum (cộng một phép đo mới cho ADR-0015); `@Cron` đã trả 12/08 trên stack thật ngay trong ADR-0011 — P7 **không** phải trả lại, chỉ thêm đột biến `scheduleNextTick(60)` cứng |
 
 ## Validation Log
 
@@ -290,6 +291,65 @@ Phase 6 là phase đầu **không** lệch với code thật — phiên 7 đã �
 - **Sales vẫn chưa có chỗ tự gõ Việc tiếp theo trên web** (phát hiện phiên 7, vẫn còn). Giờ đáng giá hơn trước: sau khi Hoàn tác, ô về trống và không có đường nào điền lại bằng tay. **Đã nhận vào P8** — phạm vi tối thiểu, `PATCH /opportunities/:id` sẵn có, không endpoint mới.
 - Bảng deal gọi **hai** endpoint và gộp ở client (ADR-0027 B1). Nếu P8 thấy nhấp nháy thì đó là chỗ đã ghi sẵn cách gộp lại.
 
+### Phiên 9 — 14/08 02:35, phạm vi Phase 7
+
+Phase 7 viết cùng lúc với plan (13/08 01:07) nên cùng hoàn cảnh đã làm P4/P5/P6 lệch. Kiểm bằng đọc mã nguồn ([báo cáo](../reports/from-brainstorm-to-planner-260814-0159-phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian-report.md)): **hai chỗ lệch đủ nặng để đổi thiết kế, một bước là nợ đã trả rồi.**
+
+**Nửa việc backend đã có sẵn:** `ObservationService.ingest()` đã làm trọn vòng đọc → so hash (I-3) → claim → `ClaimReactionService` (nhóm 4 rồi nhóm 3) ⇒ "nối vào đường ống nhóm 2" là một vòng `for` + một lời gọi. `watch_cycle_runs` đã có đủ 4 con số + `is_rollup` + `cycles_covered` ⇒ **0 migration** cho phần log. `timeline-section.tsx` đã có `machine-*` + `Badge tone="system"`. Worker đã có `ANTHROPIC_API_KEY` trong compose.
+
+**Lỗ thứ nhất — lệch điều kiện I-4 ↔ I-5, ăn mất vật liệu của T-8.** I-5 chặn *Proposal* theo `is_watched`; I-4 chặn *system entry* theo `trigger_context`. Công ty đang theo dõi + người bấm `Đọc lại nguồn` ⇒ **không đường nào ghi**, và I-3 làm nó **vĩnh viễn** (vòng sau hash trùng → 0 claim). Không phải giả thiết: `e2e/t6-t7` bấm "Đọc bản chụp sau" trên **Nimbus, `isWatched: true`** ⇒ tin của Nimbus không bao giờ lên dòng thời gian và T-8 phụ thuộc thứ tự spec.
+
+**Lỗ thứ hai — vùng 4 chỉ có một lớp chặn.** `0001_grants.sql:53` cấp `INSERT` **mức bảng** trên `timeline_entries` ⇒ `crm_system` ghi được `created_by='human'`, `source_claim_id=NULL`: **AI viết được một dòng trông như người gõ, không nguồn.** Đúng cấu trúc lỗi ADR-0015 đã bắt, đúng bảng mà ADR đó không phân loại (nó chỉ xét 7 bảng *mới* của P1).
+
+**Một bước phải bỏ:** bước 8 bản cũ đòi trả nợ đột biến `@Cron`. Nợ đó **đã trả 12/08** trên stack thật (ADR-0011 mục verify, hai phép đo có log giờ). Thay bằng đột biến một dòng: `scheduleNextTick(60)` cứng → test 2 phải đỏ.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| Ai ghi tin khi công ty đang theo dõi mà người bấm đọc tay | **Điều kiện là `is_watched`, không phải `trigger_context`** — uỷ quyền là thuộc tính của công ty (ADR-0006), không của người bấm. **ADR-0028** | Sửa I-4 ở ontology mục 6 + bảng M-5. **Sửa 1 test đang xanh** (`reading-zone-provenance.test.ts:224` đọc Sakura — công ty đang theo dõi). Đường ghi bắt buộc nằm ở `ClaimReactionService` bước 3, không nằm trong worker |
+| Lớp CSDL của vùng 4 | `GRANT INSERT` **theo cột** (bỏ `created_by`) + `DEFAULT 'system'` + CHECK nhãn hệ thống ⇒ có `source_claim_id`. **ADR-0029** | Migration `0007`. Đường ghi phải nêu đúng cột, **không** `db.insert().values()` (bẫy drizzle của P5); CHECK so `::text` (bẫy 55P04 của P5) |
+| Dòng cộng dồn mỗi 10 vòng | **Làm** — một câu `INSERT … SELECT`, mốc lấy bằng subquery | `max(started_at)` để dòng cộng dồn nằm **sau** 10 dòng nó tổng kết. Không giá trị thời gian nào rời CSDL rồi quay lại (bẫy P6) |
+| Màn Đang theo dõi + nav | **Màn `/dang-theo-doi` riêng** + công tắc một thao tác + dòng cảnh báo uỷ quyền. **Không sửa `layout.tsx`** | Nav thuộc chủ quyền [plan UI phase 2](../260814-0056-nang-cap-ui-shadcn-shell-tour/phase-02-app-shell-header-sidebar-footer.md) — P7 chỉ thêm hai `<Link>` tạm. Plan đó phải biết: nav thành **9 mục**, `git mv` phải có `dang-theo-doi` + `quan-tri` |
+
+**Ước lượng 2h → 3h** (2 ADR, 1 migration, sửa 1 test cũ). Vòng quét từ nay **chạy cả nhóm 3 và nhóm 4** mỗi vòng — đúng Specs, nhưng nghĩa là 3 lần gọi LLM mỗi nhịp; với chu kỳ 10s của T-8 thì **tràn nhịp là chuyện thường**, đọc `skipped_reason` như trạng thái bình thường.
+
+**Hợp đồng với P8:** `AuditEvent{ action:'delete_system_timeline_entry', detail:{ reason, sourceClaimId, description } }` là chỗ P8 đếm "số lần xoá mục hệ thống" cho tử số error-detection rate (ontology mục 7).
+
+### Phiên 10 — 14/08 02:55, validate Phase 7
+
+**Verification Results** — Claims checked: 18 · Verified: 15 · Failed: 1 · Đổi sang đường tốt hơn: 2 · Tier: Full (giới hạn Phase 7)
+
+Khẳng định **sai**: phase file ghi `WatchModule` cần `NotificationService`. Không cần — `AutoNextStepService` tự `INSERT INTO notifications` trong transaction của chính nó (`auto-next-step-service.ts:249`) và chỉ nhận `dbSystem`, `dbApp`, `AuditEventService`. Danh sách provider của worker chốt lại **9 cái**, kiểm bằng đọc constructor từng service. Thiếu một là worker vỡ lúc boot, Docker restart, và log trông *gần đúng* — **đúng hình dạng lỗi `unref()` mà ADR-0011 kể**, nên tiêu chí nghiệm thu là dòng `Starting Nest application`, không phải số dòng `WatchCycleRun`.
+
+**Một phát hiện ngoài danh sách claim, thuộc tài liệu:** [ADR-0011](../../docs/decisions/0011-worker-cung-image-va-vong-quet-tu-hen-nhip.md) mục Hệ quả viết *"Worker kết nối bằng `crm_system`, không có pool `crm_app`"*. Câu đó **sai từ trước P7**: `DbModule` là `@Global` và tạo cả hai pool vô điều kiện (`db.module.ts:20-36`), `SystemSettingService` — provider duy nhất của worker ngoài vòng quét — nhận cả hai (`:31-34`). P7 không gây ra, nhưng P7 làm nó quan trọng hơn vì từ nay service chọn-pool-theo-actor chạy trong worker. Đã kiểm phần đáng lo: **không đường ghi nào của vòng quét đi qua `crm_app`** — event + thông báo nằm trong transaction của `dbSystem` với `SYSTEM_ACTOR`, `dbApp` chỉ dùng ở `listActive()` là đường đọc của bảng deal.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| ADR-0011 nói sai về pool của worker | **Sửa một dòng ADR-0011** kèm câu chỉ ra đường ghi nào dùng pool nào | Phương án "chặn thật bằng cách bỏ `DATABASE_URL_APP` khỏi worker" bị loại: refactor `DbModule` theo `APP_ROLE` không rẻ trước freeze và có thể vỡ boot |
+| `occurred_at` của mục hệ thống | **Truyền `capturedAt` vào `ClaimReactionInput`** — `ObservationService` đã có `created.capturedAt` từ `.returning()` ⇒ **0 truy vấn** | Rẻ hơn cả hai phương án đã nêu ở phiên brainstorm (truy vấn lại như `ProposalService`, hoặc `now()`). Mục mang mốc bản lưu nó sinh ra từ |
+| Câu trích trên dòng thời gian | **Tra trong query `readingZone` đã cache** — `cong-ty/[id]/page.tsx:46` đã fetch observations kèm claims | `SourceViewer` cần cả object `observation` (`:28`), không chỉ `sourceClaimId`. **0 endpoint mới, 0 DTO đổi**, không đụng `toDto` của B trước freeze. Ca tra không ra → hiện nhãn + "không tra được bản lưu", không nút rỗng |
+| Phạm vi đường xoá I-13 | **Chỉ mục `created_by='system'`**; mục người gõ → 403 | `stage_change` là vết đổi giai đoạn — xoá nó cần ADR riêng. Câu treo giao P8, ghi ở cuối phase file |
+
+**Whole-Plan Consistency Sweep** — quét `plan.md` + 8 phase file + plan UI `260814-0056`. Bốn chỗ lệch phát hiện, cả bốn đã hoà giải: (1) dòng rủi ro *"`@Cron` trả trong P7"* → nợ đã trả 12/08; (2) khẳng định `[x]` I-4 của P2 → thêm ghi chú thu hẹp bởi ADR-0028, giữ nguyên bản ghi cũ vì nó đúng lúc P2 đóng; (3) P8 chưa biết đếm "số lần xoá mục hệ thống" ở đâu → chốt `audit_events.action = 'delete_system_timeline_entry'`; (4) plan UI đếm 7 route/7 mục nav → thành 8 mục · 7 thư mục `git mv` · 8 route cho command palette. **Không còn mâu thuẫn tồn đọng.**
+
+### Phiên 11 — 14/08 03:38, P7 đóng
+
+**262 test đơn vị (225 → +37) + 16 e2e (11 → +5) xanh**, lint/typecheck sạch, ba phép đo đột biến đều cắn. T-8 đóng trên stack thật với chu kỳ 10s và LLM thật. Hai ADR đã viết ([0028](../../docs/decisions/0028-quyen-ghi-muc-dong-thoi-gian-den-tu-nhan-dang-theo-doi-khong-tu-trigger-context.md) · [0029](../../docs/decisions/0029-grant-insert-theo-cot-tren-timeline-entries-va-check-nhan-he-thong.md)), ontology I-4 + I-5 + M-5b + M-13 đã sửa, dòng sai về pool của ADR-0011 đã sửa kèm số đo.
+
+Bốn việc mang sang P8 — **ba trong số đó là bẫy sẽ gặp lại nguyên vẹn**:
+
+- **Module khai báo controller có guard thì phải tự import `AuthModule`.** Dependency của guard giải trong module **khai báo controller**, không phải trong `AppModule` dù nó import cả hai. Thiếu → **sập cả container API**, triệu chứng là **502 ở trang đăng nhập**, và **toàn bộ test đơn vị vẫn xanh**. P8 thêm module có controller thì đọc lại dòng này trước. Đã có `watch-module-boots.test.ts` giải cả hai cây module — P8 thêm module mới thì thêm vào đó, lỗi sẽ đỏ trong 17ms.
+- **`CHECK` không thay được `GRANT` theo cột, và ngược lại — đã đo.** Cấp lại INSERT mức bảng trên `timeline_entries` thì test "AI ghi `created_by='human'`" đỏ **trong khi `CHECK` vẫn xanh**. Hai lớp chặn hai ca khác nhau; đừng gộp.
+- **Vòng quét giờ là tải nền của toàn bộ e2e.** Trước P7 `scan()` chỉ đếm công ty và không tạo gì; giờ nó đọc nguồn bằng LLM cho 3 công ty mỗi vòng. Hệ quả: mọi assertion chờ một lần đọc nguồn cần timeout thật (đã nâng lên 30s ở `reading-zone-provenance` và `t6-t7`; assertion không đổi), và **không spec nào được giả định vùng đọc của công ty đang theo dõi là rỗng lúc mở màn**. T-3 đã sửa sang khẳng định mạnh hơn: **đếm** số phát hiện = số nút xem nguồn.
+- **`<dialog>` đóng vẫn ở trong DOM kèm nội dung.** Dialog mount vĩnh viễn làm mỗi mục dòng thời gian xuất hiện hai lần và `getByText` khớp 2 phần tử — T-1 đỏ trên một màn hình trông hoàn toàn đúng. Chỉ mount khi mở.
+
+**Hợp đồng cho P8, đã có sẵn trong CSDL:** `audit_events.action = 'delete_system_timeline_entry'`, `detail` mang `reason` · `sourceClaimId` · `description` — đây là tử số "số lần xoá mục hệ thống" của error-detection rate (ontology mục 7). `GET /watch-cycle-runs` trả đủ 4 con số + `isRollup` + `cyclesCovered` cho bảng điều khiển.
+
+**Một quyết định nhỏ chốt lúc code, lệch phase file có ý thức:** dòng cộng dồn gọi ở `tick()` chứ không ở cuối `scan()`. Phase file ghi `scan()`, nhưng nhịp bị bỏ **cũng tính là một vòng**, nên 10 vòng toàn skip sẽ không bao giờ được tổng kết — đúng đoạn nhật ký cần tổng kết nhất. Có test riêng (test 8 của `watch-cycle-scans-and-writes`).
+
 ## Câu hỏi chưa giải quyết
 
 - **Q-6: Admin có được thao tác CRM không** — chặn ma trận quyền của nhóm 6. P8 tạm làm: Admin xem được tất cả, không sửa dữ liệu Sales.
@@ -297,4 +357,5 @@ Phase 6 là phase đầu **không** lệch với code thật — phiên 7 đã �
 - ~~**Công ty #5 `it_product` của P4**~~ — **đã làm**, không phải cắt. Marlin Product Labs dùng chung hằng số đoạn funding với Sakura.
 - **Ai flip bản chụp lúc demo:** đã có hai đường — `pnpm switch-snapshot "Sakura" after` và `POST /api/demo/companies/:id/snapshot-variant`. Còn treo đúng một câu: có cần **nút** trong `apps/web/src/app/quan-tri/` (P8) hay CLI đủ cho vòng 1? Không chặn gì.
 - ~~**Sales không có chỗ nào tự gõ Việc tiếp theo trên web**~~ — **đã giao cho P8 lúc 14/08 00:48**, không còn là câu treo. Chi tiết + phạm vi tối thiểu ở [mục "Lỗ P6 để lại"](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md#lỗ-p6-để-lại--ô-sửa-nhanh-việc-tiếp-theo). Dùng `PATCH /opportunities/:id` sẵn có, ~30', **cắt cuối cùng** — và cắt thì phải nói thẳng với BGK.
+- **Xoá mục dòng thời gian do người gõ** — Specs viết "xoá mục hệ thống *như mọi mục khác*" nhưng không có đường nào và I-13 chỉ ràng buộc mục hệ thống. P7 chốt phạm vi hẹp; [câu treo giao P8](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md#câu-treo-giao-cho-p8). Không chặn gì.
 - Telemetry của thành viên 2 và 3 chưa verify trên Grafana (README mục Telemetry). **Không phải việc của plan này nhưng là điều kiện qua vòng 1** — mỗi người tự kiểm trước khi gõ dòng đầu.

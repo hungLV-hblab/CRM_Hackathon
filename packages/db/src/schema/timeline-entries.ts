@@ -26,7 +26,12 @@ export const timelineEntries = pgTable('timeline_entries', {
   description: text('description').notNull(),
   /** Which contact the activity was with, when the entry records one. */
   contactId: uuid('contact_id').references(() => contacts.id),
-  createdBy: createdByEnum('created_by').notNull(),
+  /**
+   * DEFAULT `'system'` (migration 0007, ADR-0029) — not because system entries are the common
+   * case, but because `crm_system` is not granted this column at all. Every other writer names
+   * it explicitly, so the default only ever answers for a statement the AI made.
+   */
+  createdBy: createdByEnum('created_by').notNull().default('system'),
   /**
    * Back-reference for the `generated_from` relation (ontology section 4). Set on entries the
    * watch cycle added (zone 4) and NULL on entries Sales typed — which is what makes the

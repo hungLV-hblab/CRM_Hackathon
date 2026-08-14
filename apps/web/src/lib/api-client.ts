@@ -23,6 +23,7 @@ import type {
   UndoResultDto,
   UpdateOpportunityDto,
   UpdateStageDto,
+  WatchCycleRunDto,
 } from '@crm/contracts'
 
 /**
@@ -199,4 +200,35 @@ export const api = {
   /** "Đã xem", and only pressing it ever writes `read_at`. */
   markNotificationRead: (notificationId: string) =>
     call<void>(`/notifications/${notificationId}/read`, { method: 'POST' }),
+
+  /**
+   * "Nhật ký vòng quét" — one line per cycle, newest first, rolled-up lines marked in place.
+   * Autonomy zone 4 writes without asking, so this log is where the loop is audited afterwards.
+   */
+  listWatchCycleRuns: () => call<WatchCycleRunDto[]>('/watch-cycle-runs'),
+
+  /**
+   * I-13 — remove an entry the watch cycle added, with a short reason.
+   *
+   * The reason travels in the BODY of a DELETE, which is unusual on purpose: in the query string
+   * it would land in every access log and in the browser history, and what a person writes about
+   * the machine's mistake is not URL material. It is required — this is the error-detection
+   * signal feature group 5 produces, and an unexplained deletion counts for nothing.
+   */
+  deleteSystemTimelineEntry: (companyId: string, entryId: string, reason: string) =>
+    call<void>(`/companies/${companyId}/timeline/${entryId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reason }),
+    }),
+
+  /**
+   * Turning Đang theo dõi on or off. Reuses `PATCH /companies/:id` rather than adding an endpoint:
+   * `isWatched` is an ordinary column a person owns, and a dedicated route would suggest the flag
+   * is something else.
+   */
+  setWatched: (companyId: string, isWatched: boolean) =>
+    call<CompanyDto>(`/companies/${companyId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isWatched }),
+    }),
 }

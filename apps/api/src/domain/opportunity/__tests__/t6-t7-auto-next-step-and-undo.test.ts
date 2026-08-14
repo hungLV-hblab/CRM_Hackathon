@@ -15,6 +15,7 @@ import { OpportunityService } from '../opportunity-service'
 import { ProposalService } from '../../proposal/proposal-service'
 import { SYSTEM_ACTOR, humanActor } from '../../../common/actor/actor-context'
 import { SystemSettingService } from '../../../settings/system-setting-service'
+import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 
 /**
  * T-6, T-7 and the four invariants of feature group 4 — autonomy zone 3, the one place the AI
@@ -73,6 +74,7 @@ function buildIngest(): ObservationService {
     new ClaimReactionService(
       autoNextSteps,
       new ProposalService(systemConnection.db, appConnection.db),
+      new SystemTimelineEntryService(systemConnection.db),
     ),
   )
 }

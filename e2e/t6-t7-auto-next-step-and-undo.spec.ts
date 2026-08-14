@@ -28,6 +28,15 @@ const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
 const COMPANY = 'Nimbus Cloud Solutions'
 const OPPORTUNITY = 'Đội phát triển nền tảng tích hợp'
 
+/**
+ * Reading a source calls the model, and since feature group 5 the WORKER is calling it too, on
+ * every watched company, every cycle. Playwright's default 5s was set when the watch cycle did
+ * nothing; under real background load it cuts a legitimate read off mid-flight, and the failure
+ * reads as "the read produced nothing" — a product bug's clothes on a harness problem.
+ * The assertion is unchanged; only the patience is.
+ */
+const INGEST_TIMEOUT = 30_000
+
 async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/dang-nhap')
   await page.getByLabel('Email').fill(SALES.email)
@@ -48,7 +57,9 @@ async function readAfterSnapshot(page: import('@playwright/test').Page): Promise
   await page.getByRole('link', { name: COMPANY }).click()
   await expect(page.getByRole('heading', { name: COMPANY })).toBeVisible()
   await page.getByRole('button', { name: 'Đọc bản chụp sau' }).click()
-  await expect(page.getByText(/Lưu \d+\/\d+ phát hiện|Đã đọc, nội dung không đổi/)).toBeVisible()
+  await expect(
+    page.getByText(/Lưu \d+\/\d+ phát hiện|Đã đọc, nội dung không đổi/),
+  ).toBeVisible({ timeout: INGEST_TIMEOUT })
 }
 
 /** The deal's card on the board, whichever stage column it currently sits in. */

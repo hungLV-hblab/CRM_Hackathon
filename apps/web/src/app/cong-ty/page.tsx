@@ -92,6 +92,18 @@ export default function CompanyListPage() {
           <Button variant="ghost" onClick={() => router.push('/hang-doi')}>
             Hàng đợi gợi ý
           </Button>
+          {/**
+           * TEMPORARY, and matching the pattern already here rather than introducing a second
+           * one. A shared navigation belongs to the UI shell plan (`260814-0056` phase 2), which
+           * owns `layout.tsx`; adding these two there now would mean two people editing the same
+           * file on the last day before freeze. That plan removes both of these lines.
+           */}
+          <Button variant="ghost" onClick={() => router.push('/dang-theo-doi')}>
+            Đang theo dõi
+          </Button>
+          <Button variant="ghost" onClick={() => router.push('/quan-tri/nhat-ky-vong-quet')}>
+            Nhật ký vòng quét
+          </Button>
           <Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>
           <Button variant="ghost" onClick={onLogout}>
             Đăng xuất

@@ -21,6 +21,33 @@ export class AuditEventService {
     @Inject(DRIZZLE_SYSTEM) private readonly dbSystem: CrmDatabase,
   ) {}
 
+  /**
+   * An action HAPPENED. Record it after the write succeeded, so the trail never claims something
+   * the database rejected — the opposite ordering from `recordRefusal` below, and for the mirror
+   * reason.
+   *
+   * `outcome` is stamped into `detail` here rather than left to callers: the dashboard of feature
+   * group 6 filters on it, and a caller that forgets the key produces an event that is invisible
+   * to every count without failing anything.
+   */
+  async record(
+    actor: Actor,
+    action: string,
+    entity: string,
+    entityId: string | null,
+    detail: Record<string, unknown>,
+  ): Promise<void> {
+    await this.dbFor(actor)
+      .insert(auditEvents)
+      .values({
+        actor: actor.kind,
+        action,
+        entity,
+        entityId,
+        detail: { outcome: 'done', ...detail },
+      })
+  }
+
   /** A boundary just refused an action. Record it BEFORE throwing, or the trail is lost. */
   async recordRefusal(
     actor: Actor,

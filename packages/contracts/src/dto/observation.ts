@@ -74,4 +74,14 @@ export interface IngestResultDto {
   claimsDroppedNoVerbatimQuote: number
   /** Proposed as `certain` but downgraded by the ADR-0007 gate. */
   claimsDowngradedFromCertain: number
+  /**
+   * Timeline entries feature group 5 wrote by itself (autonomy zone 4) — non-zero only for a
+   * company carrying Đang theo dõi, whoever did the reading (ADR-0028).
+   *
+   * It travels on THIS result rather than being counted by the watch cycle afterwards because
+   * the cycle would then have to ask the database "how many rows appeared just now", and a
+   * count bounded by time is the `timestamptz`-versus-`Date` trap feature group 4 already paid
+   * for. Here the number never leaves the process that produced it.
+   */
+  systemEntriesAdded: number
 }

@@ -67,7 +67,7 @@ Nguồn nội dung: [CLAUDE.md mục 4](../../CLAUDE.md#4-trần-tự-chủ-củ
 
 ### ⌘K Command palette
 
-`shadcn add command`. Nguồn: 7 route (tĩnh) + danh sách công ty và cơ hội (dùng lại query `['companies']`, `['opportunities']` đã cache — **không thêm endpoint**). `Cmd/Ctrl+K` mở, Escape đóng.
+`shadcn add command`. Nguồn: 8 route tĩnh (gồm `dang-theo-doi` + `quan-tri/nhat-ky-vong-quet` của P7) + danh sách công ty và cơ hội (dùng lại query `['companies']`, `['opportunities']` đã cache — **không thêm endpoint**). `Cmd/Ctrl+K` mở, Escape đóng.
 
 ## Related Code Files
 

@@ -61,7 +61,11 @@ vòng lặp:
 
 - `main.ts` rẽ nhánh theo `APP_ROLE`; `WatchModule` chỉ nạp khi `worker`. Compose chạy 2 service từ **cùng một image**.
 - API và worker không nói chuyện trực tiếp với nhau — **CSDL là kênh liên lạc duy nhất**. Bấm tắt AI ở giao diện chỉ ghi `SystemSetting`, worker tự thấy ở lượt kế.
-- Worker kết nối bằng `crm_system` ([ADR-0010](0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md)), không có pool `crm_app`.
+- Worker ghi bằng `crm_system` ([ADR-0010](0010-chan-tang-csdl-bang-hai-role-va-quyen-theo-cot.md)). **Sửa 14/08 02:55:** câu cũ ở đây viết *"không có pool `crm_app`"* — **sai từ lúc viết ADR này**, không phải do phase 7. `DbModule` là `@Global` và tạo **cả hai** pool vô điều kiện (`db.module.ts:20-36`), và `SystemSettingService` — provider duy nhất của worker ngoài vòng quét — nhận cả hai (`:31-34`). Phase 7 không gây ra chuyện đó nhưng làm nó đáng nói hơn, vì từ nay vòng quét chạy cả cây service chọn-pool-theo-actor.
+
+  Phần đáng lo đã kiểm, và kết quả là số đo chứ không phải lời hứa: **không đường ghi nào của vòng quét đi qua `crm_app`.** Event và thông báo của nhóm 4 nằm trong transaction của `dbSystem` với `SYSTEM_ACTOR` — `poolFor(actor)` (`auto-next-step-service.ts:526`) chọn pool theo actor và `db.transaction()` (`:207-252`) nhận đúng pool đó; mục dòng thời gian của nhóm 5 ghi bằng `dbSystem` và bị `0007` siết theo cột; `dbApp` chỉ xuất hiện ở `listActive()`, là đường **đọc** bảng cơ hội. Đường xoá của I-13 dùng `crm_app` nhưng nó nằm trong nhánh API, không trong worker.
+
+  Phương án "chặn thật bằng cách bỏ `DATABASE_URL_APP` khỏi worker" đã cân và **loại**: refactor `DbModule` theo `APP_ROLE` không rẻ trước freeze và có thể làm vỡ boot — mà một worker vỡ boot trông y hệt lỗi `unref()` mô tả ở dưới. Ghi lại đúng hiện trạng có giá trị hơn một lời khẳng định sai.
 - `WATCH_CYCLE_SECONDS` trong env chỉ được đọc **một lần lúc seed** để đặt giá trị đầu vào CSDL. Sau đó env vô nghĩa — phải ghi rõ trong `.env.example` kẻo có người sửa env rồi tưởng đã đổi chu kỳ.
 - Cần dọn `setTimeout` lúc `onModuleDestroy`, nếu không test e2e treo.
 - **Sẽ phải xem lại nếu:** cần chạy nhiều worker song song (lúc đó hai worker cùng quét một công ty — phải thêm khoá ở CSDL). Không xảy ra trong phạm vi hackathon: 12–15 công ty, 1 worker.

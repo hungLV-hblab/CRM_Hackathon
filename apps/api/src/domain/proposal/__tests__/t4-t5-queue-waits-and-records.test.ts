@@ -14,6 +14,8 @@ import { ProposalDecisionService } from '../proposal-decision-service'
 import { ProposalService } from '../proposal-service'
 import { SYSTEM_ACTOR, humanActor } from '../../../common/actor/actor-context'
 import { SystemSettingService } from '../../../settings/system-setting-service'
+import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
+import { WatchCycleRollup } from '../../../watch/watch-cycle-rollup'
 import { WatchCycleService } from '../../../watch/watch-cycle-service'
 
 /**
@@ -62,6 +64,7 @@ function buildIngest(): ObservationService {
         new AuditEventService(appConnection.db, systemConnection.db),
       ),
       proposalService,
+      new SystemTimelineEntryService(systemConnection.db),
     ),
   )
 }
@@ -129,14 +132,27 @@ describe('T-4 · a suggestion nobody decides changes nothing, indefinitely', () 
   })
 
   it('1 · three watch cycles later the profile is untouched and the queue still waits', async () => {
-    await buildIngest().ingest(SAKURA, 'after', 'watch_cycle')
+    const firstRead = await buildIngest().ingest(SAKURA, 'after', 'watch_cycle')
 
     const queued = await owner.query(`SELECT count(*)::int AS total FROM proposals`)
     expect(queued.rows[0].total).toBeGreaterThan(0)
     const before = await companyProfile(SAKURA)
 
+    /**
+     * Point the watch cycle at the SAME page the read above used. The cycle takes which snapshot
+     * to open from `companies.snapshot_variant` (ADR-0022) and never from an argument, so without
+     * this line the cycles would read the `before` page — genuinely new content, genuinely new
+     * findings — and the test would be measuring the fixture rather than T-4.
+     */
+    await owner.query(`UPDATE companies SET snapshot_variant = 'after' WHERE id = $1`, [SAKURA])
+
     vi.useFakeTimers()
-    worker = new WatchCycleService(settings, systemConnection.db)
+    worker = new WatchCycleService(
+      settings,
+      systemConnection.db,
+      buildIngest(),
+      new WatchCycleRollup(systemConnection.db),
+    )
     worker.onModuleInit()
     await worker.awaitCurrentTick()
 
@@ -159,9 +175,25 @@ describe('T-4 · a suggestion nobody decides changes nothing, indefinitely', () 
     const decided = await owner.query('SELECT count(*)::int AS total FROM proposal_decisions')
     expect(decided.rows[0].total).toBe(0)
 
-    // Nor did anything slip onto the timeline while nobody was looking.
-    const timeline = await owner.query('SELECT count(*)::int AS total FROM timeline_entries')
-    expect(timeline.rows[0].total).toBe(0)
+    /**
+     * Nor did anything slip onto the timeline while nobody was looking — and after ADR-0028 that
+     * sentence needs saying precisely, because Sakura IS a watched company, so zone 4 wrote its
+     * entry during the first read above. Two things are asserted instead of a flat zero:
+     *
+     *   no entry claims a PERSON typed it — an accepted suggestion would be written by `crm_app`
+     *   as `created_by = 'human'`, so a human-authored row appearing with nobody deciding is
+     *   precisely the T-4 failure;
+     *
+     *   the system entries did not GROW over three further cycles — I-3 sees an unchanged page,
+     *   produces no findings, and so zone 4 has nothing to write. Without this half, a version
+     *   that re-adds the same news every 60 seconds would pass.
+     */
+    const byAuthor = await owner.query(
+      `SELECT created_by, count(*)::int AS total FROM timeline_entries GROUP BY created_by`,
+    )
+    const totals = Object.fromEntries(byAuthor.rows.map((row) => [row.created_by, row.total]))
+    expect(totals.human ?? 0).toBe(0)
+    expect(totals.system ?? 0).toBe(firstRead.systemEntriesAdded)
   })
 })
 
