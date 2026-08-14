@@ -1,5 +1,6 @@
 'use client'
 
+import { Undo2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -115,6 +116,7 @@ export function AutoNextStepCell({ autoNextStep, opportunityName }: AutoNextStep
             onClick={() => undo.mutate()}
             data-testid="undo-auto-next-step"
           >
+            <Undo2 className="size-4" aria-hidden />
             {undo.isPending ? 'Đang hoàn tác…' : 'Hoàn tác'}
           </Button>
           <span className="text-xs text-ink-600">

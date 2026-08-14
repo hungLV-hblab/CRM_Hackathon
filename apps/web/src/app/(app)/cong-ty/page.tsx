@@ -1,6 +1,6 @@
 'use client'
 
-import { Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
@@ -125,7 +125,12 @@ export default function CompanyListPage() {
           logout. Leaving a second "Đăng xuất" on the page would give the app two of them. */}
       <PageHeader
         title="Công ty"
-        actions={<Button onClick={() => setDialogOpen(true)}>Thêm công ty</Button>}
+        actions={
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Thêm công ty
+          </Button>
+        }
       />
 
       <FilterBar chips={filterChips(filters, setFilters)} onReset={() => setFilters(EMPTY_FILTERS)}>
@@ -190,7 +195,7 @@ export default function CompanyListPage() {
         </Select>
       </FilterBar>
 
-      {companies.isPending && <Skeleton className="h-64 w-full rounded-card" />}
+      {companies.isPending && <TableSkeleton rows={6} />}
 
       {companies.isError && (
         <ErrorState error={companies.error} fallback={'Không tải được danh sách công ty'} />
@@ -323,6 +328,20 @@ function filterChips(
     })
 
   return chips
+}
+
+/** Shaped like the table that is coming: one header band, then rows at row height. */
+function TableSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="overflow-hidden rounded-card border border-ink-200 bg-surface shadow-card">
+      <Skeleton className="h-12 w-full rounded-none" />
+      <div className="flex flex-col gap-px p-px">
+        {Array.from({ length: rows }, (_, index) => (
+          <Skeleton key={index} className="h-12 w-full rounded-none" />
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function unique(values: string[]): string[] {

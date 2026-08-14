@@ -52,7 +52,7 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
     <article
       data-testid="proposal-card"
       data-tour="proposal-card"
-      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-surface p-4"
+      className="flex flex-col gap-3 rounded-control border border-ink-200 bg-surface p-4 transition-colors duration-(--duration-state) hover:border-ink-300"
     >
       <header className="flex flex-wrap items-center gap-2">
         <Badge tone="inference">{PROPOSAL_TYPE[proposal.proposalType]}</Badge>

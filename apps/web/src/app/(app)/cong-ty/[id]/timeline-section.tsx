@@ -179,8 +179,11 @@ function TimelineRow({
 
   return (
     <li
-      className={`rounded-card border p-3 ${
-        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-surface'
+      // The violet border on a system entry is the zone-4 label, not decoration, so hover
+      // brightens only the human rows — darkening the machine ones would blur the one signal
+      // that says who wrote the row.
+      className={`rounded-card border p-3 transition-colors duration-(--duration-state) ${
+        isSystem ? 'border-machine-200 bg-machine-50' : 'border-ink-200 bg-surface hover:border-ink-300'
       }`}
     >
       <div className="mb-1 flex flex-wrap items-center gap-2">

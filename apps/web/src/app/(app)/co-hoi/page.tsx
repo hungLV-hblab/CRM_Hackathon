@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -72,7 +73,12 @@ export default function OpportunityBoardPage() {
           came to disagree about it. */}
       <PageHeader
         title="Cơ hội"
-        actions={<Button onClick={() => setCreateOpen(true)}>Thêm cơ hội</Button>}
+        actions={
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Thêm cơ hội
+          </Button>
+        }
       />
 
       {/*
@@ -117,7 +123,7 @@ export default function OpportunityBoardPage() {
         </div>
       </FilterBar>
 
-      {opportunities.isPending && <Skeleton className="h-40 w-full rounded-card" />}
+      {opportunities.isPending && <BoardSkeleton />}
       {opportunities.isError && (
         <ErrorState error={opportunities.error} fallback={'Không tải được danh sách cơ hội'} />
       )}
@@ -144,6 +150,21 @@ export default function OpportunityBoardPage() {
         onClose={() => setCreateOpen(false)}
       />
     </PageBody>
+  )
+}
+
+/** Shaped like the board: four columns at column width, two cards each. */
+function BoardSkeleton() {
+  return (
+    <div className="flex gap-3 overflow-hidden">
+      {[0, 1, 2, 3].map((column) => (
+        <div key={column} className="flex w-72 shrink-0 flex-col gap-2 rounded-card bg-ink-50 p-3">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      ))}
+    </div>
   )
 }
 

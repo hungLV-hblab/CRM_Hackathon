@@ -103,7 +103,12 @@ export default function ProposalQueuePage() {
         <ErrorState error={decide.error} fallback="Không ghi được quyết định" />
       ) : null}
 
-      {proposals.isLoading ? <Skeleton className="h-40 w-full rounded-card" /> : null}
+      {proposals.isLoading ? (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-36 w-full rounded-control" />
+          <Skeleton className="h-36 w-full rounded-control" />
+        </div>
+      ) : null}
 
       {!proposals.isLoading && rows.length === 0 ? (
         <p className="rounded-control bg-ink-50 p-4 text-sm text-ink-600" data-testid="queue-empty">

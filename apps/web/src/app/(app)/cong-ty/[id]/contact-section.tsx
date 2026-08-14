@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -65,6 +66,7 @@ export function ContactSection({ companyId }: { companyId: string }) {
       title="Người liên hệ"
       actions={
         <Button variant="secondary" onClick={() => setDialogOpen(true)}>
+          <Plus className="size-4" aria-hidden />
           Thêm người liên hệ
         </Button>
       }

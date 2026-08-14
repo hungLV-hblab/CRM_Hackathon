@@ -1,5 +1,6 @@
 'use client'
 
+import { Undo2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 
@@ -120,6 +121,7 @@ export function NotificationStrip({ show, showLink = false }: NotificationStripP
                     disabled={undo.isPending}
                     onClick={() => undo.mutate(item.autoEventId as string)}
                   >
+                    <Undo2 className="size-4" aria-hidden />
                     Hoàn tác
                   </Button>
                 ))}

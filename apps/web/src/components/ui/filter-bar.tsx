@@ -64,6 +64,7 @@ export function FilterBar({
           ))}
           {onReset && (
             <Button variant="ghost" onClick={onReset} className="ml-auto">
+              <X className="size-4" aria-hidden />
               Xoá bộ lọc
             </Button>
           )}
