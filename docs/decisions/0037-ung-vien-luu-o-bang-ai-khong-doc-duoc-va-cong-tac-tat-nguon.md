@@ -119,8 +119,10 @@ Câu phân biệt, và đây là chỗ dễ đọc nhầm nhất: ADR-0036 mục
 | AI không ghi được vào view | Cùng file test 25 |
 | Tìm nguồn ghi ứng viên, **không** chạm danh sách đọc | `company-source-candidates.test.ts` test 1 (bản viết lại) — ứng viên = N, `company_sources` = **0** |
 | Tìm lại thay danh sách, nguồn đã lưu sống sót | Cùng file test 10, 11 |
+| "Đã trong danh sách đọc" suy ra bằng join theo url, không phải cột thứ hai | Cùng file test 12 |
 | Nguồn đã tắt không được đọc | `disabled-source-not-read.test.ts` — tắt 1 trong 2 → đọc đúng nguồn đang bật; tắt cả 2 → rơi về `companies.website` |
-| Cửa `system` đóng ở cả bốn route ghi | Cùng file test 13, 14 |
+| Cửa `system` đóng ở cả bốn route ghi | Cùng file test 14, 15 — và test 14 chứng minh **tìm bị chặn trước khi search chạy** (`discovery.calls = 0`) |
+| Công tắc giữ lại snippet qua hai lần bật/tắt | Cùng file test 16 |
 | Ứng viên sống qua reload | e2e `source-candidates-survive-reload.spec.ts` bước 3 |
 | **Test có răng** | Xem mục dưới — từng lần đảo, và **đúng bao nhiêu test đỏ** |
 
@@ -131,8 +133,8 @@ Câu phân biệt, và đây là chỗ dễ đọc nhầm nhất: ADR-0036 mục
 | Thêm tay `GRANT SELECT ON company_source_candidates TO crm_system` | test 20 đỏ | ✅ **đúng 1 test đỏ** (20), 22 test còn lại xanh. Đã `REVOKE` lại và xác nhận 23/23 xanh |
 | Sửa view thành `WHERE true` | test 24 đỏ | ✅ **đúng 1 test đỏ** (24), 24 test còn lại xanh. Đã khôi phục `WHERE enabled` và xác nhận 25/25 xanh |
 | `.from(companySourcesEnabled)` → `.from(companySources)` | test đường đọc đỏ **bằng `permission denied`** | ✅ cả 3 test của `disabled-source-not-read.test.ts` đỏ, và đỏ đúng bằng `permission denied for table company_sources` — **không** phải bằng assertion sai. Đã khôi phục |
-| Bỏ dòng `DELETE` trong transaction thay ứng viên | test 10 đỏ | *(cập nhật sau khi chạy phase 3)* |
-| Bỏ một cửa gác `system` | test 13 hoặc 14 đỏ | *(cập nhật sau khi chạy phase 3)* |
+| Bỏ dòng `DELETE` trong transaction thay ứng viên | test 10 đỏ | ✅ **2 test đỏ**, nhiều hơn dự kiến một cái và đúng lý do: test 10 đỏ vì danh sách cộng dồn thành 3; test 11 đỏ vì lần tìm sau chèn lại một url đã có ⇒ **vi phạm UNIQUE**. Ghi lại nguyên văn thay vì làm tròn thành "1 test đỏ như kỳ vọng". Đã khôi phục |
+| Bỏ cửa gác `system` của `setEnabled` | test 15 đỏ | ✅ **đúng 1 test đỏ** (15), 17 test còn lại xanh. Đã khôi phục |
 
 ## Rollback
 

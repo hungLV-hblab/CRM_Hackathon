@@ -19,11 +19,45 @@ export interface CompanySourceDto {
   searchSnippet: string | null
   addedBy: string | null
   createdAt: string
+  /**
+   * Whether this page is currently being read (ADR-0037). `false` keeps the row, the snippet and
+   * the person who kept it while the live path skips it — a paused source, not a deleted one.
+   */
+  enabled: boolean
 }
 
 /**
- * One candidate as it travels to the screen. Deliberately NOT a `CompanySourceDto`: a candidate
- * has no id because it was never stored, and the type says so.
+ * One stored candidate as it travels to the screen — what a search OFFERED for this company.
+ *
+ * Deliberately NOT a `CompanySourceDto`, and the difference is not shape but meaning: a row here
+ * says "a search suggested this URL", a `CompanySourceDto` says "a person kept it". They live in
+ * two tables for that reason (ADR-0037), and `crm_system` can read neither this list nor write it.
+ */
+export interface CompanySourceCandidateDto {
+  id: string
+  companyId: string
+  url: string
+  sourceTier: string
+  /** Why this URL is about THIS company — the sentence a person reads to decide. Never empty. */
+  reason: string
+  snippet: string | null
+  foundAt: string
+  foundBy: string | null
+  /**
+   * The id of the `company_sources` row with the same URL, or `null` when there is none.
+   *
+   * DERIVED by joining on the URL rather than stored as a flag: "is this candidate in the reading
+   * list" has exactly one answer — whether the reading list contains it — and a second column
+   * would be a copy of that answer able to drift from it.
+   */
+  savedSourceId: string | null
+}
+
+/**
+ * One candidate as the discovery port hands it over, before anything is stored.
+ *
+ * Kept separate from `CompanySourceCandidateDto` because it genuinely has no id yet: the search has
+ * returned, the row has not been written. The service turns one into the other.
  */
 export interface SourceCandidateDto {
   url: string
@@ -61,6 +95,29 @@ const sourceUrlSchema = z
  * click set an ongoing cost nobody agreed to.
  */
 export const MAX_SOURCES_PER_COMPANY = 5
+
+/**
+ * How many candidates one search may leave behind — SIX, and this is not a second number invented
+ * for the table (ADR-0037).
+ *
+ * The reason belongs to the person reading them, not to the database: someone has to read and tick
+ * every row, so six is a decision and a dozen is a chore. `AnthropicSourceDiscovery` already cut
+ * its results here, and this constant is that same cut lifted out so the storage path and the
+ * search path cannot drift to two different answers.
+ *
+ * Applied in the service by slicing what came back, NOT in a zod schema: this is a machine result
+ * being bounded, not user input being validated — a search that finds seven good pages should keep
+ * six of them, not be rejected.
+ */
+export const MAX_CANDIDATES_PER_COMPANY = 6
+
+/**
+ * Pause or resume reading one saved page. The whole body is one boolean because that is the whole
+ * decision — anything else about a source is changed by removing it and keeping another.
+ */
+export const toggleCompanySourceSchema = z.object({ enabled: z.boolean() })
+
+export type ToggleCompanySourceDto = z.infer<typeof toggleCompanySourceSchema>
 
 export const saveCompanySourcesSchema = z.object({
   sources: z

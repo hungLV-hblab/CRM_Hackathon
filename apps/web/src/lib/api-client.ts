@@ -2,9 +2,9 @@ import type {
   AiStatusDto,
   AutoNextStepMap,
   CompanyDto,
+  CompanySourceCandidateDto,
   CompanySourceDto,
   SaveCompanySourcesDto,
-  SourceCandidateDto,
   MetricsDto,
   SystemParametersDto,
   UpdateSystemSettingsDto,
@@ -176,7 +176,8 @@ export const api = {
     }),
 
   /**
-   * The reading list of a company — the pages the live path is allowed to fetch.
+   * The reading list of a company — the pages the live path is allowed to fetch, including any
+   * currently switched off.
    *
    * Note there is no "find and save" call, and that absence is the design (ADR-0036): finding
    * candidates and keeping them are separate requests because only the second may write. A model
@@ -185,9 +186,31 @@ export const api = {
   listCompanySources: (companyId: string) =>
     call<CompanySourceDto[]>(`/companies/${companyId}/sources`),
 
-  /** Runs `web_search`. Takes 10–20 seconds, spends money, and persists nothing. */
+  /**
+   * Runs `web_search`. Takes 10–20 seconds, spends money, and stores what it offered — in the
+   * suggestion table, never the reading list (ADR-0037). Returns the stored list.
+   */
   findSourceCandidates: (companyId: string) =>
-    call<SourceCandidateDto[]>(`/companies/${companyId}/source-candidates`, { method: 'POST' }),
+    call<CompanySourceCandidateDto[]>(`/companies/${companyId}/source-candidates`, {
+      method: 'POST',
+    }),
+
+  /** The stored suggestions. This is the call that makes them survive a refresh. */
+  listSourceCandidates: (companyId: string) =>
+    call<CompanySourceCandidateDto[]>(`/companies/${companyId}/source-candidates`),
+
+  removeSourceCandidate: (companyId: string, candidateId: string) =>
+    call<void>(`/companies/${companyId}/source-candidates/${candidateId}`, { method: 'DELETE' }),
+
+  /**
+   * Pause or resume reading one kept page. Not a delete: the row keeps the snippet that made
+   * somebody choose it, so switching back on costs nothing and still explains itself.
+   */
+  setCompanySourceEnabled: (companyId: string, sourceId: string, enabled: boolean) =>
+    call<CompanySourceDto>(`/companies/${companyId}/sources/${sourceId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
+    }),
 
   /** The click that writes. Everything saved here carries the person who kept it. */
   saveCompanySources: (companyId: string, dto: SaveCompanySourcesDto) =>

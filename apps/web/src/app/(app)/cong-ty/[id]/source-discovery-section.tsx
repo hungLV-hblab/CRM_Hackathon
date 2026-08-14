@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { SOURCE_TIER, type CompanyDto, type SourceCandidateDto } from '@crm/contracts'
+import { SOURCE_TIER, type CompanyDto, type CompanySourceCandidateDto } from '@crm/contracts'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ import { api } from '@/lib/api-client'
  */
 export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
   const queryClient = useQueryClient()
-  const [candidates, setCandidates] = useState<SourceCandidateDto[] | null>(null)
+  const [candidates, setCandidates] = useState<CompanySourceCandidateDto[] | null>(null)
   const [picked, setPicked] = useState<Set<string>>(new Set())
 
   const sources = useQuery({
@@ -84,7 +84,7 @@ export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
           .map((candidate) => ({
             url: candidate.url,
             sourceTier: candidate.sourceTier as 'company_website' | 'news' | 'social',
-            searchSnippet: candidate.snippet,
+            searchSnippet: candidate.snippet ?? undefined,
           })),
       }),
     onSuccess: async () => {

@@ -18,8 +18,10 @@ import type { SourceTier } from '../enums'
  * and every `quote_start`/`quote_end` over OUR normalisation of OUR bytes, so a page this
  * codebase never held has nothing for I-2 to check a quote against, and rule 1 goes with it.
  *
- * A candidate is not a source. Nothing here is persisted — a person ticks the ones that are
- * really about their company, and that click is what writes `company_sources`.
+ * A CANDIDATE IS NOT A SOURCE, and that stays true now that candidates are stored (ADR-0037). What
+ * this port returns is written to `company_source_candidates` — a table the AI identity holds no
+ * privilege on and no reader acts on. A person ticks the ones that are really about their company,
+ * and only that click writes `company_sources`, which is the list the crawler is shown.
  */
 
 export interface SourceCandidate {
@@ -39,7 +41,10 @@ export interface SourceDiscoveryInput {
 }
 
 export interface SourceDiscovery {
-  /** Returns candidates, never fewer than zero and never persisted. An empty list is an answer. */
+  /**
+   * Returns candidates; storing them is the service's business, not this port's. An empty list is
+   * an answer — "no page I can vouch for" beats a plausible URL nobody can trace (rule 4).
+   */
   discover(input: SourceDiscoveryInput): Promise<SourceCandidate[]>
 }
 
