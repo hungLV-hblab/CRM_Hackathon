@@ -67,7 +67,7 @@ function SnapshotCard({ observation }: { observation: ObservationWithClaimsDto }
           {observation.claims.map((claim) => (
             <li
               key={claim.id}
-              className="rounded-control border border-machine-200 bg-white p-3 text-sm"
+              className="rounded-control border border-machine-200 bg-card p-3 text-sm"
             >
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <ConfidenceBadge confidence={claim.confidence} />

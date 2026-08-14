@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Restyle màn hình — Card, Skeleton, Sonner"
-status: pending
+status: done
 priority: P3
 effort: "1h30'"
 dependencies: [2, 3]
@@ -55,7 +55,14 @@ Không toast nào mang hành động Hoàn tác thay cho nút. Nếu muốn ti�
 - Modify: mutation call site — thêm toast thành công/lỗi
 - **Đọc, không sửa hành vi:** `components/next-step/auto-next-step-cell.tsx`
 
-> **Chủ quyền:** `app/{cong-ty,co-hoi,tong-quan,hang-doi}/` **thuộc B** trong bảng chủ quyền của plan 260813-0107. Phase này đụng gần hết. Phải chờ B xong P8 hoặc thoả thuận trước.
+> **Chủ quyền — đã đảo chiều 14/08.** `app/{cong-ty,co-hoi,tong-quan,hang-doi}/` **thuộc B** trong bảng chủ quyền của plan 260813-0107. Bản đầu của phase này viết *"chờ B xong P8"*; đảo thứ tự làm câu đó sai ngược: **ta sửa trước, B rebase lên.**
+>
+> Nghĩa là gánh nặng merge chuyển từ ta sang B. Điều kiện để làm việc đó tử tế:
+>
+> - **Báo B trước khi P2 chạy**, không phải lúc B pull (bàn giao số 2 ở [phase-02 bước 4](./phase-02-app-shell-header-sidebar-footer.md#implementation-steps)).
+> - **Đường thư mục đã đổi** — P2 dời sang `app/(app)/`. B rebase vào đường mới, và `git` theo dõi được vì P2 dùng `git mv` thuần không sửa nội dung.
+> - **Không refactor logic trong file của B.** Phase này chỉ bọc `Card`, thay `Skeleton`, thêm toast, xoá link back. Đụng vào luồng dữ liệu là biến một rebase thành một cuộc điều tra.
+> - Phase này **vẫn cắt được**. Nếu B đã bắt đầu sửa cùng file cho P8, **cắt P4** — rẻ hơn merge tay hai chiều dưới áp lực freeze.
 
 ## Tests First
 
@@ -94,5 +101,5 @@ Phase này **không thêm hành vi mới**, nên tests-first ở đây là **kho
 | **`Card` bọc thẻ cơ hội làm vỡ dnd-kit** | TB | Làm `co-hoi` cuối cùng, chạy T-1 riêng trước/sau. Vỡ thì bỏ `Card` đúng ở màn đó |
 | Toast bị coi là đã thay được nút Hoàn tác | TB | Khẳng định e2e ở Tests First mục 3. Đây là chỗ dễ mất T-7 nhất |
 | `Card` nền trắng phủ mất nền `machine-50` của vùng AI | **cao** | Vùng AI dùng `Card` với `className` nền tím, hoặc không dùng `Card`. Kiểm bằng mắt từng chỗ có nhãn "do AI sinh" |
-| Đụng file của B | **cao** | Chờ B xong P8. Phase này cắt được nên không đáng tranh chấp |
+| **Đụng file của B — giờ ta sửa trước, B rebase** | **cao** | Báo B từ P2 bước 4. Chỉ bọc/thay style, không chạm luồng dữ liệu. B đã bắt đầu sửa cùng file cho P8 → **cắt P4**, rẻ hơn merge tay hai chiều |
 | `Skeleton` sai hình dáng → nhảy layout | thấp | Skeleton phải cùng số dòng/cỡ với nội dung thật |

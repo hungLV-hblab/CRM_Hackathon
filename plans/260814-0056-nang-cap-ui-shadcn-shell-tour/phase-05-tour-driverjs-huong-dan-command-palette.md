@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Tour driver.js + trang hướng dẫn + Command palette"
-status: pending
+status: done
 priority: P3
 effort: "2h"
 dependencies: [2]
@@ -53,15 +53,21 @@ Hai luật còn lại vẫn giữ:
 | 3 | `data-tour="proposal-card"` | Hai nút Duyệt/Bỏ đứng cạnh bằng chứng, không đứng một mình |
 | 4 | `data-tour="next-step-cell"` | Vùng 3: máy tự điền, viền tím, **Hoàn tác một cú bấm trong 7 ngày** |
 | 5 | `data-tour="quote-block"` | Provenance: mọi phát hiện bấm ra được câu trích nguyên văn |
-| 6 | `data-tour="ai-status"` | Vùng 4 + nút tắt sạch AI ở `/quan-tri` |
+| 6 | `data-tour="ai-status"` | Vùng 4 + nút tắt sạch AI. **Nói bằng lời, không link sang `/quan-tri`** — route đó do P8 tạo và P8 chạy sau plan này. Link sang route chưa tồn tại là dẫn BGK vào 404 ngay bước cuối của tour |
 
 Sáu bước này **chính là** bài giải thích của vòng 2. Viết nội dung bước cho đúng, đừng viết cho đẹp.
+
+> **⚠️ Bước 6 neo vào phần tử có thể không tồn tại.** P2 đã quyết định pill trạng thái AI **không render** khi `GET /settings` trả 403 — và nó trả 403 cho mọi user Sales, tức gần như luôn luôn trong lúc demo. Neo `data-tour="ai-status"` vào cái pill đó thì bước 6 **bị driver.js bỏ qua trong im lặng**, và tour 6 bước lặng lẽ thành 5 bước.
+>
+> **Đặt `data-tour="ai-status"` lên vùng header luôn hiện diện** (khối chứa pill), không lên chính cái pill. Vùng đó tồn tại bất kể pill có render hay không. Đây chính là lý do bước 6 của Implementation Steps bắt **đếm tay đủ 6 bước** — không có test tự động nào bắt được bước bị bỏ qua.
 
 Bước 3, 4, 5 neo vào phần tử chỉ tồn tại ở một số màn. driver.js bỏ qua bước neo trượt — **nhưng bỏ qua trong im lặng**. Nên tour phải chạy trên màn có đủ, hoặc tự điều hướng giữa các bước. Đường đơn giản: tour chạy trên `/cong-ty/[id]` của một công ty có phát hiện + `/hang-doi`, và bước nào không có neo thì thay bằng bước mô tả kèm link.
 
 ### `/huong-dan`
 
 Trang tĩnh, server component, không gọi API. 4 khối theo 4 vùng tự chủ, mỗi khối: AI được làm gì · cơ chế an toàn · **link sang màn thật để tự kiểm** · mã nghiệm thu tương ứng (T-2, T-4/T-5, T-6/T-7, T-8). Cộng một khối "✋ Cấm tuyệt đối" và một khối "nút tắt sạch AI".
+
+**Khối "nút tắt sạch AI" không được link sang `/quan-tri`** — route đó do P8 tạo, chưa tồn tại khi plan này chạy. Mô tả cơ chế bằng lời (`system_settings.ai_enabled`, API và worker đọc lại mỗi lần gọi, không cache), và **thêm link khi P8 xong**. `guide-page.spec.ts` khẳng định link không 404, nên link sớm là spec đỏ ngay — đó là hàng rào, không phải phiền phức.
 
 Nguồn nội dung: [CLAUDE.md mục 4](../../CLAUDE.md#4-trần-tự-chủ-của-ai-trong-sản-phẩm) + [ontology.md](../../docs/ontology.md). **Không viết lại bằng lời khác** — sai lệch giữa trang này và ontology là đúng cái bẫy vòng 2.
 
@@ -120,6 +126,8 @@ Nguồn nội dung: [CLAUDE.md mục 4](../../CLAUDE.md#4-trần-tự-chủ-củ
 | **Tour overlay chặn click Playwright** | **thấp sau khi bỏ auto-run** | Không có nhánh auto-run là không có gì chặn. `tour-does-not-block.spec.ts` khoá điều đó lại để người sau không thêm vào |
 | Ai đó sau này thêm auto-run "cho thân thiện" | TB | Nhánh 1 của `tour-does-not-block.spec.ts` sẽ đỏ. Đó là lý do khẳng định phủ định đó tồn tại |
 | driver.js bỏ qua bước neo trượt **trong im lặng** | **cao** | Neo bằng `data-tour`; bước 6 chạy tay và **đếm**. Không có test tự động cho việc này |
+| **Bước 6 neo vào pill AI mà pill không render (403)** | **cao** | Neo lên vùng header chứa pill, không lên pill. Đếm tay đủ 6 bước sẽ bắt được |
+| **Tour hoặc `/huong-dan` link sang `/quan-tri` chưa tồn tại** | TB | `guide-page.spec.ts` khẳng định link không 404. Bước 6 của tour nói bằng lời, không link |
 | P4 restyle làm tour trỏ trượt | TB | `data-tour` là thuộc tính riêng, restyle không chạm. Đây là lý do không neo theo class |
 | `/huong-dan` diễn giải sai ontology | TB | Trích thẳng, không viết lại bằng lời khác |
 | Hai spec mới nằm trong chủ quyền C | TB | Hỏi C một lần cho cả ba file e2e của plan (kể cả `ui-invariants` của P3) |

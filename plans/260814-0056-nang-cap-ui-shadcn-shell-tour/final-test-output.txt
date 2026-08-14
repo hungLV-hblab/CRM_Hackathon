@@ -1,0 +1,252 @@
+
+> crm-hackathon@0.1.0 test D:\công ty\CRM_Hackathon
+> pnpm test:unit && pnpm test:e2e
+
+
+> crm-hackathon@0.1.0 test:unit D:\công ty\CRM_Hackathon
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mD:/công ty/CRM_Hackathon[39m
+
+ [32m✓[39m [30m[45m db [49m[39m src/__tests__/column-grants-block-system-actor-on-ai-tables.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 4674[2mms[22m[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 21eae6e6-38b6-496e-b62f-e006b2f45bd1: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu cbf80cd4-39bc-4e69-bb5a-5ce00ba1f459: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 9b9f17b4-98a4-45fa-9d4d-cf384de61d0f: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 2cdd7eca-6c0f-443a-8ef9-d39bd22cde75: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:01 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 2bb8c90b-ca2f-44f0-8be2-7a1386dbfc3e: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu a6251cfc-f221-4aee-924c-cd7bbe30d605: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mHoàn tác eb786302-9067-4a87-8244-833c5d373fdf bởi 11111111-1111-4111-8111-111111111111: Việc tiếp theo trở lại trạng thái trống[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mHoàn tác fac66bd0-e10d-41b1-8409-d639daf4b7fe bởi 11111111-1111-4111-8111-111111111111: Việc tiếp theo trở lại trạng thái trống[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mHoàn tác 96e25da4-9f85-4cfa-b45a-b3f70bd8ef7e bởi 11111111-1111-4111-8111-111111111111: Việc tiếp theo trở lại “Tôi hẹn khách tuần sau”[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 758b8c3e-ea2e-4268-bcef-e3425633ee95: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 2c2a61e4-4b3e-4095-8d5f-4ebd77036fe1: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:02 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mHoàn tác f4c84f2d-b828-4a92-b7fc-981968d91db8 bởi 11111111-1111-4111-8111-111111111111: Việc tiếp theo trở lại trạng thái trống[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 8bc48749-7774-4777-b780-6cff3bfd660d: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu a2fef06b-200b-4f56-89a7-b8891b8355c4: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu f138eee2-5857-434e-904f-4b438487bb11: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: tự đặt Việc tiếp theo cho 1 cơ hội · 0 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 5828  - [39m08/14/2026, 3:28:03 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0002-4000-8000-000000000002: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 2 không sinh vì công ty đang theo dõi (I-5)[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/opportunity/__tests__/t6-t7-auto-next-step-and-undo.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 2970[2mms[22m[39m
+[33m[Nest] 3008  - [39m08/14/2026, 3:28:04 AM [33m   WARN[39m [38;5;3m[ClaimService] [39m[33mBỏ phát hiện vì câu trích không phải chuỗi con nguyên văn: "Sakura huy động 20 triệu USD vòng Series B…"[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:04 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 097eb64c-ae33-43ad-88e1-0f4ac2713ad2: 0/1 phát hiện được lưu, 1 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[33m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [33m   WARN[39m [38;5;3m[ClaimService] [39m[33mBỏ phát hiện vì câu trích không phải chuỗi con nguyên văn: "Sakura huy động 20 triệu USD vòng Series B…"[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 6e44f0e5-6888-49cc-a348-fcfcbee1529c: 0/1 phát hiện được lưu, 1 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu dbcf9ceb-2831-4fe3-ae62-12983820470d: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 4d263879-78c7-4ec5-9b8c-63155a6ea909: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 241841af-b9f9-4d0b-bec3-b420d2dfc07e: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu e89e2607-1e6f-4a53-94d9-a7f65594acef: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mĐã đọc, không đổi: công ty aaaaaaaa-0001-4000-8000-000000000001 — không tạo bản lưu, không gọi LLM[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu a453282e-02bc-4956-8715-282565e5a6d7: 4/4 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 8bc4dc7c-eb80-4a06-8d8f-1b0ba605f762: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 3 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 30de56d7-77ea-45a6-8a13-19fb7d731d00: 4/4 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 4 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu bdef0c1c-9a31-43a3-a144-772e207a1b6d: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:05 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[33m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [33m   WARN[39m [38;5;3m[ObservationService] [39m[33mKhông đọc được nguồn của công ty aaaaaaaa-0004-4000-8000-000000000004 — ghi fetch_status=failed[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 13fa8e02-fb84-47df-8011-df025bb3b6d6: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBỏ qua đọc nguồn công ty aaaaaaaa-0001-4000-8000-000000000001: AI đang tắt[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ClaimService] [39m[32mHạ mức Chắc → Có thể: "35" không có trong câu trích[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 7cba15c9-61c0-499b-9d23-c255f1d5bc20: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 1 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu bbe1a78f-5b0e-4aab-8602-fd1abc951ba7: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 91d9014b-97b0-456c-84ac-76fb1d7be65f: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu c250bb00-218c-4557-99aa-a8dabebd9885: 4/4 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu f9f8ecb4-eb35-4440-a7e6-ee096138e9a9: 4/4 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 4 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 8fb3b395-0057-4314-a2c0-a902b45afe46: 5/5 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 3008  - [39m08/14/2026, 3:28:06 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 3 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/observation/__tests__/reading-zone-provenance.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 2084[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/proposal/__tests__/proposal-boundary-check-and-grants.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 2078[2mms[22m[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:10 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu a1c86b70-b3a3-4df2-bec1-2206e6df21bf: 0/0 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:10 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 194b477a-d88f-4534-be49-1e4b93ca5019: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:10 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:10 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 5d1fbcda-ee46-4cdc-bcde-dd250c0acaaf: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:10 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0003-4000-8000-000000000003: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu b08c62a5-a670-460a-bd28-4d9d05f582ff: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0003-4000-8000-000000000003: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 58a801e2-3144-4adc-8749-6e4668d55c60: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[33m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [33m   WARN[39m [38;5;3m[ProposalService] [39m[33mBỏ đề xuất ô size: "5000+" không có nguyên văn trong câu trích[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 0 gợi ý mới · 1 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 538f4d8a-1c62-4116-9dc2-27d4dce750b6: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[33m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [33m   WARN[39m [38;5;3m[ProposalService] [39m[33mI-11: từ chối gợi ý sửa ô "company_type" — ngoài whitelist hồ sơ công ty[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 2f242cfe-3348-4a45-b034-77208b8fad1e: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 3e959bd4-f321-4f0a-981c-14fbc9aa2a1d: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0005-4000-8000-000000000005: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu bea121c2-29e3-492f-ab53-fbdd2e190698: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0003-4000-8000-000000000003: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu d5ff79a7-f57c-44bf-9abd-de9c37bfb76a: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0003-4000-8000-000000000003: 0 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 1 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu ad4010d1-c473-4fdf-8140-31ce4ce93408: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 76150369-5313-400b-bb23-900981b5bc49: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0005-4000-8000-000000000005: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 5612d335-bb87-4729-b11f-7c7b00b1ad9e: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 22964  - [39m08/14/2026, 3:28:11 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/proposal/__tests__/proposal-generation-gates.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1400[2mms[22m[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 1858abe6-d419-40f6-b668-263423771183: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:29:13 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:30:13 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:31:13 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu fb67aef5-7bbe-4dff-b89f-db5b80734893: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý a0f9e7e3-5835-4a74-907f-2fca9139658e: accept bởi 11111111-1111-4111-8111-111111111111 — 7s[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu cd082e11-2253-4a96-a198-50df7e10df01: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý 3c24d018-9fec-4a5d-82b8-851670ee0146: edit bởi 11111111-1111-4111-8111-111111111111 — 22s[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 831a9f36-bef3-489d-9d41-f0e2df008498: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý cb2c2c21-4f40-4032-a750-e4e34c7fd9fd: reject bởi 11111111-1111-4111-8111-111111111111 (lý do: wrong_info) — 4s[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 29288f80-3a8e-4c8d-b5c8-880933b2bcb1: 1/1 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0005-4000-8000-000000000005: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 0 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý 5643e9bf-9a7d-4f30-ab73-fb84924c0dd9: accept bởi 11111111-1111-4111-8111-111111111111[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 30b3a499-8c44-4df6-ad7a-cbadc88da880: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý 908d67a2-8f81-4ab5-b23c-4490d365d319: accept bởi 11111111-1111-4111-8111-111111111111[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 2e3a0679-df75-44f6-bb5f-0cd10624846c: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:13 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu d36a3f60-3250-47ac-b787-be16f767c54f: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý 1968e33c-7631-4e55-a53e-d56f214c098a: accept bởi 11111111-1111-4111-8111-111111111111[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 7521b8fe-b1fd-4c77-a607-d06ee1862c6d: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 2 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 0 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ProposalDecisionService] [39m[32mGợi ý b48607fb-9f00-4059-86d4-8c768da01d3c: reject bởi 11111111-1111-4111-8111-111111111111 (lý do: outdated)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mĐã đọc, không đổi: công ty aaaaaaaa-0001-4000-8000-000000000001 — không tạo bản lưu, không gọi LLM[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mĐã đọc, không đổi: công ty aaaaaaaa-0001-4000-8000-000000000001 — không tạo bản lưu, không gọi LLM[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mĐã đọc, không đổi: công ty aaaaaaaa-0001-4000-8000-000000000001 — không tạo bản lưu, không gọi LLM[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu 41d1e157-d5c3-47a8-be6f-4a3921f9a803: 0/0 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ObservationService] [39m[32mBản lưu df272482-69dd-4f40-99e5-a51820e6c95f: 2/2 phát hiện được lưu, 0 bỏ vì câu trích không khớp, 0 hạ mức Chắc[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[AutoNextStepService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: tự đặt Việc tiếp theo cho 0 cơ hội · 1 không đè vì ô do người gõ (I-7)[39m
+[32m[Nest] 7228  - [39m08/14/2026, 3:28:14 AM [32m    LOG[39m [38;5;3m[ProposalService] [39m[32mCông ty aaaaaaaa-0001-4000-8000-000000000001: 1 gợi ý mới · 0 bỏ vì giá trị không có trong câu trích · 0 bỏ vì trùng giá trị đang có · 1 bỏ vì trùng gợi ý đang chờ hoặc đã quyết · 1 không sinh vì công ty đang theo dõi (I-5)[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/proposal/__tests__/t4-t5-queue-waits-and-records.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1385[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/opportunity/__tests__/opportunity-stage-never-blocks.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1411[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/company/__tests__/company-search-and-filter.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1675[2mms[22m[39m
+ [32m✓[39m [30m[45m db [49m[39m src/__tests__/seed-idempotent.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1288[2mms[22m[39m
+   [33m[2m✓[22m[39m reseeding returns the system to exactly the initial state (I-14)[2m > [22mrunning seed twice produces an identical state [33m 386[2mms[22m[39m
+   [33m[2m✓[22m[39m reseeding returns the system to exactly the initial state (I-14)[2m > [22mseed wipes what the demo produced instead of accumulating on top of it [33m 301[2mms[22m[39m
+   [33m[2m✓[22m[39m reseeding returns the system to exactly the initial state (I-14)[2m > [22mreseeding puts every company back on the "before" snapshot [33m 304[2mms[22m[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:28:22 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:22 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:30:22 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:28:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:33 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:43 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:28:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: tick skipped (ai_disabled)[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: tick skipped (ai_disabled)[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:28:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: tick skipped (ai_disabled)[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:30:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: tick skipped (ai_disabled)[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: tick skipped (previous_cycle_running)[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:29:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+[32m[Nest] 26280  - [39m08/14/2026, 3:28:23 AM [32m    LOG[39m [38;5;3m[WatchCycle] [39m[32mWatchCycleRun: scanned 1 watched companies[39m
+ [32m✓[39m [30m[46m api [49m[39m src/watch/__tests__/self-scheduling-watch-cycle.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1133[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/__tests__/login.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1033[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/overview/__tests__/overview-excludes-on-hold.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 893[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/contact/__tests__/contact-primary-swap.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 807[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/__tests__/t10-mini-system-actor-blocked.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 685[2mms[22m[39m
+ [32m✓[39m [30m[45m db [49m[39m src/__tests__/column-grants-block-system-actor.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 322[2mms[22m[39m
+ [32m✓[39m [30m[45m db [49m[39m src/__tests__/column-grants-block-system-actor-on-snapshot-variant.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 255[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/__tests__/nestjs-harness-compiles.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/ai/__tests__/normalize-snapshot-text.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts [49m[39m src/__tests__/ontology-enum-parity.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/domain/opportunity/__tests__/opportunity-warnings.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m [30m[46m api [49m[39m src/ai/__tests__/demo-snapshots.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+[2m      Tests [22m [1m[32m225 passed[39m[22m[90m (225)[39m
+[2m   Start at [22m 03:27:51
+[2m   Duration [22m 46.40s[2m (transform 751ms, setup 263ms, collect 15.55s, tests 24.13s, environment 4ms, prepare 2.16s)[22m
+
+
+> crm-hackathon@0.1.0 test:e2e D:\công ty\CRM_Hackathon
+> playwright test
+
+
+> crm-hackathon@0.1.0 seed D:\công ty\CRM_Hackathon
+> pnpm --filter @crm/db seed
+
+
+> @crm/db@0.1.0 seed D:\công ty\CRM_Hackathon\packages\db
+> tsx src/seed/index.ts
+
+Seed complete: 2 users, 5 companies, 3 contacts, 5 opportunities, 2 timeline entries. Every company is back on the "before" snapshot.
+
+Running 26 tests using 1 worker
+
+  ok  1 [chromium] › e2e\app-shell-navigation.spec.ts:32:5 › mỗi màn tới được bằng đúng một cú bấm từ thanh bên (1.7s)
+  ok  2 [chromium] › e2e\app-shell-navigation.spec.ts:70:5 › trang đăng nhập không có thanh bên (199ms)
+  ok  3 [chromium] › e2e\app-shell-navigation.spec.ts:77:5 › ở 375px thanh bên ẩn đi và mở lại được bằng nút hamburger (600ms)
+  ok  4 [chromium] › e2e\app-shell-navigation.spec.ts:91:5 › mọi mục điều hướng có vùng chạm ít nhất 44px (541ms)
+  ok  5 [chromium] › e2e\guide-page.spec.ts:30:5 › trang hướng dẫn có đủ bốn vùng tự chủ, vùng cấm và nút tắt AI (622ms)
+  ok  6 [chromium] › e2e\guide-page.spec.ts:44:5 › mọi link trên trang hướng dẫn đều tới nơi có thật (1.2s)
+  ok  7 [chromium] › e2e\login-and-create-company.spec.ts:18:5 › đăng nhập, giữ phiên qua reload, tạo công ty, đăng xuất (1.1s)
+  ok  8 [chromium] › e2e\login-and-create-company.spec.ts:63:5 › xoá cookie phiên rồi tải lại thì bị đá về trang đăng nhập (507ms)
+  ok  9 [chromium] › e2e\login-and-create-company.spec.ts:76:5 › cookie phiên có cờ HttpOnly (479ms)
+  ok 10 [chromium] › e2e\reading-zone-provenance.spec.ts:35:5 › T-3 · bấm phát hiện mở đúng đoạn nguồn và có đánh dấu (903ms)
+  ok 11 [chromium] › e2e\reading-zone-provenance.spec.ts:78:5 › I-3 · đọc lại nội dung y nguyên thì không tạo bản lưu mới (727ms)
+  ok 12 [chromium] › e2e\reading-zone-provenance.spec.ts:94:5 › nguồn không đọc được thì nói rõ, không đoán nội dung (566ms)
+  ok 13 [chromium] › e2e\t1-crm-without-ai.spec.ts:40:5 › T-1 · nhóm 1 chạy đủ khi AI đang tắt (3.6s)
+  ok 14 [chromium] › e2e\t5-proposal-queue-decisions.spec.ts:51:5 › T-5 · hàng đợi hiện đủ bốn thứ tại chỗ, ba nhánh quyết định đều ghi lại (1.2s)
+  ok 15 [chromium] › e2e\t5-proposal-queue-decisions.spec.ts:108:5 › T-5 · Sửa rồi duyệt ghi giá trị người gõ, không ghi giá trị máy đề nghị (1.4s)
+  ok 16 [chromium] › e2e\t6-t7-auto-next-step-and-undo.spec.ts:59:5 › T-6 · đổi sang bản chụp sau thì Việc tiếp theo tự đổi, có thông báo, ô mang dấu hiệu hệ thống (1.2s)
+  ok 17 [chromium] › e2e\t6-t7-auto-next-step-and-undo.spec.ts:102:5 › T-7 · Hoàn tác một cú bấm, giá trị cũ trở lại, thông báo không tự biến mất (7.8s)
+  ok 18 [chromium] › e2e\tour-does-not-block.spec.ts:32:5 › mở màn bình thường thì không có tour nào tự chạy (999ms)
+  ok 19 [chromium] › e2e\tour-does-not-block.spec.ts:44:5 › tham số ?tour=1 mở tour, Escape đóng và trả lại quyền bấm (1.1s)
+  ok 20 [chromium] › e2e\tour-does-not-block.spec.ts:58:5 › nút Xem hướng dẫn trên header mở lại tour bất cứ lúc nào (1.1s)
+  ok 21 [chromium] › e2e\ui-invariants.spec.ts:49:5 › T-A · mọi nút nhìn thấy được đều cao ít nhất 44px (1.6s)
+  ok 22 [chromium] › e2e\ui-invariants.spec.ts:69:5 › T-B · nút chính mang nền thương hiệu, nút phá huỷ thì không (1.3s)
+  ok 23 [chromium] › e2e\ui-invariants.spec.ts:89:5 › T-C · nhãn của máy mang màu tím, nhãn dữ liệu người nhập thì không (1.3s)
+  ok 24 [chromium] › e2e\ui-invariants.spec.ts:127:5 › T-D · nhãn ô nhập vẫn bind bằng id nên tra được bằng tên (821ms)
+  ok 25 [chromium] › e2e\ui-invariants.spec.ts:146:5 › T-E · hộp thoại có tên đọc được và đóng bằng Escape (849ms)
+  ok 26 [chromium] › e2e\ui-invariants.spec.ts:158:5 › T-F · cờ cảnh báo mang chữ đọc được, không chỉ có màu (968ms)
+
+  26 passed (37.7s)

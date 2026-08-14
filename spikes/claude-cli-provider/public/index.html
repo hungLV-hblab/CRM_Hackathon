@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spike · Claude qua CLI</title>
+    <style>
+      /* Token values copied from apps/web/src/app/globals.css so the spike reads like the
+         product. Two rules carried over: cam = người sắp bấm, tím = máy sinh ra. */
+      :root {
+        --ink-900: #141417; --ink-700: #424244; --ink-600: #5b5b61; --ink-500: #6b6b72;
+        --ink-300: #c9c9d0; --ink-200: #e4e4e9; --ink-100: #f1f1f4; --ink-50: #f8f8fa;
+        --brand-400: #ffc20f; --brand-200: #ffe28a; --brand-700: #8a5e00;
+        --machine-50: #f5f3ff; --machine-200: #ddd6fe; --machine-600: #6d28d9;
+        --danger: #b42318; --danger-surface: #fef3f2; --success: #0e7c4a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--ink-50); color: var(--ink-900);
+        font: 15px/1.55 "Segoe UI", system-ui, sans-serif;
+      }
+      header { padding: 20px 24px; border-bottom: 1px solid var(--ink-200); background: #fff; }
+      h1 { margin: 0; font-size: 18px; }
+      header p { margin: 4px 0 0; color: var(--ink-600); font-size: 13px; }
+      main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px; align-items: start; }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+      section { background: #fff; border: 1px solid var(--ink-200); border-radius: 10px; padding: 16px; }
+      h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-500); }
+      textarea {
+        width: 100%; min-height: 260px; padding: 12px; resize: vertical;
+        border: 1px solid var(--ink-300); border-radius: 8px; font: 13px/1.6 ui-monospace, Consolas, monospace;
+      }
+      /* Cam: the one thing a person is about to press. Ink on brand-400 = 11.36:1. */
+      button {
+        margin-top: 12px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px;
+        background: var(--brand-400); color: var(--ink-900); font-size: 15px; font-weight: 600; cursor: pointer;
+      }
+      button:disabled { background: var(--ink-200); color: var(--ink-500); cursor: progress; }
+      .empty { color: var(--ink-500); font-size: 14px; }
+      /* Tím + nhãn chữ: machine origin never rides on colour alone. */
+      .claim {
+        border: 1px solid var(--ink-200); border-left: 4px solid var(--machine-600);
+        border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer; background: #fff;
+      }
+      .claim:hover { background: var(--machine-50); }
+      .claim.active { background: var(--machine-50); border-color: var(--machine-600); }
+      .tag {
+        display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+        background: var(--machine-50); color: var(--machine-600); border: 1px solid var(--machine-200);
+        margin: 0 6px 8px 0; font-weight: 600;
+      }
+      .tag.fact { background: var(--ink-100); color: var(--ink-700); border-color: var(--ink-200); }
+      .statement { font-weight: 600; margin: 2px 0 8px; }
+      /* Fact surface: ink, monospace, visually a different substance from the purple claim. */
+      .quote {
+        border-left: 3px solid var(--ink-300); padding: 6px 10px; background: var(--ink-50);
+        color: var(--ink-700); font: 12px/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap;
+      }
+      .dropped { border-left-color: var(--danger); background: var(--danger-surface); cursor: default; }
+      .dropped:hover { background: var(--danger-surface); }
+      .reason { color: var(--danger); font-size: 12px; font-weight: 600; }
+      pre#source {
+        margin: 0; padding: 12px; max-height: 420px; overflow: auto; background: var(--ink-50);
+        border: 1px solid var(--ink-200); border-radius: 8px;
+        font: 12px/1.7 ui-monospace, Consolas, monospace; white-space: pre-wrap;
+      }
+      mark { background: var(--brand-200); color: var(--ink-900); padding: 1px 0; }
+      .telemetry {
+        display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 24px; background: #fff;
+        border-top: 1px solid var(--ink-200); font-size: 12px; color: var(--ink-600);
+      }
+      .telemetry b { color: var(--ink-900); font-variant-numeric: tabular-nums; }
+      .error { color: var(--danger); font-size: 13px; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Spike · Rút phát hiện bằng Claude CLI (không có API key)</h1>
+      <p>
+        Trình duyệt → server Node → <code>claude -p</code> chạy ngầm → JSON → cửa kiểm câu trích nguyên văn.
+        Phát hiện nào không chỉ được về đúng đoạn nguồn thì bị loại, không hiển thị.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Bản chụp (dữ liệu nguồn)</h2>
+        <textarea id="snapshot">
+&lt;h1&gt;Sakura Logistics Holdings&lt;/h1&gt;
+&lt;p&gt;Sakura Logistics Holdings vừa hoàn tất vòng gọi vốn Series B trị giá 20 triệu USD do Mitsui Ventures dẫn dắt.&lt;/p&gt;
+&lt;p&gt;Quy mô: 1200+ nhân viên, trụ sở chính tại Osaka, Nhật Bản.&lt;/p&gt;
+&lt;p&gt;Công ty cho biết sẽ mở văn phòng kỹ thuật đầu tiên ngoài Nhật Bản tại Hà Nội trong quý 4 năm nay.&lt;/p&gt;
+&lt;p&gt;Ông Kenji Watanabe được bổ nhiệm làm Giám đốc Công nghệ, phụ trách chương trình hiện đại hoá hệ thống kho vận.&lt;/p&gt;
+&lt;p&gt;Chúng tôi đang tuyển 150 kỹ sư phần mềm trong 12 tháng tới.&lt;/p&gt;
+        </textarea>
+        <button id="run">Rút phát hiện</button>
+        <div id="error" class="error"></div>
+      </section>
+
+      <section>
+        <h2>Phát hiện <span style="text-transform: none; font-weight: 400">— bấm để soi câu trích trong nguồn</span></h2>
+        <div id="claims" class="empty">Chưa chạy.</div>
+        <h2 style="margin-top: 18px">Văn bản đã chuẩn hoá <span style="text-transform: none; font-weight: 400">— nơi mọi vị trí trích được đo</span></h2>
+        <pre id="source">(chưa có)</pre>
+      </section>
+    </main>
+
+    <div class="telemetry" id="telemetry">
+      <span>Chưa có số liệu. Mỗi lần bấm sẽ ghi lại thời gian, chi phí và phiên chạy.</span>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id)
+      let state = { normalized: '', kept: [], dropped: [] }
+
+      const escapeHtml = (value) =>
+        value.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+
+      // Provenance is rendered from OFFSETS the server computed against the normalised text,
+      // never by searching for the quote here — a highlight that re-finds its own text would
+      // paper over exactly the mismatch this screen exists to expose.
+      function renderSource(active) {
+        const text = state.normalized
+        if (!text) return ($('source').textContent = '(chưa có)')
+        if (!active) return ($('source').textContent = text)
+        $('source').innerHTML =
+          escapeHtml(text.slice(0, active.quoteStart)) +
+          '<mark>' + escapeHtml(text.slice(active.quoteStart, active.quoteEnd)) + '</mark>' +
+          escapeHtml(text.slice(active.quoteEnd))
+        $('source').querySelector('mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+
+      function renderClaims() {
+        const box = $('claims')
+        if (!state.kept.length && !state.dropped.length) {
+          box.className = 'empty'
+          box.textContent = 'Không có phát hiện nào — đây là câu trả lời hợp lệ.'
+          return
+        }
+        box.className = ''
+        box.innerHTML =
+          state.kept
+            .map(
+              (claim, index) => `
+              <article class="claim" data-index="${index}">
+                <span class="tag">máy suy luận</span>
+                <span class="tag">${escapeHtml(claim.signalType)}</span>
+                <span class="tag">độ tin: ${escapeHtml(claim.confidence)}</span>
+                <div class="statement">${escapeHtml(claim.statement)}</div>
+                <span class="tag fact">câu trích nguyên văn · vị trí ${claim.quoteStart}–${claim.quoteEnd}</span>
+                <div class="quote">${escapeHtml(claim.quoteText)}</div>
+              </article>`,
+            )
+            .join('') +
+          state.dropped
+            .map(
+              (claim) => `
+              <article class="claim dropped">
+                <span class="reason">BỊ LOẠI · ${escapeHtml(claim.reason)}</span>
+                <div class="statement">${escapeHtml(claim.statement)}</div>
+                <div class="quote">${escapeHtml(claim.quoteText || '(trống)')}</div>
+              </article>`,
+            )
+            .join('')
+
+        box.querySelectorAll('.claim[data-index]').forEach((node) => {
+          node.addEventListener('click', () => {
+            box.querySelectorAll('.claim').forEach((n) => n.classList.remove('active'))
+            node.classList.add('active')
+            renderSource(state.kept[Number(node.dataset.index)])
+          })
+        })
+      }
+
+      $('run').addEventListener('click', async () => {
+        const button = $('run')
+        button.disabled = true
+        button.textContent = 'Đang chạy claude -p…'
+        $('error').textContent = ''
+        $('telemetry').innerHTML = '<span>Đang chờ tiến trình con trả lời…</span>'
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ snapshot: $('snapshot').value }),
+          })
+          const data = await response.json()
+          if (!response.ok) throw new Error(data.error || 'Lỗi không rõ')
+
+          state = data
+          renderClaims()
+          renderSource(null)
+          const run = data.run
+          $('telemetry').innerHTML = [
+            `Giữ lại <b>${data.kept.length}</b> · loại <b>${data.dropped.length}</b>`,
+            `Tổng thời gian <b>${(run.elapsedMs / 1000).toFixed(1)}s</b>`,
+            `Trong đó gọi mô hình <b>${(run.apiMs / 1000).toFixed(1)}s</b>`,
+            `Tiêu thụ quy đổi <b>$${run.costUsd.toFixed(4)}</b>`,
+            `Token vào/ra <b>${run.inputTokens}</b>/<b>${run.outputTokens}</b>`,
+            `Model <b>${escapeHtml(run.model)}</b>`,
+            `Phiên <b>${escapeHtml(run.sessionId.slice(0, 8))}</b>`,
+          ]
+            .map((cell) => `<span>${cell}</span>`)
+            .join('')
+        } catch (error) {
+          $('error').textContent = error.message
+          $('telemetry').innerHTML = '<span>Lần chạy vừa rồi thất bại.</span>'
+        } finally {
+          button.disabled = false
+          button.textContent = 'Rút phát hiện'
+        }
+      })
+    </script>
+  </body>
+</html>

@@ -100,7 +100,7 @@ export function NotificationStrip({ show, showLink = false }: NotificationStripP
           <li
             key={group.key}
             data-testid="notification-row"
-            className="flex flex-col gap-2 rounded-control bg-white p-3"
+            className="flex flex-col gap-2 rounded-control bg-card p-3"
           >
             <p className="text-sm text-ink-800">
               {group.message}

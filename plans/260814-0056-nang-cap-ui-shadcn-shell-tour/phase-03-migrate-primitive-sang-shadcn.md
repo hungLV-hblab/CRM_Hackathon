@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Migrate primitive sang shadcn"
-status: pending
+status: done
 priority: P1
 effort: "1h30'"
 dependencies: [1]

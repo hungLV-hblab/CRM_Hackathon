@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Tầng token + giàn shadcn"
-status: pending
+status: done
 priority: P1
 effort: "30'"
 dependencies: []
@@ -147,4 +147,40 @@ Phase này chưa có component để test hành vi, nên "tests-first" ở đây
 
 ## Baseline
 
-<!-- Điền sau khi chạy bước 0. Ví dụ: 5 e2e spec pass / N unit test pass / 3m12s. Con số này là hợp đồng của cả plan. -->
+**Chốt 14/08 02:25. `pnpm test` → EXIT 0.** Con số này là hợp đồng của cả plan.
+
+| Đo | Giá trị |
+| --- | --- |
+| Unit (`vitest run`) | **225 test / 21 file, tất cả pass** — 48.32s |
+| e2e (`playwright test`) | **11 test pass** — 14.9s |
+| File output | [`baseline-test-output.txt`](./baseline-test-output.txt) |
+
+**Điều kiện baseline này đo được — lệch điều kiện thì con số hết giá trị so sánh:**
+
+- **Chạy trên nhánh fixture, không phải LLM thật.** `ANTHROPIC_API_KEY` trống trong `.env`, nên provider rơi về fixture adapter — đường lùi có chủ đích, ghi ở [`infra/docker-compose.yml`](../../infra/docker-compose.yml) dòng 13–17. Nếu giữa chừng có người cắm key vào, `diff` ở P6 sẽ lệch vì lý do **không liên quan gì tới UI**. Cắm key thì phải chạy lại baseline.
+- Stack production ở `:8080`, seed vừa chạy, mọi công ty ở bản chụp "trước".
+- Playwright **1.62.1** + chromium build **1234**.
+
+### Ba thứ phải sửa để baseline chạy được — không nằm trong plan, nhưng chặn cứng
+
+1. **`JWT_SECRET` trống trong `.env`** → `docker compose` từ chối khởi động. Đã sinh một khoá cục bộ (`.env` nằm trong `.gitignore`, không vào commit).
+2. **`infra/postgres-init/01-roles.sh` bị CRLF** → Linux đọc shebang thành `#!/bin/bash\r` và báo `cannot execute: required file not found`. Postgres chạy init script **đúng một lần trên volume rỗng**, nên hỏng này **im lặng và vĩnh viễn**: cluster lên mà không có role `crm_*`, và mọi kết nối sau đó chết với `role "crm_owner" does not exist` — thông báo trỏ đi chỗ khác hoàn toàn. Đã đổi về LF **và** thêm [`.gitattributes`](../../.gitattributes) (`*.sh text eol=lf`) để lần checkout Windows sau không tái lập. Phải `pnpm reset` xoá volume rồi dựng lại thì init mới chạy.
+3. **`packages/contracts` chưa build** → `pnpm seed` chết với `MODULE_NOT_FOUND: @crm/contracts`. Chạy `pnpm --filter @crm/contracts build && pnpm --filter @crm/db build` trước khi seed.
+
+Điểm 2 là lỗi thật của repo trên mọi máy Windows, không phải sự cố riêng của máy này.
+
+### Cửa build đổi từ `pnpm build` sang `docker compose build web`
+
+`pnpm build` **đỏ trên máy này kể cả khi cây làm việc sạch** — đã kiểm bằng `git stash -u` rồi chạy lại: **8 lỗi `EPERM: operation not permitted, symlink`**. Nguyên nhân là `output: 'standalone'` của Next phải tạo symlink lúc gom traced files, mà Windows không cho nếu chưa bật Developer Mode. Nó **không** phải lỗi token hay lỗi code:
+
+```
+✓ Compiled successfully in 1821ms
+✓ Generating static pages (10/10)
+⚠ Failed to copy traced files ... EPERM: operation not permitted, symlink
+```
+
+Biên dịch, kiểm kiểu, sinh trang tĩnh đều qua; chỉ bước copy cuối chết.
+
+**Quyết định: cửa build của plan này là `docker compose -f infra/docker-compose.yml --env-file .env build web`.** Đó cũng là đường build thật của sản phẩm — image này chính là thứ chạy ở `:8080` và là thứ BGK mở. Kiểm 14/08: **xanh** với thang token mới. Tiêu chí *"`pnpm build` xanh"* ở P1 và mục 8 checklist P6 đọc theo nghĩa này.
+
+Phương án bị loại: bật Developer Mode của Windows (sửa cấu hình máy người dùng để thoả một tiêu chí, trong khi đường build thật vẫn xanh) · bỏ `output: 'standalone'` (Dockerfile dựa vào nó — đổi để test chạy được là để test lái kiến trúc).

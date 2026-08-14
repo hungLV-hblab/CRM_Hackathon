@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Be_Vietnam_Pro } from 'next/font/google'
 
 import './globals.css'
+import { Toaster } from '@/components/ui/sonner'
 import { QueryProvider } from '@/lib/query-provider'
 
 /**
@@ -26,6 +27,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={beVietnamPro.variable}>
       <body>
         <QueryProvider>{children}</QueryProvider>
+        {/* Outside the route group on purpose: a failed login is worth a toast too. */}
+        <Toaster />
       </body>
     </html>
   )

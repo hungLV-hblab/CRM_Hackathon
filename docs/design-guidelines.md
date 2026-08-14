@@ -53,7 +53,15 @@ Lấy trực tiếp từ file logo, không phải ước lượng bằng mắt: 
 ## 4. Khoảng cách, bo góc, đổ bóng, thời gian
 
 - Nhịp **4/8px**. Khoảng cách trong section: `16 · 24 · 32 · 48`.
-- Bo góc chỉ hai giá trị: `rounded-control` (nút, ô nhập) và `rounded-card` (thẻ, bảng, hộp thoại).
+- Bo góc **đúng ba giá trị, không có giá trị thứ tư**:
+
+  | Token | Giá trị | Dùng cho |
+  | --- | --- | --- |
+  | `rounded-control` | `0.5rem` | nút, ô nhập |
+  | `rounded-card` | `1rem` | thẻ, hộp thoại |
+  | `rounded-pill` | `9999px` | mục nav, chip lọc, nút icon, avatar |
+
+  **Bảng và ô nhập giữ cạnh thẳng.** Trên màn CRM dày dữ liệu, cạnh thẳng chính là thứ mắt dùng để căn cột — bo nó đi thì mất nhiều hơn được. Dùng `rounded-card` / `shadow-card` chứ **không** dùng `rounded-xl` / `shadow-sm` của Tailwind: chúng là một thang bo góc và đổ bóng thứ hai nằm cạnh thang của dự án, và một thẻ bo 0.75rem đứng cạnh một thẻ bo 1rem là thứ không ai báo lỗi nhưng ai cũng thấy.
 - Bóng chỉ hai mức: `shadow-card` cho thẻ nằm trên trang, `shadow-float` cho thứ nổi lên trên (hộp thoại, dropdown). Không có mức thứ ba — màn CRM dày đặc thẻ, thêm một tầng bóng nữa là thành nhiễu.
 - Thời gian: `--duration-state` (150ms) cho đổi trạng thái, `--duration-motion` (250ms) cho thứ di chuyển. **Không có gì chậm hơn 300ms.**
 - Chỉ animate `transform` và `opacity`. Animate `width`/`height`/`top` là ép trình duyệt tính lại layout mỗi khung hình.
@@ -97,6 +105,16 @@ Khi **tắt AI**: banner đứng đầu mọi màn có AI, dữ liệu cũ **v�
 - Trạng thái rỗng luôn có câu giải thích + một hành động, không để trang trắng.
 - Focus ring đã khai báo toàn cục. **Cấm `outline: none`** ở bất cứ đâu.
 
+### Từ vựng alias của shadcn — chỉ sống trong `components/ui/`
+
+`globals.css` có một khối `@theme inline` ánh xạ tên semantic của shadcn (`background`, `primary`, `muted-foreground`, …) về token của dự án. Nó tồn tại để component copy từ shadcn về chạy được **mà không phải sửa từng dòng class**, không phải để trở thành cách gọi màu thứ hai.
+
+**Luật:** `bg-background`, `text-primary`, `text-muted-foreground` và họ hàng chỉ được dùng **trong `src/components/ui/`**. Code màn hình viết `ink-*` / `brand-*` / `machine-*`.
+
+Vì sao chặt thế: nếu `bg-background` viết được ở mọi nơi thì repo có hai từ vựng cho một màu, và điều cấm "không dùng class màu thô" **mất hiệu lực trong im lặng** — `bg-background` lọt qua mọi lần grep trong khi không nói cho người đọc biết đó là màu gì. Mục 7 của checklist có một dòng kiểm việc này.
+
+Một chỗ lớp alias **cố ý cãi lại upstream**: `--color-primary-foreground` là **ink, không phải trắng**. Trắng trên `brand-400` là 1.7:1 và không đọc được; ink trên `brand-400` là 11.36:1. Component nào của shadcn giả định trắng-trên-primary thì phải sửa, không phải nhận nguyên.
+
 ## 7. Trước khi merge một thay đổi giao diện
 
 - [ ] Không còn class màu thô (`slate-*`, `amber-*`, `bg-[#...]`) — chỉ token
@@ -115,4 +133,5 @@ Khi **tắt AI**: banner đứng đầu mọi màn có AI, dữ liệu cũ **v�
 ## Câu hỏi chưa giải quyết
 
 - Vàng thuần `#FFFF00` trong logo chưa có vai trò nào trong giao diện. Đang cố ý để trống — nó chói và gần như không thể đạt tương phản. Nếu cần dải thương hiệu đậm hơn thì bàn trước khi dùng.
-- Chưa có bộ icon thống nhất trong repo. Màn hình đầu tiên cần icon là chỗ phải chốt Lucide và cài một lần.
+
+*(Đã chốt 14/08: **bộ icon là Lucide**, cài `lucide-react` trong `apps/web`. Câu hỏi mở cũ — "màn hình đầu tiên cần icon là chỗ phải chốt Lucide" — đã được app shell trả lời. Mục 6 vốn đã ghi Lucide làm ví dụ; giờ nó là quyết định có gói cài kèm.)*

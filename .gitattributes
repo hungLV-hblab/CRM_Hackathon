@@ -1,0 +1,10 @@
+# Shell scripts that are mounted INTO a Linux container must keep LF endings, whatever the
+# checkout platform does. Git's autocrlf on Windows rewrites them to CRLF, which turns the
+# shebang into `#!/bin/bash\r` — and Linux then reports the interpreter itself as missing:
+#
+#   /docker-entrypoint-initdb.d/01-roles.sh: cannot execute: required file not found
+#
+# Postgres runs its init scripts EXACTLY ONCE on an empty volume, so the failure is silent
+# and permanent: the cluster comes up without the crm_* roles, and every later connection
+# fails with "role crm_owner does not exist" — a message that points nowhere near the cause.
+*.sh text eol=lf
