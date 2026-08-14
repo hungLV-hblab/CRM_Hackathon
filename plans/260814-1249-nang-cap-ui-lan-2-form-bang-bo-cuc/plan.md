@@ -1,5 +1,5 @@
 ---
-status_note: "done 14/08 — 7/7 phase, 281 unit + 36 e2e xanh, ADR-0034"
+status_note: "done 14/08 — 7/7 phase, 281 unit + 39 e2e xanh, ADR-0034"
 title: "Nâng cấp UI lần 2 — form, bảng, bố cục, nhịp chữ"
 description: "Bịt drift đã ship (bo góc thứ 4, bóng thứ 3, alias rò ra app/), dựng ba component trạng thái dùng chung, đưa ô nhập lên 44px, làm bảng dính thật + sắp xếp được, thống nhất một thang container và khôi phục nhịp chữ"
 status: done
@@ -142,7 +142,7 @@ Thứ tự cắt, cắt từ dưới lên: P6 → P5 → nửa sau P4 → (hết
 | | Trước | Sau |
 | --- | --- | --- |
 | Unit | 281 | **281** — không đổi |
-| e2e | 32 | **36** — đúng 4 test mới có chủ đích |
+| e2e | 32 | **39** — đúng 7 test mới có chủ đích |
 | `pnpm lint` · `typecheck` | xanh | **xanh** |
 | `docker compose build web` | xanh | **xanh** (7 lần rebuild) |
 | Cỡ chữ dùng thật | 2 tầng (194/210 là `text-sm`/`text-xs`) | **6 tầng theo vai trò** |
@@ -151,6 +151,7 @@ Thứ tự cắt, cắt từ dưới lên: P6 → P5 → nửa sau P4 → (hết
 | Khối lỗi copy tay | 13 | **0** |
 | Thẻ panel viết tay | 11 | **0** |
 | Chiều cao ô nhập | 38px | **44px, có test đo** |
+| Tràn ngang ở 375px và 1440px | chưa ai đo | **0px trên 7 màn, có test** |
 | SVG tự vẽ | 1 | **0** |
 
 ### Phát hiện thêm trong lúc chạy — không có trong chẩn đoán ban đầu
