@@ -8,6 +8,7 @@ import { SOURCE_TIER, type CompanyDto, type SourceCandidateDto } from '@crm/cont
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { IngestSummary } from './ingest-summary'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api-client'
 
@@ -48,6 +49,33 @@ export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
     },
   })
 
+  /**
+   * The read that follows saving a list, so nobody waits out a watch cycle to see what their
+   * choice produced.
+   *
+   * A SEPARATE mutation rather than a second step inside `save`, because the two can fail
+   * independently and a reader has to be able to tell which one did: the URLs are stored the
+   * moment `save` returns, and a page that then times out must not read as "nothing was saved"
+   * (rule 4 — a wrong line is worse than a blank one).
+   *
+   * `manual_ingest`, not `watch_cycle`, and that is the invariant rather than a default: I-4 bars
+   * a manually triggered finding from becoming a timeline entry. Someone pressed a button here,
+   * so borrowing the watch cycle's context to get the extra autonomy would be autonomy zone 4
+   * taken without Specs opening it (CLAUDE.md section 4).
+   *
+   * `variant` is required by the contract and ignored on the live path — the live reader takes its
+   * URLs from the saved list, never from a stored snapshot.
+   */
+  const readAfterSave = useMutation({
+    mutationFn: () =>
+      api.ingestSnapshot(company.id, { variant: 'after', triggerContext: 'manual_ingest' }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['reading-zone', company.id] })
+      // A live-source read can only raise suggestions (I-15), so the queue marker is stale now.
+      await queryClient.invalidateQueries({ queryKey: ['pending-proposals'] })
+    },
+  })
+
   const save = useMutation({
     mutationFn: () =>
       api.saveCompanySources(company.id, {
@@ -63,6 +91,14 @@ export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
       setCandidates(null)
       setPicked(new Set())
       await queryClient.invalidateQueries({ queryKey: ['company-sources', company.id] })
+
+      /**
+       * Only when the switch is on, because only then does the saved list get read at all:
+       * `ObservationService.collectReads` consults `company_sources` on the live branch and
+       * nowhere else. With the switch off the list is inert, and reading anyway would re-read the
+       * stored snapshot — a read whose result has nothing to do with what was just saved.
+       */
+      if (company.liveSourceEnabled) readAfterSave.mutate()
     },
   })
 
@@ -194,9 +230,13 @@ export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
             <Button
               type="button"
               onClick={() => save.mutate()}
-              disabled={picked.size === 0 || save.isPending}
+              disabled={picked.size === 0 || save.isPending || readAfterSave.isPending}
             >
-              Lưu {picked.size} nguồn đã chọn
+              {save.isPending
+                ? 'Đang lưu…'
+                : readAfterSave.isPending
+                  ? 'Đã lưu — đang đọc nguồn…'
+                  : `Lưu ${picked.size} nguồn đã chọn`}
             </Button>
           </div>
 
@@ -246,6 +286,25 @@ export function SourceDiscoverySection({ company }: { company: CompanyDto }) {
           {errorText(save.error)}
         </p>
       )}
+
+      {/*
+        The read that follows the save reports itself HERE rather than up in the read zone, next to
+        the click that caused it. Its failure names the save as having succeeded, because it did —
+        the URLs are in the list and the button above is what to press to try reading them again.
+      */}
+      {readAfterSave.isPending && (
+        <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
+          Đã lưu nguồn. Đang đọc ngay, không chờ vòng quét…
+        </p>
+      )}
+
+      {readAfterSave.isError && (
+        <p className="rounded-control bg-danger-surface px-3 py-2 text-sm text-danger">
+          Đã lưu nguồn, nhưng chưa đọc được: {errorText(readAfterSave.error)}
+        </p>
+      )}
+
+      {readAfterSave.data && <IngestSummary result={readAfterSave.data} />}
     </div>
   )
 }
