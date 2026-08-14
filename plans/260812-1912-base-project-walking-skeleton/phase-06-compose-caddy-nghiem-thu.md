@@ -71,7 +71,7 @@ Một cổng duy nhất giám khảo cần biết. API và worker **cùng một 
 | Định làm | Làm thật | Vì sao |
 | --- | --- | --- |
 | Migration chạy lúc api khởi động | Service `migrate` riêng, chạy một lần | api và worker cùng `depends_on: service_completed_successfully` → khử hẳn tranh chấp thay vì thu hẹp nó |
-| `seed` chạy trong container api | `pnpm seed` chạy từ máy | Cổng 5432 đã publish sẵn cho test, không cần thêm đường thứ hai |
+| `seed` chạy trong container api | `pnpm seed` chạy từ máy | Cổng 5403 đã publish sẵn cho test, không cần thêm đường thứ hai |
 | — | Thêm `--env-file .env` vào mọi script compose | Compose đọc `.env` cạnh **file compose** (`infra/`), không phải gốc repo. Thiếu cái này `pnpm start` gãy ngay từ biến đầu tiên |
 | — | Bỏ `pnpm-lock.yaml` khỏi `.gitignore` | Image build bằng `--frozen-lockfile`; giám khảo clone repo phải nhận đúng cây phụ thuộc đã test |
 | — | Thêm `pnpm stop` · `pnpm reset` | `down -v` là thao tác bắt buộc khi volume cũ thiếu 3 role |

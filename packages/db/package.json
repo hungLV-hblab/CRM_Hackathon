@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "pnpm --filter @crm/contracts build && drizzle-kit generate",
     "db:migrate": "tsx src/migrate.ts",
-    "seed": "tsx src/seed/index.ts",
+    "seed": "pnpm --filter @crm/contracts build && tsx src/seed/index.ts",
     "switch-snapshot": "tsx src/seed/switch-snapshot.ts"
   },
   "dependencies": {
