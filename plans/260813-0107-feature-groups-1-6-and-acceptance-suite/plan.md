@@ -59,7 +59,7 @@ Cắt theo đúng thứ tự này nếu tới **trưa 14/08** mà P4/P5 chưa xo
 | 5 | [Nhóm 3 — hàng đợi gợi ý](phase-05-nhom-3-hang-doi-goi-y.md) | **done** | B | ~~3h~~ 4.5h (thực: ~1h20') | 2, **1b** |
 | 6 | [Nhóm 4 — tự đặt Việc tiếp theo + Hoàn tác](phase-06-nhom-4-tu-dat-viec-tiep-theo.md) | **done** | A | ~~3h~~ 4h (thực: ~30') | 2, 5, **1b** |
 | 7 | [Nhóm 5 — vòng quét ghi dòng thời gian](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md) | **done** | C | ~~2h~~ 3h (thực: ~1h10') | 2, 4, **1b** |
-| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội | 4h + 30' (ô sửa nhanh) | 5, 6, 7 |
+| 8 | [Nhóm 6 — bảng điều khiển + đóng T-1…T-10](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md) | pending | cả đội, **song song ~2.5h** | 4h30 (A 2h · B 1.5h · C 2h) | 5, 6, 7 |
 
 ```
 P1a (cả đội chờ, 1.5h)
@@ -350,12 +350,39 @@ Bốn việc mang sang P8 — **ba trong số đó là bẫy sẽ gặp lại ng
 
 **Một quyết định nhỏ chốt lúc code, lệch phase file có ý thức:** dòng cộng dồn gọi ở `tick()` chứ không ở cuối `scan()`. Phase file ghi `scan()`, nhưng nhịp bị bỏ **cũng tính là một vòng**, nên 10 vòng toàn skip sẽ không bao giờ được tổng kết — đúng đoạn nhật ký cần tổng kết nhất. Có test riêng (test 8 của `watch-cycle-scans-and-writes`).
 
+### Phiên 12 — 14/08 10:12, phạm vi Phase 8
+
+Phase 8 viết cùng lúc với plan (13/08 01:07) nên cùng hoàn cảnh đã làm P4/P5/P6/P7 lệch. Kiểm bằng đọc mã nguồn ([báo cáo](../reports/from-brainstorm-to-planner-260814-1012-phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu-report.md)): **ba chỗ lệch, cả ba đổi thiết kế.** Bù lại, hai chỗ nhẹ hơn tưởng.
+
+**Hai tin tốt:** **P8 cần 0 migration** — `crm_app` có `GRANT ALL ON ALL TABLES` (`0001_grants.sql:23`) nên `setAiEnabled` chạy ngay, metrics và banner đều là đường đọc. **Lớp CSDL của T-10 đã chặn sẵn cả ba nhánh** — `:48` chỉ cấp `UPDATE` ba cột next-step, `:63` không cấp `DELETE` bảng nào ⇒ T-10 chỉ cần test chứng minh, không sửa quyền.
+
+**Lỗ thứ nhất — T-9 hở: Sales không có đường nào biết AI đang tắt.** `GET /settings` là `@Roles('admin')` và `ai-status-pill.tsx:31` cố ý `enabled: isAdmin` ⇒ pill **không bao giờ render cho Sales**, đúng người dùng mà T-9 đòi phải thấy banner. Không phải giả thiết: comment trong chính file đã đẩy việc sang "banner ở màn sinh output AI" mà banner đó chưa tồn tại và chưa có nguồn dữ liệu.
+
+**Lỗ thứ hai — mẫu số của error-detection rate chưa từng được định nghĩa.** Ontology mục 7 cho tử số rõ, mẫu số ghi "tổng output AI" — không đủ để viết một câu SQL, và hai cách đọc cho hai con số lệch nhau 5–10 lần.
+
+**Lỗ thứ ba — Q-6 mô tả một thứ không tồn tại.** `company.controller.ts:29` · `opportunity.controller.ts:35` · `proposal.controller.ts:30` chỉ có `@UseGuards(JwtGuard)` ⇒ admin ghi y hệt Sales, ngược với câu "Admin xem tất cả, không sửa dữ liệu Sales" của phase file.
+
+**Bốn quyết định chốt:**
+
+| Câu hỏi | Chốt | Hệ quả lan ra |
+| --- | --- | --- |
+| Banner T-9 lấy trạng thái AI ở đâu | `GET /settings/ai-status` trả đúng `{aiEnabled}`, chỉ `JwtGuard` + banner **toàn cục** ở `(app)/layout.tsx`. **ADR-0032** | Giữ điểm nghiệm thu số 2 của skeleton (Sales 403 trên `/settings`). `RolesGuard:33` cho qua khi không có `@Roles` ⇒ route nằm trong controller cũ, **0 module mới, né bẫy `AuthModule` của P7** |
+| Mẫu số error-detection rate | `proposals + auto_next_step_events + timeline_entries(created_by='system')` — tập mà người *có thể* bác. **ADR-0031** | Mọi tỉ lệ hiện **kèm mẫu số**; mẫu số 0 → "chưa có dữ liệu", không phải `0%`. Cộng `claims` bị loại: tỉ lệ gần 0 vĩnh viễn = số không bao giờ sai được |
+| Q-6 | ADR một dòng nói đúng hiện trạng, **không** ép admin read-only. **ADR-0033** | Sửa chữ phase file + dòng Q-6 mục Câu hỏi chưa giải quyết. Ép read-only = 3 controller + guard mới + rủi ro e2e đỏ vào tối freeze, đổi lấy một dòng rubric không chấm |
+| Nút đổi bản chụp trên Quản trị | **Có**, món cắt cuối cùng | Đóng câu treo "ai flip bản chụp lúc demo". ~20 dòng gọi endpoint đã có |
+
+**Hai bẫy đã biết trước, ghi vào phase file:** `MetricsModule` là module mới **có controller** ⇒ phải tự `imports: [AuthModule]`, thiếu thì sập container API với triệu chứng 502 ở trang đăng nhập **trong khi test đơn vị vẫn xanh** (bài học P7) — thêm vào `watch-module-boots.test.ts` ngay lúc tạo. Trần dưới của `watch_cycle_seconds` **không được là 60**: T-8 e2e chạy 10s.
+
+**T-9 an toàn với các spec khác:** `playwright.config.ts:20-22` là `workers: 1` + `fullyParallel: false` ⇒ tắt AI toàn cục không đụng spec đang chạy, miễn `afterAll` bật lại và trả chu kỳ về 60 — đúng khuôn T-1 đã làm.
+
+**Ước lượng 4h → 4h30**, nhưng chia được ba nhánh song song (**A 2h · B 1.5h · C 2h**, C bị chặn 30' đầu chờ endpoint của A) ⇒ **~2.5h thực tế**. Ba ADR phải viết: 0031 · 0032 · 0033.
+
 ## Câu hỏi chưa giải quyết
 
-- **Q-6: Admin có được thao tác CRM không** — chặn ma trận quyền của nhóm 6. P8 tạm làm: Admin xem được tất cả, không sửa dữ liệu Sales.
+- ~~**Q-6: Admin có được thao tác CRM không**~~ — **chốt 14/08 10:12**: vòng 1 Admin có quyền CRM **y hệt Sales** (ba controller chỉ có `JwtGuard`), ma trận quyền chi tiết ngoài phạm vi. Câu "Admin xem tất cả, không sửa dữ liệu Sales" trong bản cũ **mô tả một thứ không tồn tại trong code** — đã bỏ. Ghi thành ADR-0033 thay vì ép read-only vào tối freeze.
 - Format bộ dữ liệu BTC — [ADR-0013](../../docs/decisions/0013-seed-theo-du-lieu-tu-dat-chap-nhan-migrate-khi-btc-giao-du-lieu.md) đã quyết không chờ. Khi dữ liệu về thì thay `seed-data.ts`.
 - ~~**Công ty #5 `it_product` của P4**~~ — **đã làm**, không phải cắt. Marlin Product Labs dùng chung hằng số đoạn funding với Sakura.
-- **Ai flip bản chụp lúc demo:** đã có hai đường — `pnpm switch-snapshot "Sakura" after` và `POST /api/demo/companies/:id/snapshot-variant`. Còn treo đúng một câu: có cần **nút** trong `apps/web/src/app/quan-tri/` (P8) hay CLI đủ cho vòng 1? Không chặn gì.
+- ~~**Ai flip bản chụp lúc demo**~~ — **chốt 14/08 10:12: có nút trong màn Quản trị**, ~20 dòng gọi `POST /api/demo/companies/:id/snapshot-variant` đã có, để lúc demo không phải rời trình duyệt sang terminal. Xếp **cuối danh sách cắt** của P8.
 - ~~**Sales không có chỗ nào tự gõ Việc tiếp theo trên web**~~ — **đã giao cho P8 lúc 14/08 00:48**, không còn là câu treo. Chi tiết + phạm vi tối thiểu ở [mục "Lỗ P6 để lại"](phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu.md#lỗ-p6-để-lại--ô-sửa-nhanh-việc-tiếp-theo). Dùng `PATCH /opportunities/:id` sẵn có, ~30', **cắt cuối cùng** — và cắt thì phải nói thẳng với BGK.
 - **Xoá mục dòng thời gian do người gõ** — Specs viết "xoá mục hệ thống *như mọi mục khác*" nhưng không có đường nào và I-13 chỉ ràng buộc mục hệ thống. P7 chốt phạm vi hẹp; [câu treo giao P8](phase-07-nhom-5-vong-quet-ghi-dong-thoi-gian.md#câu-treo-giao-cho-p8). Không chặn gì.
 - Telemetry của thành viên 2 và 3 chưa verify trên Grafana (README mục Telemetry). **Không phải việc của plan này nhưng là điều kiện qua vòng 1** — mỗi người tự kiểm trước khi gõ dòng đầu.
