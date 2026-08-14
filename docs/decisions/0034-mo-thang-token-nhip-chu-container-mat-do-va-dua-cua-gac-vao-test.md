@@ -6,7 +6,7 @@
 | **Giai đoạn** | Development |
 | **Trạng thái** | Chấp nhận |
 | **Người quyết định** | HungLV |
-| **Prompt log** | *không có* — phiên làm việc trực tiếp, chẩn đoán bằng grep trên mã nguồn chứ bằng phản biện persona |
+| **Prompt log** | *không có* — phiên làm việc trực tiếp, chẩn đoán bằng grep trên mã nguồn chứ không bằng phản biện persona |
 
 ## Bối cảnh
 

@@ -174,18 +174,19 @@ Thứ tự cắt, cắt từ dưới lên: P6 → P5 → nửa sau P4 → (hết
 
 ## Tiêu chí nghiệm thu của cả plan
 
-- [ ] `pnpm test` xanh — **281 unit + 32 e2e**, cộng **đúng số assertion mới có chủ đích** thêm vào `ui-invariants.spec.ts`. Không spec cũ nào đỏ
-- [ ] `pnpm lint` · `pnpm typecheck` · `pnpm build` xanh
-- [ ] **Grep màu thô đã neo lại** rỗng — `(bg|text|border|ring|fill|stroke|from|to|via|divide|accent)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]` cộng `bg-\[#`. Bản cũ trong doc vừa sót `red-*` vừa báo nhầm trên `-translate-`
-- [ ] **Grep mở rộng rỗng**: `rounded-(md|lg|xl|sm|2xl)` và `shadow-(sm|md|lg|xl)` không còn ngoài `components/ui/dropdown-menu.tsx` (vendored, khai miễn trừ ở P1)
-- [ ] **Alias không rò**: `bg-card|bg-background|text-primary|text-muted-foreground|border-border` **rỗng** trong `apps/web/src/app/`
-- [ ] Mọi ô nhập, ô chọn, checkbox có chiều cao đo được **≥44px** — `ui-invariants` đo, không tin bằng mắt
-- [ ] Không còn khối `border-dashed` viết tay ngoài `EmptyState`
-- [ ] Một thang container duy nhất; gutter co theo khổ; thử ở **375px và 1440px**, tràn ngang **0px**
-- [ ] Mỗi màn có ít nhất **ba cấp cỡ chữ** phân biệt được
-- [ ] Qua checklist mục 7 [design-guidelines](../../docs/design-guidelines.md)
-- [ ] **ADR-0034** cho quyết định mở thang token (nhịp chữ + container + mật độ), kèm phương án bị loại
-- [ ] design-guidelines cập nhật đúng ba mục mới, có ngày
+- [x] `pnpm test` xanh — **281 unit + 32 e2e**, cộng **đúng số assertion mới có chủ đích** thêm vào `ui-invariants.spec.ts`. Không spec cũ nào đỏ
+- [x] `pnpm lint` · `pnpm typecheck` xanh · `docker compose build web` xanh (đường build thật)
+- [ ] `pnpm build` — **đỏ, và không phải do vòng này.** `next build` compile + sinh 14/14 trang xanh; chỉ bước copy trace `standalone` đỏ vì Windows không cho tạo symlink (`EPERM`). Chạy đúng lệnh đó trên `origin/master` → đỏ y hệt. Lỗi môi trường sẵn có, đã ghi ở ADR-0034
+- [x] **Grep màu thô đã neo lại** rỗng — `(bg|text|border|ring|fill|stroke|from|to|via|divide|accent)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]` cộng `bg-\[#`. Bản cũ trong doc vừa sót `red-*` vừa báo nhầm trên `-translate-`
+- [x] **Grep mở rộng rỗng**: `rounded-(md|lg|xl|sm|2xl)` và `shadow-(sm|md|lg|xl)` không còn ngoài `components/ui/dropdown-menu.tsx` (vendored, khai miễn trừ ở P1)
+- [x] **Alias không rò**: `bg-card|bg-background|text-primary|text-muted-foreground|border-border` **rỗng** trong `apps/web/src/app/`
+- [x] Mọi ô nhập, ô chọn, checkbox có chiều cao đo được **≥44px** — `ui-invariants` đo, không tin bằng mắt
+- [x] Không còn khối `border-dashed` viết tay ngoài `EmptyState`
+- [x] Một thang container duy nhất; gutter co theo khổ; thử ở **375px và 1440px**, tràn ngang **0px**
+- [x] Mỗi màn có ít nhất **ba cấp cỡ chữ** phân biệt được
+- [x] Qua checklist mục 7 [design-guidelines](../../docs/design-guidelines.md)
+- [x] **ADR-0034** cho quyết định mở thang token (nhịp chữ + container + mật độ), kèm phương án bị loại
+- [x] design-guidelines cập nhật đúng ba mục mới, có ngày
 
 ## Luật áp cho mọi phase
 
