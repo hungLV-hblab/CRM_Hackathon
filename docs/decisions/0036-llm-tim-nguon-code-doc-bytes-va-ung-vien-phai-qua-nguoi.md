@@ -99,7 +99,7 @@ Tiêu chí dùng để so, không phải "đơn giản hơn": **cách nào giữ
 - **Kéo theo:** bảng mới `company_sources` với đúng một dòng GRANT — `GRANT SELECT ON company_sources TO crm_system`, không INSERT, không UPDATE. Đây là chỗ "AI không tự chọn nguồn nó đọc" thành **ràng buộc CSDL** chứ không phải một câu trong doc.
 - **Kéo theo:** `ObservationService` đọc theo **danh sách URL**; `company_sources` không rỗng thì thắng, rỗng thì rơi về `companies.website` (quyết định V4).
 - **Đánh đổi đã nhận:** hai nguồn sự thật cho câu "đọc ở đâu" ⇒ thứ tự ưu tiên phải có test riêng, không được để ngầm định.
-- **Đánh đổi đã nhận:** refresh trang mất danh sách ứng viên. Thao tác mất 10–20 giây, và đổi lại là giữ được nguyên tắc.
+- **[Bị thay bởi [ADR-0037](0037-ung-vien-luu-o-bang-ai-khong-doc-duoc-va-cong-tac-tat-nguon.md)]** ~~**Đánh đổi đã nhận:** refresh trang mất danh sách ứng viên. Thao tác mất 10–20 giây, và đổi lại là giữ được nguyên tắc.~~ → Cái giá này đã **trả xong** mà không mất nguyên tắc: ứng viên lưu ở `company_source_candidates`, bảng mà `crm_system` không có quyền nào. Mục (b) dưới đây **không bị đảo** — phương án B ("tìm xong tự lưu vào danh sách đọc") vẫn bị loại.
 - **Đánh đổi đã nhận:** không có `ANTHROPIC_API_KEY` thì `FixtureSourceDiscovery` suy ứng viên từ website đã lưu và **nói thẳng trong mỗi `reason`** rằng chưa chạy tìm kiếm thật. Suy giảm trung thực, không phải giả vờ đã tìm.
 - **Sẽ phải xem lại nếu:** vòng quét bắt đầu tự crawl (khi đó robots.txt và rate-limit theo host quay lại phạm vi — hiện ngoài phạm vi vì mỗi cú fetch là do người bấm vào URL người đó tự chọn); hoặc BTC trả lời rằng bản chụp là nguồn **duy nhất được phép tồn tại**, khi đó **xoá** đường nguồn thật chứ không nới thêm điều kiện.
 
@@ -123,7 +123,7 @@ Tiêu chí dùng để so, không phải "đơn giản hơn": **cách nào giữ
 | `observations` không cần grant mới | `0003_grants_ai_tables.sql` — `GRANT SELECT, INSERT ON observations` là **table-level** ⇒ cột mới tự có |
 | AI không bật được công tắc nguồn của chính nó | `0001_grants.sql:38` — `crm_system` chỉ có `GRANT SELECT ON companies`. Đo bằng `live-source-columns-and-grants.test.ts` nối **đúng vai** `DATABASE_URL_TEST_SYSTEM` |
 | AI không ghi được vào `company_sources` | `0001_grants.sql:13` — `crm_system` cố ý **không** có `ALTER DEFAULT PRIVILEGES` ⇒ bảng mới bị cấm tới khi grant tay. Đo bằng cùng file test: INSERT/UPDATE/DELETE đều permission denied |
-| Ứng viên không được persist | `company-source-candidates.test.ts` test 1 — chạy xong `findCandidates`, đếm hàng `company_sources` = **0** |
+| **[Bị thay bởi [ADR-0037](0037-ung-vien-luu-o-bang-ai-khong-doc-duoc-va-cong-tac-tat-nguon.md)]** ~~Ứng viên không được persist~~ → **Ứng viên persist ở bảng AI không đọc được; danh sách đọc vẫn 0 hàng sau khi tìm** | `company-source-candidates.test.ts` test 1 — chạy xong `findCandidates`, `company_source_candidates` có **N** hàng và `company_sources` vẫn = **0**. Nửa sau của assertion **không đổi một chữ**, và đó là nửa mang tải |
 | Bộ nghiệm thu bất khả xâm phạm | Chạy **đủ 39 e2e với `OBSERVATION_SOURCE=live_crawl`** → 39 xanh, và truy vấn CSDL sau đó: **mọi** bản lưu là `demo_snapshot`, crawler gọi **0** lần |
 | Cửa gác SSRF chặn thật | Chạy tay qua sản phẩm: `http://169.254.169.254/latest/meta-data/` → `blocked_url`, không có gói tin nào ra |
 | Bảng lỗi phân loại đúng | Chạy tay qua sản phẩm: tên miền không tồn tại → `unreachable`; `example.com/khong-co-trang-nay-404` → `http_4xx`; `example.com` → đọc được, 145 ký tự text, `source_kind = live_crawl` |

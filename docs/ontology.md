@@ -1,7 +1,7 @@
 # Ontology — AI Native CRM
 
 > Sinh 12/08/2026 từ [template](./ontology-template.md), dựa trên [Specs BTC](./hackathon-spec-ai-native-crm.md) và [phiên phản biện 260812-1742](./ai-sessions/260812-1742-req-phan-bien-de-bai-ai-native-crm.md).
-> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ✅ HungLV đọc lại và chấp nhận 13/08/2026 · ⏳ bản sửa 14/08/2026 (nguồn web thật có điều kiện — mục 1, 2, 3.6, 5, 6, 9, 10) **chờ duyệt lại**; ⏳ bản sửa 14/08/2026 tối (đã thi công: `company_sources`, I-18, ADR-0036 — mục 3.6, 6, 9, 10) **chờ duyệt lại**. Sửa file này thì phải duyệt lại.
+> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ✅ HungLV đọc lại và chấp nhận 13/08/2026 · ⏳ bản sửa 14/08/2026 (nguồn web thật có điều kiện — mục 1, 2, 3.6, 5, 6, 9, 10) **chờ duyệt lại**; ⏳ bản sửa 14/08/2026 tối (đã thi công: `company_sources`, I-18, ADR-0036 — mục 3.6, 6, 9, 10) **chờ duyệt lại**; ⏳ bản sửa 14/08/2026 khuya (ứng viên nguồn persist + công tắc bật/tắt nguồn, I-18 mạnh lên, ADR-0037 — mục 3.6, 6) **chờ duyệt lại**. Sửa file này thì phải duyệt lại.
 > Nền lý thuyết: [ai-native-design-principles.md](./ai-native-design-principles.md).
 >
 > **File này là nguồn sự thật về ĐẶT TÊN và RÀNG BUỘC.** Code không khớp file này là code sai, không phải file sai.
@@ -114,19 +114,28 @@ Specs mục 3: *"Nguồn web trong đề bài chính là các bản chụp này,
 
 | Thực thể | Từ trong Specs | Nghĩa | Ai được tạo |
 | --- | --- | --- | --- |
-| `CompanySource` | **nguồn đọc** | Một trang công khai mà công ty này được phép đọc: `url`, `source_tier`, `discovered_via`, `search_snippet`, `added_by` | **Chỉ người.** `crm_system` có `SELECT`, không có INSERT (I-18) |
+| `CompanySource` | **nguồn đọc** | Một trang công khai mà công ty này được phép đọc: `url`, `source_tier`, `discovered_via`, `search_snippet`, `added_by`, `enabled` | **Chỉ người.** `crm_system` **không đọc được bảng này**; nó chỉ đọc view `company_sources_enabled`, và không ghi được gì (I-18) |
+| `CompanySourceCandidate` | **ứng viên nguồn** | Một trang mà lượt tìm **đề xuất**, chưa ai tick: `url`, `source_tier`, `reason`, `snippet`, `found_by`. Hàng ở đây nghĩa là "máy đề xuất", **không** phải "được phép đọc" | **Chỉ người bấm Tìm.** `crm_system` **không có quyền nào** trên bảng này — không SELECT, không INSERT/UPDATE/DELETE (ADR-0037) |
 
 Luồng đi đúng luật 3 của CLAUDE.md — *máy chuẩn bị sẵn, người quyết định ghi*:
 
 ```
-POST /companies/:id/source-candidates  → chạy web_search, TRẢ VỀ ứng viên. KHÔNG ghi gì.
-POST /companies/:id/sources            → người đã tick; ghi dưới crm_app, added_by = người đó.
-GET  /companies/:id/sources            → danh sách đang dùng để đọc.
+POST   /companies/:id/source-candidates      → chạy web_search, GHI ứng viên vào
+                                               company_source_candidates (thay bộ cũ, một
+                                               transaction). KHÔNG chạm company_sources.
+GET    /companies/:id/source-candidates      → ứng viên đã lưu, kèm savedSourceId (join theo url).
+DELETE /companies/:id/source-candidates/:id  → bỏ một ứng viên.
+POST   /companies/:id/sources                → người đã tick; ghi dưới crm_app, added_by = người đó.
+GET    /companies/:id/sources                → danh sách đọc, kể cả trang đang tạm tắt.
+PATCH  /companies/:id/sources/:id            → { enabled } — tạm ngưng hoặc đọc lại một trang.
+DELETE /companies/:id/sources/:id            → bỏ một nguồn khỏi danh sách đọc.
 ```
 
-**Vì sao tách hai bước thay vì "tìm xong tự lưu".** Gộp lại thì ít một cú bấm, và đổi lại AI **tự chọn nguồn nó sẽ rút phát hiện** — đúng thứ `snapshot_variant` đã được bảo vệ khỏi, và là một đường ghi thứ ba ngoài hai ngoại lệ Specs mở. Cái giá đã nhận: refresh trang mất danh sách ứng viên, vì không có chỗ nào lưu nó.
+Cả bốn route ghi đều có cửa `actor.kind === 'system'` → `ForbiddenException` + `AuditEvent`.
 
-**Đọc ở đâu, thứ tự ưu tiên:** `company_sources` không rỗng → đọc đúng danh sách đó, **không** đọc `companies.website`; rỗng → rơi về `companies.website`; cả hai trống → ghi `fetch_error_reason = invalid_url`. Hai nguồn sự thật cho một câu hỏi là cái giá phải trả để người dùng bật công tắc rồi bấm đọc được ngay mà không bị bắt Tìm nguồn trước — nên thứ tự này có test riêng, không để ngầm định.
+**Vì sao tách hai bước thay vì "tìm xong tự lưu".** Gộp lại thì ít một cú bấm, và đổi lại AI **tự chọn nguồn nó sẽ rút phát hiện** — đúng thứ `snapshot_variant` đã được bảo vệ khỏi, và là một đường ghi thứ ba ngoài hai ngoại lệ Specs mở. Lập luận này **vẫn nguyên**; chỉ cái giá đã trả xong: ứng viên nay sống qua reload vì nằm ở **bảng riêng mà AI không đọc được** (ADR-0037), nên hai bước không còn tốn 10–20 giây và một lượt tìm có phí mỗi lần refresh. Lưu ứng viên **không** phải "tìm xong tự lưu": danh sách **đọc** vẫn chỉ người ghi được.
+
+**Đọc ở đâu, thứ tự ưu tiên:** `company_sources` có hàng **đang bật** → đọc đúng những trang đó, **không** đọc `companies.website`; không còn hàng nào đang bật (rỗng, hoặc tắt hết) → rơi về `companies.website`; cả hai trống → ghi `fetch_error_reason = invalid_url`. Đường đọc truy vấn view `company_sources_enabled` và **không có `WHERE enabled` nào ở tầng code** — trỏ vào bảng là `permission denied`, không phải đọc lén thành công. Hai nguồn sự thật cho một câu hỏi là cái giá phải trả để người dùng bật công tắc rồi bấm đọc được ngay mà không bị bắt Tìm nguồn trước — nên thứ tự này có test riêng, không để ngầm định.
 
 Nên: `SOURCE_KIND`, `SOURCE_TIER` và `FETCH_ERROR_REASON` khai trong `enums.ts` **ngoài** `ENUMS`, kèm comment giải thích; danh sách đóng do `CHECK` của [`0008_live_source.sql`](../packages/db/migrations/0008_live_source.sql) giữ; bảng 3.5 giữ nguyên 12 dòng và `ontology-enum-parity.test.ts` không phải sửa. Chi tiết ở ADR-0036.
 
@@ -223,7 +232,13 @@ Mỗi bất biến dưới đây có một test. Không có test = coi như chư
 
 Bằng chứng mạnh nhất cho I-16 nằm ở đó: chạy **đủ 39 e2e với `OBSERVATION_SOURCE=live_crawl`** → 39 xanh, mọi bản lưu trong CSDL vẫn là `demo_snapshot`, và crawler được gọi **0** lần. Bật công tắc toàn cục không mở được đường nào tới công ty seed.
 
-**Một bất biến mới, sinh ra từ chính thiết kế này:** `crm_system` có `SELECT` và **không có `INSERT`/`UPDATE`/`DELETE`** trên `company_sources`. Đó là "AI không tự chọn nguồn nó đọc" dịch thành quyền CSDL, cùng cơ chế đã bảo vệ `snapshot_variant` — test 14–16 của `live-source-columns-and-grants.test.ts`.
+**Một bất biến mới, sinh ra từ chính thiết kế này — I-18, đã mạnh lên ngày 14/08 khuya (ADR-0037):**
+
+- `crm_system` **không đọc được** `company_sources` (`REVOKE SELECT`), và không ghi được gì ở đó — test 14, 15, 16.
+- Nó chỉ đọc được view `company_sources_enabled`, tức **chỉ thấy trang đang bật**; và không ghi được qua view — test 24, 25.
+- Trên `company_source_candidates` nó **không có quyền nào**, kể cả SELECT — test 20, 21.
+
+Phát biểu cũ (`crm_system` **có** `SELECT` trên `company_sources`) đúng một nửa: crawler cần biết đọc trang nào, nhưng nó không cần — và không được — thấy trang người ta vừa tắt. Đó là "AI không tự chọn nguồn nó đọc" dịch thành quyền CSDL, cùng cơ chế đã bảo vệ `snapshot_variant` — đo trong `live-source-columns-and-grants.test.ts`.
 
 **Bảng độ gấp (I-9)** — tham số, đọc được, sửa được:
 

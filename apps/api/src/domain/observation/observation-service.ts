@@ -13,7 +13,7 @@ import {
   type SourceTier,
   type TriggerContext,
 } from '@crm/contracts'
-import { type CrmDatabase, companies, companySources, observations } from '@crm/db'
+import { type CrmDatabase, companies, companySourcesEnabled, observations } from '@crm/db'
 
 import { ClaimReactionService } from '../claim/claim-reaction-service'
 import { ClaimService } from '../claim/claim-service'
@@ -224,7 +224,8 @@ export class ObservationService {
   /**
    * WHICH pages to read, in precedence order (decision V4).
    *
-   *   1. `company_sources` — the list a person ticked and kept. Always wins when it has entries.
+   *   1. `company_sources_enabled` — the pages a person ticked and has left switched ON. Always
+   *      wins when it has entries.
    *   2. `companies.website` — the address Sales typed when they created the company.
    *
    * Two sources of truth for one question is a cost, taken deliberately: the fall-back is what
@@ -237,18 +238,24 @@ export class ObservationService {
    * because "this company has no address on file" is a fact worth showing, and a silent empty
    * list would leave the screen looking as though nothing had been asked for.
    *
-   * Read under `DRIZZLE_SYSTEM`, and that is the point rather than an accident: `crm_system` holds
-   * SELECT on `company_sources` and no INSERT, so the identity that reads the list provably
-   * cannot have written it.
+   * Read under `DRIZZLE_SYSTEM`, and that is the point rather than an accident: `crm_system` writes
+   * nothing anywhere near this list, so the identity that reads it provably cannot have written it.
+   *
+   * THE VIEW IS NOT A CONVENIENCE, AND THERE IS NO `WHERE enabled` BELOW ON PURPOSE (ADR-0037).
+   * `crm_system` has no SELECT on `company_sources` itself (`0011_source_enabled_view.sql`), so
+   * "never fetch a page somebody switched off" is not a filter this method has to remember — it is
+   * the only thing the role is allowed to see. Point this query at the table instead and it fails
+   * with `permission denied` rather than quietly reading a switched-off URL. Measured by
+   * `disabled-source-not-read.test.ts`.
    */
   private async liveSourceUrls(
     company: CompanyForReading,
   ): Promise<{ url: string | null; sourceTier: SourceTier }[]> {
     const saved = await this.dbSystem
-      .select({ url: companySources.url, sourceTier: companySources.sourceTier })
-      .from(companySources)
-      .where(eq(companySources.companyId, company.id))
-      .orderBy(asc(companySources.createdAt))
+      .select({ url: companySourcesEnabled.url, sourceTier: companySourcesEnabled.sourceTier })
+      .from(companySourcesEnabled)
+      .where(eq(companySourcesEnabled.companyId, company.id))
+      .orderBy(asc(companySourcesEnabled.createdAt))
 
     if (saved.length > 0) {
       return saved.map((source) => ({

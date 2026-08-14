@@ -220,13 +220,21 @@ describe('company_sources — the read list is human-owned, and the grant says s
     ).rejects.toThrow(/permission denied/i)
   })
 
-  it('15 · crm_system can READ the list — the crawler has to know what to fetch', async () => {
-    const { rows } = await system.query(
-      'SELECT url, source_tier FROM company_sources WHERE company_id = $1',
-      [COMPANY_ID],
+  it('15 · crm_system CANNOT read the table — it must not see a source somebody switched off', async () => {
+    /**
+     * THIS TEST WAS INVERTED ON PURPOSE (ADR-0037). It used to assert that `crm_system` could read
+     * `company_sources`, on the grounds that the crawler has to know what to fetch. That is still
+     * true, and it is now answered by `company_sources_enabled` (test 24) — because the older
+     * sentence was half wrong: the crawler needs the pages that are ON, and reading the table gives
+     * it the pages that were ever added.
+     *
+     * The privilege is what makes the difference load-bearing. With `WHERE enabled` in the service,
+     * forgetting the filter would read a switched-off page and succeed silently. With SELECT
+     * revoked, the same mistake is `permission denied` — loud, immediate, and impossible to ship.
+     */
+    await expect(system.query('SELECT url FROM company_sources')).rejects.toThrow(
+      /permission denied/i,
     )
-    expect(rows).toHaveLength(1)
-    expect(rows[0].source_tier).toBe('news')
   })
 
   it('16 · crm_system cannot UPDATE or DELETE the list either', async () => {
@@ -254,5 +262,111 @@ describe('company_sources — the read list is human-owned, and the grant says s
         [COMPANY_ID],
       ),
     ).rejects.toThrow(/company_sources_source_tier_check/i)
+  })
+})
+
+describe('company_source_candidates — the AI cannot see its own suggestion list', () => {
+  it('19 · crm_app can add a candidate', async () => {
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url, source_tier, reason, snippet, found_by)
+         VALUES ($1, 'https://example.test/candidate', 'news', 'Bài viết nhắc tên công ty', 'Trích đoạn', $2)`,
+        [COMPANY_ID, USER_ID],
+      ),
+    ).resolves.toBeTruthy()
+  })
+
+  it('20 · crm_system SELECT is refused — a suggestion list is nothing the crawler acts on', async () => {
+    /**
+     * The difference from test 15 stated as a privilege. `company_sources` answers "which pages
+     * do I fetch", which the crawler genuinely has to know. This table answers "which pages might
+     * someone tick later", and a reader that consulted it would be reading a page nobody kept.
+     * Granting SELECT here for symmetry would collapse the two-step into one.
+     */
+    await expect(
+      system.query('SELECT url FROM company_source_candidates'),
+    ).rejects.toThrow(/permission denied/i)
+  })
+
+  it('21 · crm_system INSERT, UPDATE and DELETE are all refused', async () => {
+    // Nothing granted means all four refused, and all four are asserted rather than sampled:
+    // the guarantee is "no privilege on this table", not "no INSERT".
+    await expect(
+      system.query(
+        `INSERT INTO company_source_candidates (company_id, url, reason)
+         VALUES ($1, 'https://example.test/ai-suggested-itself', 'vì AI muốn')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(
+      system.query(`UPDATE company_source_candidates SET url = 'https://elsewhere.test'`),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(system.query('DELETE FROM company_source_candidates')).rejects.toThrow(
+      /permission denied/i,
+    )
+  })
+
+  it('22 · the same URL cannot be suggested twice for one company', async () => {
+    // A second search returning a URL already on the list must not double the row a person reads.
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url, reason)
+         VALUES ($1, 'https://example.test/candidate', 'lý do khác')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/company_source_candidates_company_id_url_unique|duplicate key/i)
+  })
+
+  it('23 · a candidate with no reason is refused — the reason is what a person decides on', async () => {
+    // Rule 4 where it costs the most: a row offered for a decision, carrying no grounds for it.
+    await expect(
+      app.query(
+        `INSERT INTO company_source_candidates (company_id, url)
+         VALUES ($1, 'https://example.test/no-reason')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/reason/i)
+  })
+})
+
+describe('company_sources_enabled — the crawler is handed the ON pages and nothing else', () => {
+  it('24 · crm_system reads the view, and the view shows only what is switched on', async () => {
+    // Two saved sources, one switched off. `crm_app` still writes and reads the table itself —
+    // REVOKE touched `crm_system` only, because a person has to see the row they turned off.
+    await app.query(
+      `INSERT INTO company_sources (company_id, url, source_tier, discovered_via, added_by)
+       VALUES ($1, 'https://example.test/tin-tuc', 'news', 'web_search', $2)`,
+      [COMPANY_ID, USER_ID],
+    )
+    await app.query(
+      `UPDATE company_sources SET enabled = false WHERE company_id = $1 AND url = $2`,
+      [COMPANY_ID, 'https://example.test/press'],
+    )
+
+    const { rows } = await system.query(
+      'SELECT url FROM company_sources_enabled WHERE company_id = $1',
+      [COMPANY_ID],
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].url).toBe('https://example.test/tin-tuc')
+  })
+
+  it('25 · crm_system cannot write through the view either', async () => {
+    // A simple view is updatable in Postgres, so "read-only" here is a GRANT and not a property of
+    // the view. Asserted rather than assumed: without these three refusals the AI would have
+    // gained a write path to the reading list by way of its own read path.
+    await expect(
+      system.query(
+        `INSERT INTO company_sources_enabled (company_id, url, discovered_via)
+         VALUES ($1, 'https://example.test/qua-view', 'web_search')`,
+        [COMPANY_ID],
+      ),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(
+      system.query(`UPDATE company_sources_enabled SET url = 'https://elsewhere.test'`),
+    ).rejects.toThrow(/permission denied/i)
+    await expect(system.query('DELETE FROM company_sources_enabled')).rejects.toThrow(
+      /permission denied/i,
+    )
   })
 })

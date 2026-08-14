@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common'
 import { z } from 'zod'
 
 import {
+  MAX_CANDIDATES_PER_COMPANY,
   SOURCE_TIER,
   type SourceCandidate,
   type SourceDiscovery,
@@ -37,8 +38,14 @@ const DEFAULT_MODEL = 'claude-sonnet-5'
 const MAX_SEARCHES = 3
 /** ...and a turn that keeps pausing is abandoned after this many continuations. */
 const MAX_CONTINUATIONS = 4
-/** A person has to read and tick every row. Six is a decision; a dozen is a chore. */
-const MAX_CANDIDATES = 6
+/**
+ * A person has to read and tick every row. Six is a decision; a dozen is a chore.
+ *
+ * The number lives in contracts because the service stores what comes back and caps it there too
+ * (ADR-0037). Two constants would be two answers to one product question, and the one that drifted
+ * would be the one nobody was looking at.
+ */
+const MAX_CANDIDATES = MAX_CANDIDATES_PER_COMPANY
 
 /** Only the transport is injected, so the tests can script responses without a network. */
 export type MessageCreate = (params: Anthropic.MessageCreateParams) => Promise<Anthropic.Message>

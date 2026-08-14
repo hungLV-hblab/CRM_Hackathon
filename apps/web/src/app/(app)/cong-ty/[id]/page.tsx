@@ -4,8 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
-import type { IngestResultDto } from '@crm/contracts'
-
 import { Badge } from '@/components/ui/badge'
 import {
   PendingProposalMarker,
@@ -14,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { CompanyProfileSection } from './company-profile-section'
 import { ContactSection } from './contact-section'
+import { IngestSummary } from './ingest-summary'
 import { ReadingZone } from '@/components/provenance/reading-zone'
 import { TimelineSection } from './timeline-section'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -123,74 +122,24 @@ export default function CompanyDetailPage() {
             {readingZone.isPending && <Skeleton className="h-40 w-full rounded-card" />}
             {readingZone.data && <ReadingZone observations={readingZone.data} />}
           </SectionCard>
-
-          {/*
-            Below the read zone on purpose: this is where the pages ABOVE came from, so it reads
-            in the order someone thinks in — what was found, then where it was found.
-          */}
-          {company && (
-            <SectionCard title="Nguồn đọc">
-              <SourceDiscoverySection company={company} />
-            </SectionCard>
-          )}
         </div>
       </div>
+
+      {/*
+        AFTER the grid, so it gets the full width — and still after the read zone in DOM order,
+        which is the order someone thinks in: what was found, then where it was found. Nothing above
+        moves, so the read zone keeps the position it had.
+
+        It was inside the 24rem column until 14/08 and could not fit what it holds: every candidate
+        carries a tier, a URL, a reason and a quoted snippet, which is three or four lines each, and
+        the two lists are only useful when they can be read side by side.
+      */}
+      {company && (
+        <SectionCard title="Nguồn đọc">
+          <SourceDiscoverySection company={company} />
+        </SectionCard>
+      )}
     </PageBody>
   )
 }
 
-/**
- * What the last read produced, in numbers. The dropped count is shown even when it is zero:
- * ADR-0014 makes the share of findings rejected for an unverifiable quote a METRIC, and a
- * number that only appears when it is inconvenient is not a metric.
- */
-function IngestSummary({ result }: { result: IngestResultDto }) {
-  if (result.skippedReason === 'ai_disabled') {
-    return (
-      <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
-        AI đang tắt nên không đọc nguồn. Dữ liệu đã có vẫn còn nguyên.
-      </p>
-    )
-  }
-
-  if (result.unchanged) {
-    return (
-      <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
-        Đã đọc, nội dung không đổi — không tạo bản lưu mới, không gọi LLM.
-      </p>
-    )
-  }
-
-  if (result.fetchStatus === 'failed') {
-    return (
-      <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
-        Không đọc được nguồn. Đã ghi lại lần đọc này, không có phát hiện nào được sinh.
-      </p>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="rounded-control bg-ink-100 px-3 py-2 text-sm text-ink-700">
-        Lưu {result.claimsSaved}/{result.claimsProposed} phát hiện ·{' '}
-        {result.claimsDroppedNoVerbatimQuote} bị bỏ vì câu trích không khớp nguyên văn ·{' '}
-        {result.claimsDowngradedFromCertain} bị hạ từ mức Chắc
-      </p>
-
-      {/**
-        * Autonomy zone 4 said out loud, at the moment it happens.
-        *
-        * On a company carrying Đang theo dõi, this read just wrote to the official timeline with
-        * nobody approving it (ADR-0028) — and the person who pressed the button is standing right
-        * here. Saying nothing would mean the only way to notice is to scroll up and spot a new row,
-        * which is not what "máy tự làm thì phải nói" means. The machine hue marks who wrote it.
-        */}
-      {result.systemEntriesAdded > 0 && (
-        <p className="rounded-control bg-machine-50 px-3 py-2 text-sm text-ink-900">
-          Hệ thống đã tự thêm {result.systemEntriesAdded} mục vào dòng thời gian vì công ty này
-          đang được theo dõi. Mỗi mục có câu trích bấm ra được, và bạn xoá được kèm lý do.
-        </p>
-      )}
-    </div>
-  )
-}

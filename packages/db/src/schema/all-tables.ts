@@ -4,6 +4,7 @@ import { auditEvents } from './audit-events'
 import { autoNextStepEvents } from './auto-next-step-events'
 import { claims } from './claims'
 import { companies } from './companies'
+import { companySourceCandidates } from './company-source-candidates'
 import { companySources } from './company-sources'
 import { contacts } from './contacts'
 import { notifications } from './notifications'
@@ -36,6 +37,10 @@ export const ALL_TABLES = [
   claims,
   observations,
   // Sales' official data.
+  // `companySourceCandidates` holds what a search offered, which nobody has kept yet — so it is
+  // neither AI-written data nor Sales' own. It sits here because it references `companies` and
+  // `users` and has to be cleared before both.
+  companySourceCandidates,
   // `companySources` is human-written configuration the AI only reads, so it belongs here
   // rather than above — but it references `companies` and `users`, hence before both.
   companySources,
