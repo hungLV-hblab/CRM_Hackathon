@@ -1,7 +1,7 @@
 # Ontology — AI Native CRM
 
 > Sinh 12/08/2026 từ [template](./ontology-template.md), dựa trên [Specs BTC](./hackathon-spec-ai-native-crm.md) và [phiên phản biện 260812-1742](./ai-sessions/260812-1742-req-phan-bien-de-bai-ai-native-crm.md).
-> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ✅ HungLV đọc lại và chấp nhận 13/08/2026 · ⏳ bản sửa 14/08/2026 (nguồn web thật có điều kiện — mục 1, 2, 3.6, 5, 6, 9, 10) **chờ duyệt lại**. Sửa file này thì phải duyệt lại.
+> **AI sinh nháp — người review và duyệt.** Trạng thái duyệt: ✅ HungLV đọc lại và chấp nhận 13/08/2026 · ⏳ bản sửa 14/08/2026 (nguồn web thật có điều kiện — mục 1, 2, 3.6, 5, 6, 9, 10) **chờ duyệt lại**; ⏳ bản sửa 14/08/2026 tối (đã thi công: `company_sources`, I-18, ADR-0036 — mục 3.6, 6, 9, 10) **chờ duyệt lại**. Sửa file này thì phải duyệt lại.
 > Nền lý thuyết: [ai-native-design-principles.md](./ai-native-design-principles.md).
 >
 > **File này là nguồn sự thật về ĐẶT TÊN và RÀNG BUỘC.** Code không khớp file này là code sai, không phải file sai.
@@ -108,7 +108,25 @@ Specs mục 3: *"Nguồn web trong đề bài chính là các bản chụp này,
 
 **`source_kind` không vào bảng 3.5 — và đó là kết luận sau khi đã có cột thật.** Bản 14/08 của mục này hứa ngược lại ("vào bảng 3.5 cùng lúc với migration"), vì lúc đó giả định nó sẽ là một pg enum. Khi thi công thì tiêu chí của chính repo bác điều đó: `packages/contracts/src/enums.ts` khai rõ *bảng 3.5 liệt kê những enum **tồn tại như một kiểu Postgres***, nên `user_role` và cờ cảnh báo cơ hội mới nằm ngoài `ENUMS`.
 
-`source_kind` là `text` + `CHECK`, **giống hệt `source_tier` trên cùng bảng đó và `snapshot_variant` trên `companies`** — cả hai đều không có trong 3.5. Hai cột mô tả cùng một trục "dữ liệu này từ đâu ra" mà chia nhau hai quy ước là bất nhất, và `text` + `CHECK` còn giữ được điều đã hứa với `source_tier`: thêm một giá trị không cần `ALTER TYPE`.
+`source_kind` là `text` + `CHECK`, **giống hệt `source_tier` trên cùng bảng đó và `snapshot_variant` trên `companies`** — cả hai đều không có trong 3.5. Hai cột mô tả cùng một trục "dữ liệu này từ đâu ra" mà chia nhau hai quy ước là bất nhất, và `text` + `CHECK` còn giữ được điều đã hứa với `source_tier`: thêm một giá trị không cần `ALTER TYPE`. Lời hứa đó đã được dùng ngay: `source_tier` có thêm `news` và `social` mà không cần migration kiểu nào.
+
+#### Đọc trang nào — `company_sources`, và vì sao nó là bảng của người
+
+| Thực thể | Từ trong Specs | Nghĩa | Ai được tạo |
+| --- | --- | --- | --- |
+| `CompanySource` | **nguồn đọc** | Một trang công khai mà công ty này được phép đọc: `url`, `source_tier`, `discovered_via`, `search_snippet`, `added_by` | **Chỉ người.** `crm_system` có `SELECT`, không có INSERT (I-18) |
+
+Luồng đi đúng luật 3 của CLAUDE.md — *máy chuẩn bị sẵn, người quyết định ghi*:
+
+```
+POST /companies/:id/source-candidates  → chạy web_search, TRẢ VỀ ứng viên. KHÔNG ghi gì.
+POST /companies/:id/sources            → người đã tick; ghi dưới crm_app, added_by = người đó.
+GET  /companies/:id/sources            → danh sách đang dùng để đọc.
+```
+
+**Vì sao tách hai bước thay vì "tìm xong tự lưu".** Gộp lại thì ít một cú bấm, và đổi lại AI **tự chọn nguồn nó sẽ rút phát hiện** — đúng thứ `snapshot_variant` đã được bảo vệ khỏi, và là một đường ghi thứ ba ngoài hai ngoại lệ Specs mở. Cái giá đã nhận: refresh trang mất danh sách ứng viên, vì không có chỗ nào lưu nó.
+
+**Đọc ở đâu, thứ tự ưu tiên:** `company_sources` không rỗng → đọc đúng danh sách đó, **không** đọc `companies.website`; rỗng → rơi về `companies.website`; cả hai trống → ghi `fetch_error_reason = invalid_url`. Hai nguồn sự thật cho một câu hỏi là cái giá phải trả để người dùng bật công tắc rồi bấm đọc được ngay mà không bị bắt Tìm nguồn trước — nên thứ tự này có test riêng, không để ngầm định.
 
 Nên: `SOURCE_KIND`, `SOURCE_TIER` và `FETCH_ERROR_REASON` khai trong `enums.ts` **ngoài** `ENUMS`, kèm comment giải thích; danh sách đóng do `CHECK` của [`0008_live_source.sql`](../packages/db/migrations/0008_live_source.sql) giữ; bảng 3.5 giữ nguyên 12 dòng và `ontology-enum-parity.test.ts` không phải sửa. Chi tiết ở ADR-0036.
 
@@ -201,7 +219,9 @@ Mỗi bất biến dưới đây có một test. Không có test = coi như chư
 | I-16 | [`live-source-toggle.test.ts`](../apps/api/src/domain/company/__tests__/live-source-toggle.test.ts) — từ chối + `AuditEvent`, phủ **cả năm** công ty seed; và [`live-source-columns-and-grants.test.ts`](../packages/db/src/__tests__/live-source-columns-and-grants.test.ts) cho tầng CSDL |
 | I-17 | [`resolve-observation-source.test.ts`](../apps/api/src/ai/__tests__/resolve-observation-source.test.ts) — 10 kiểu cấu hình sai/thiếu, tất cả rơi về `demo_snapshot`; `ai_enabled = false` chặn cả hai loại nguồn |
 
-**Vẫn còn một vế chưa nối:** `resolveObservationSource` là hàm thuần đã có test, nhưng `ObservationService` chưa gọi nó — nó ghi thẳng `source_kind = 'demo_snapshot'` vì chưa có crawler nào để phân giải sang. Nối vào cùng lúc với `LiveCrawlSource`. Cho tới lúc đó, **không đường nào trong sản phẩm sinh ra `live_crawl`**, nên công tắc bật cũng không đọc thật được.
+**Vế đó đã nối (14/08 tối).** `ObservationService` gọi `resolveObservationSource` trên đường chạy thật, và `LiveCrawlSource` đọc trang công khai — I-17 chuyển từ "có test hàm thuần" sang "có trên đường chạy", đo bằng [`live-crawl-ingest.test.ts`](../apps/api/src/domain/observation/__tests__/live-crawl-ingest.test.ts).
+
+Bằng chứng mạnh nhất cho I-16 nằm ở đó: chạy **đủ 39 e2e với `OBSERVATION_SOURCE=live_crawl`** → 39 xanh, mọi bản lưu trong CSDL vẫn là `demo_snapshot`, và crawler được gọi **0** lần. Bật công tắc toàn cục không mở được đường nào tới công ty seed.
 
 **Một bất biến mới, sinh ra từ chính thiết kế này:** `crm_system` có `SELECT` và **không có `INSERT`/`UPDATE`/`DELETE`** trên `company_sources`. Đó là "AI không tự chọn nguồn nó đọc" dịch thành quyền CSDL, cùng cơ chế đã bảo vệ `snapshot_variant` — test 14–16 của `live-source-columns-and-grants.test.ts`.
 
@@ -265,6 +285,8 @@ Các chỗ Specs mơ hồ hoặc tự mâu thuẫn, đã quyết xong — mườ
 | M-12 | Nút tắt chỉ dừng việc **sinh mới**; hành vi do người khởi xướng không bị tắt | mục 5 | [0009](decisions/0009-pham-vi-nut-tat-ai-chi-dung-sinh-moi.md) |
 | M-14 | "Nguồn web trong đề bài chính là các bản chụp" là ràng buộc **của bộ nghiệm thu**, không phải lệnh cấm nguồn khác tồn tại: nguồn thật được **bổ sung**, không được **thay**, và trần tự chủ hạ xuống vùng 2 | 3.6, I-15…I-17 | [0035](decisions/0035-cho-phep-nguon-web-that-kem-dieu-kien-ban-chup-van-la-nguon-cua-bo-nghiem-thu.md) |
 
+| M-15 | **LLM quyết *đọc ở đâu*, code quyết *cái gì được lưu và trích thế nào*.** `web_search` trả URL + đoạn trích; `LiveCrawlSource` fetch bytes; `ClaimExtractor` rút phát hiện qua đúng cửa I-1/I-2. Cấm dùng `web_fetch` lấy nội dung công ty — mất byte gốc là mất chỗ đứng của I-2 | 3.6, I-18 | [0036](decisions/0036-llm-tim-nguon-code-doc-bytes-va-ung-vien-phai-qua-nguoi.md) |
+
 **Luật rút ra, dùng cho mọi chỗ mơ hồ còn lại:** cách đọc nào làm một điều khoản Specs trở nên vô nghĩa thì cách đọc đó sai. Dùng ở ADR-0003, 0007, 0009.
 
 ## 10. Checklist duyệt ontology
@@ -275,8 +297,8 @@ Các chỗ Specs mơ hồ hoặc tự mâu thuẫn, đã quyết xong — mườ
 - [x] Vùng cấm liệt kê tường minh, có cách chặn hai lớp (mục 5)
 - [x] Có chỗ ghi nhận accept/reject/edit trên từng Proposal (`ProposalDecision`)
 - [x] 10 diễn giải ở mục 9 đã có ADR (0002–0009)
-- [ ] Ba điều kiện của nguồn thật (I-15, I-16, I-17) đã có test — **còn nợ**; đây là cửa gác của việc bật `source_kind = live_crawl`, không phải việc phải làm trước freeze
-- [ ] `source_kind` đã vào bảng 3.5 + `enums.ts` — **chỉ làm cùng lúc với migration tạo cột**, xem 3.6
+- [x] Ba điều kiện của nguồn thật (I-15, I-16, I-17) đã có test — **đã trả 14/08**, xem bảng cuối mục 6. Công tắc chỉ được bật sau khi cả ba xanh, và cả ba đã xanh
+- [x] `source_kind` đã có trong `enums.ts` cùng migration `0008` — **cố ý nằm ngoài bảng 3.5**: 3.5 liệt kê enum tồn tại như một kiểu Postgres, còn `source_kind` là `text` + CHECK, giống `source_tier` và `snapshot_variant` trên cùng bảng. Lý do đầy đủ ở [ADR-0036](decisions/0036-llm-tim-nguon-code-doc-bytes-va-ung-vien-phai-qua-nguoi.md) mục (f)
 - [x] **Người (không phải AI) đã đọc và duyệt file này** — HungLV, 13/08/2026
 - [x] Enum ở 3.5 đã ánh xạ vào code/CSDL thật — `packages/contracts/src/enums.ts` (13 enum trong `ENUMS`, cộng `user_role` cố ý nằm ngoài vì 3.5 không khai) → `pgEnum` sinh thẳng từ đó, giữ bởi `ontology-enum-parity.test.ts` đọc chính file này
 - [ ] Phần thực nghiệm còn nợ trong ADR-0002/0003/0007 đã chạy (một lần đo, ba ADR dùng chung) — **còn nợ**, trả trong phase nhóm 2 cùng nợ verify của [ADR-0014](decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md)
@@ -288,4 +310,4 @@ Các chỗ Specs mơ hồ hoặc tự mâu thuẫn, đã quyết xong — mườ
 - ~~Bản chụp là HTML hay text (Q-3 gửi BTC) → ảnh hưởng cách tính `quote_start`/`quote_end` (offset trên chuỗi nào).~~ **Đã chốt 12/08:** bản chụp lưu HTML; `Observation` giữ cả `raw_html` lẫn `raw_content` (text trích ra), offset và hash tính trên `raw_content`; giao diện hai tab *Văn bản* / *Bản gốc* → [ADR-0012](decisions/0012-ban-luu-giu-html-goc-va-text-trich-offset-tinh-tren-text.md).
 - ~~Chưa rõ Admin có được thao tác CRM không (Q-6) → chưa viết được ma trận quyền đầy đủ.~~ **Đã chốt 14/08:** vòng 1 Admin có quyền CRM y hệt Sales, chỉ khác màn quản trị → [ADR-0033](decisions/0033-vong-1-admin-co-quyen-crm-nhu-sales-ma-tran-quyen-chi-tiet-ngoai-pham-vi.md).
 - Cách đọc Specs mục 3 ở mục 3.6 ("bản chụp là ràng buộc của bộ nghiệm thu", không phải "nguồn duy nhất được phép tồn tại") là **diễn giải của đội, chưa có BTC xác nhận** — câu hỏi đã ghi trong [prompt log 260814-1124](ai-sessions/260814-1124-req-crawl-web-that.md) mục 6. Nếu BTC trả lời "duy nhất": **xoá** đường nguồn thật khỏi mục 1 và 3.6, không phải nới thêm điều kiện. Rủi ro hiện bằng 0 vì công tắc chưa bật.
-- Ai được bật nguồn thật cho một công ty — Admin hay Sales sở hữu công ty đó? Ảnh hưởng chỗ đặt nút và `AuditEvent` ghi actor nào. Chưa cần trả lời trước khi có cột `source_kind`.
+- ~~Ai được bật nguồn thật cho một công ty — Admin hay Sales sở hữu công ty đó?~~ **Đã chốt 14/08:** bất kỳ người dùng đã đăng nhập, giống mọi thao tác sửa hồ sơ công ty khác — theo [ADR-0033](decisions/0033-vong-1-admin-co-quyen-crm-nhu-sales-ma-tran-quyen-chi-tiet-ngoai-pham-vi.md), ma trận quyền chi tiết vẫn ngoài phạm vi vòng 1. Chỉ `JwtGuard`, không thêm cửa kiểm vai trò; `AuditEvent` ghi actor nên vẫn truy được ai bật.

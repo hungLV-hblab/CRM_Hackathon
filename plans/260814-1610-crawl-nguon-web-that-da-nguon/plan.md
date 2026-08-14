@@ -1,7 +1,7 @@
 ---
 title: "Nguồn web thật, đa nguồn có phân cấp — LLM tìm nguồn, code đọc bytes"
 description: "Trả nợ ba cửa gác I-15/I-16/I-17 bằng test, rồi mở đường đọc nguồn web thật cho công ty ngoài seed: web_search của Anthropic tìm URL, code của mình fetch bytes, ClaimExtractor không đổi một dòng"
-status: pending
+status: done
 priority: P1
 effort: large
 branch: "feat/live-crawl-sources"

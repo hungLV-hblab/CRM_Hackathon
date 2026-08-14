@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Cửa chốt — ADR, ontology, prompt log"
-status: pending
+status: done
 priority: P1
 dependencies: [1, 2, 3]
 ---
