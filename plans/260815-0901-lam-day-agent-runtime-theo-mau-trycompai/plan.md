@@ -34,7 +34,7 @@ Thứ đáng lấy là **thiết kế và văn xuôi hướng dẫn phán đoán
 - [x] `pnpm typecheck` xanh cả 5 gói · `pnpm lint` sạch
 - [x] Full unit suite **521/521** xanh — `apps/api` không phải sửa dòng nào, vì `/health` chỉ **thêm** `grants`
 - [x] Đọc mắt prompt ghép của cả hai skill, xác nhận đúng thứ tự và đúng khối công cụ cho từng skill
-- [ ] **Chưa xong:** chạy thật một lượt `discover-sources` và một lượt `extract-claims` qua stack `:8080`. Cần người có OAuth token — cùng điểm treo ADR-0038 và ADR-0039
+- [x] **Xong 15/08 ~10:47** (commit `aded85f`): chạy thật `extract-claims` với credential thật → `200`, hai phát hiện kèm câu trích, 19369 token vào / 160 ra, 8029ms, `authMode: cli_login`. Điểm treo của ADR-0038 và ADR-0039 đóng lại. `discover-sources` vẫn chưa chạy thật (tốn WebSearch + 8 lượt)
 - [x] ADR-0040 và ADR-0041 có ≥2 phương án bị loại kèm lý do (0040 có 3, 0041 có 3) và mục *đội đã verify thế nào* không rỗng
 
 ## Chi phí prompt
@@ -47,4 +47,5 @@ System prompt dài thêm ~1.4k ký tự mỗi lượt (≈400 token). Đối chi
 
 ## Câu hỏi còn treo
 
-- Chưa chạy được lượt thật với OAuth token nào ở phiên này — cùng điểm treo ADR-0039 đã ghi. Tiêu chí nghiệm thu thứ 3 phải do người có token chạy.
+- ~~Chưa chạy được lượt thật với OAuth token nào ở phiên này~~ — **đã đóng 15/08**, xem tiêu chí nghiệm thu thứ 5. Credential đến từ `claude /login` trong container, không phải OAuth token trong `.env`; đường thứ ba đó nay là [ADR-0042](../../docs/decisions/0042-dang-nhap-trong-container-la-duong-xac-thuc-thu-ba-va-no-song-trong-volume-rieng.md).
+- Còn treo: `discover-sources` chưa có lượt chạy thật nào.

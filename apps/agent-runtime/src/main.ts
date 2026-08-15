@@ -1,10 +1,12 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { createServer } from 'node:http'
 import { join } from 'node:path'
 
-import { resolveAuthMode, runSkill, sandboxPath } from './claude-cli'
-import { AgentRunError } from './errors'
-import { JobQueue, QueueDeadlineError } from './job-queue'
-import { loadSkills, requireSkill } from './skill-registry'
+import { resolveAuthMode } from './claude-cli'
+import { TicketVerifier } from './auth-ticket'
+import { createRouter } from './http-routes'
+import { JobQueue } from './job-queue'
+import { LoginSessionController, hydrateStoredOauthToken } from './login-session'
+import { loadSkills } from './skill-registry'
 import { SKILL_TEMPLATE_VARS } from './skill-template-vars'
 
 /**
@@ -16,8 +18,14 @@ import { SKILL_TEMPLATE_VARS } from './skill-template-vars'
  * CLI inside `api` instead and a subprocess spawned by a model would be sharing an environment
  * with `DATABASE_URL_SYSTEM`.
  *
- * Deliberately NOT NestJS. There are two routes, no dependency injection worth the name, and a
- * framework here would mean a second build pipeline to maintain for no behaviour.
+ * Deliberately NOT NestJS. There are a handful of routes, no dependency injection worth the name,
+ * and a framework here would mean a second build pipeline to maintain for no behaviour.
+ *
+ * This file is the COMPOSITION ROOT and nothing else: it reads the environment, builds the four
+ * collaborators, and hands them to `http-routes.ts`. The routing moved out when the login endpoints
+ * arrived, because the property that most needed a test — that `/run/*` still demands
+ * `Bearer $AGENT_TOKEN` after a route is added beside it — could not be tested while it only
+ * existed inside a module that starts a server on import.
  *
  * WHAT THIS SERVICE DOES NOT DO: parse the model's answer, or judge it. It returns text. Every
  * gate — I-1, I-2, the verbatim quote check, the proposal whitelist — lives on the `api` side
@@ -29,7 +37,19 @@ const PORT = Number(process.env.AGENT_PORT ?? 4700)
 const TOKEN = process.env.AGENT_TOKEN?.trim()
 const SKILLS_DIR = process.env.AGENT_SKILLS_DIR?.trim() || join(__dirname, '..', 'skills')
 
+/**
+ * BEFORE anything asks `resolveAuthMode()`. If a previous login through the panel produced a
+ * printed token rather than a credential file, it lives on disk in the `agent-claude-home` volume
+ * and has to be back in the environment before the first `/health` answers, or a restart reports
+ * `null` for a container that is in fact authenticated.
+ *
+ * It never overwrites a variable that is already set — `.env` still decides (ADR-0042).
+ */
+hydrateStoredOauthToken()
+
 const queue = new JobQueue(Number(process.env.AGENT_QUEUE_DEADLINE_MS ?? 120_000))
+const login = new LoginSessionController()
+const tickets = new TicketVerifier(TOKEN)
 
 /**
  * Boot fails loudly on a bad skill directory rather than starting and failing on first use.
@@ -51,7 +71,8 @@ const skills = loadSkills(SKILLS_DIR, SKILL_TEMPLATE_VARS)
  * unref'd timer: almost right in the log is worse than plainly wrong.
  *
  * So it stays up, says so on /health, and refuses every run. Serving without a token is the one
- * thing it must not do — /run would be an open endpoint spending a real person's quota.
+ * thing it must not do — /run would be an open endpoint spending a real person's quota, and
+ * /agent-auth would be an open endpoint opening login sessions.
  */
 const ENABLED = Boolean(TOKEN)
 
@@ -70,143 +91,14 @@ const AUTH_LABEL: Record<'oauth' | 'api_key' | 'cli_login' | 'none', string> = {
   none: 'CHƯA CÓ — mọi lượt chạy sẽ trả not_authenticated',
 }
 
-interface RunRequest {
-  userPrompt?: unknown
-}
+const router = createRouter({ enabled: ENABLED, token: TOKEN, skills, queue, login, tickets })
 
 const server = createServer((req, res) => {
-  void handle(req, res).catch((error: Error) => {
-    send(res, 500, { reason: 'spawn_failed', message: error.message })
+  void router(req, res).catch((error: Error) => {
+    res.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+    res.end(JSON.stringify({ reason: 'spawn_failed', message: error.message }))
   })
 })
-
-async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const url = new URL(req.url ?? '/', 'http://localhost')
-
-  if (req.method === 'GET' && url.pathname === '/health') {
-    /**
-     * Unauthenticated on purpose: compose's healthcheck has no token, and everything here is a
-     * count or a name. The `authMode` field answers "which credential is this actually running
-     * on" from the outside, which ADR-0014 established must never be a guess.
-     */
-    return send(res, 200, {
-      ok: ENABLED,
-      enabled: ENABLED,
-      skills: [...skills.keys()],
-      /**
-       * The autonomy ceiling, readable from OUTSIDE the container.
-       *
-       * Which tools each skill may reach for is otherwise only knowable by reading a
-       * `policy.json` inside the image, and "nobody can widen a skill's reach without anyone
-       * noticing" is a claim worth being able to check rather than assert. Added ALONGSIDE
-       * `skills` rather than replacing it — `agent-runtime-client.ts` types that field as
-       * `string[]`, and a breaking change to a shape the API already reads is not a thing to
-       * do for a diagnostic.
-       */
-      grants: Object.fromEntries([...skills].map(([name, skill]) => [name, skill.policy.allowedTools])),
-      /**
-       * Asked of `claude-cli.ts` rather than re-derived from the environment here. Two copies of
-       * "which credential are we on" drift the moment a third path appears — which is exactly
-       * what happened: a login performed INSIDE the container leaves no variable behind, and
-       * this line used to answer `api_key` for it while the run itself was refused outright.
-       *
-       * `null` is reported as such. "No credential" is a state an operator has to be able to
-       * read off /health, and it is not the same state as "running on a key".
-       */
-      authMode: resolveAuthMode(),
-      sandbox: sandboxPath(),
-      queue: queue.stats(),
-    })
-  }
-
-  const runMatch = url.pathname.match(/^\/run\/([a-z0-9-]+)$/)
-  if (req.method === 'POST' && runMatch) {
-    if (!ENABLED) {
-      return send(res, 503, {
-        reason: 'disabled',
-        message: 'AGENT_TOKEN chưa đặt — agent-runtime đang tắt, không nhận lượt chạy nào',
-      })
-    }
-    if (req.headers.authorization !== `Bearer ${TOKEN}`) {
-      return send(res, 401, { reason: 'unauthorized', message: 'Thiếu hoặc sai AGENT_TOKEN' })
-    }
-    return runOne(res, runMatch[1] as string, await readJson(req))
-  }
-
-  send(res, 404, { reason: 'not_found', message: `Không có route ${req.method} ${url.pathname}` })
-}
-
-async function runOne(res: ServerResponse, skillName: string, body: RunRequest): Promise<void> {
-  if (typeof body.userPrompt !== 'string' || body.userPrompt.trim() === '') {
-    return send(res, 400, { reason: 'parse_failed', message: 'Thiếu trường userPrompt' })
-  }
-  const userPrompt = body.userPrompt
-
-  try {
-    const skill = requireSkill(skills, skillName)
-    const run = await queue.run(() => runSkill(skill.policy, skill.systemPrompt, userPrompt))
-
-    /**
-     * One line per run, and `elapsedMs` is kept apart from `apiMs` because the difference IS
-     * the process startup cost — the number that decides whether this transport is viable for
-     * a given flow. Collapsing them into one figure hides the only thing worth watching.
-     */
-    console.log(
-      `[agent] ${skillName}: ${run.elapsedMs}ms tổng (${run.apiMs}ms gọi model, ` +
-        `${run.elapsedMs - run.apiMs}ms khởi động) · ${run.inputTokens} token vào / ` +
-        `${run.outputTokens} ra · session ${run.sessionId}`,
-    )
-
-    send(res, 200, {
-      text: run.text,
-      telemetry: {
-        skill: skillName,
-        elapsedMs: run.elapsedMs,
-        apiMs: run.apiMs,
-        inputTokens: run.inputTokens,
-        outputTokens: run.outputTokens,
-        sessionId: run.sessionId,
-      },
-    })
-  } catch (error) {
-    if (error instanceof QueueDeadlineError) {
-      console.warn(`[agent] ${skillName}: ${error.message}`)
-      return send(res, 503, { reason: 'timeout', message: error.message })
-    }
-    if (error instanceof AgentRunError) {
-      console.warn(`[agent] ${skillName} thất bại (${error.reason}): ${error.message}`)
-      /**
-       * 200-with-a-reason would make a failure indistinguishable from an answer at the HTTP
-       * layer. `502` says the upstream did not produce one; the caller turns that into an
-       * empty finding list, which is what rule 4 asks for.
-       */
-      return send(res, 502, { reason: error.reason, message: error.message })
-    }
-    throw error
-  }
-}
-
-function readJson(req: IncomingMessage): Promise<RunRequest> {
-  return new Promise((resolve, reject) => {
-    let raw = ''
-    req.setEncoding('utf8')
-    req.on('data', (chunk: string) => (raw += chunk))
-    req.on('error', reject)
-    req.on('end', () => {
-      try {
-        resolve(raw.trim() === '' ? {} : (JSON.parse(raw) as RunRequest))
-      } catch {
-        resolve({})
-      }
-    })
-  })
-}
-
-function send(res: ServerResponse, status: number, body: unknown): void {
-  const payload = JSON.stringify(body)
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' })
-  res.end(payload)
-}
 
 server.listen(PORT, () => {
   if (!ENABLED) {

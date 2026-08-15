@@ -157,8 +157,12 @@ describe('luật nền đi kèm mọi skill', () => {
     expect(skill.systemPrompt).toContain('CÔNG CỤ Ở LƯỢT NÀY')
   })
 
-  it('nạp đúng hai skill đang ship, _base.md không thành skill thứ ba', () => {
-    expect([...shippedSkills.keys()].sort()).toEqual(['discover-sources', 'extract-claims'])
+  it('nạp đúng ba skill đang ship, _base.md không thành skill thứ tư', () => {
+    expect([...shippedSkills.keys()].sort()).toEqual([
+      'discover-sources',
+      'extract-claims',
+      'health-check',
+    ])
   })
 })
 

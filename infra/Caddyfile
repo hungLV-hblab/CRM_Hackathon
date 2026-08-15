@@ -11,6 +11,20 @@
 		reverse_proxy api:3001
 	}
 
+	# The ONLY prefix of `agent-runtime` reachable from outside, and the list is closed on purpose.
+	#
+	# `/agent-auth/*` opens a Claude login: the browser asks `api` for a short-lived HMAC ticket and
+	# then posts here DIRECTLY, so the OAuth code and the resulting credential never pass through
+	# the process that holds `DATABASE_URL_SYSTEM` (ADR-0038). Guarded by that ticket, not by
+	# `AGENT_TOKEN` — anything a browser holds is public.
+	#
+	# `/run/*` is deliberately ABSENT and must stay absent. It spends a real person's Claude quota,
+	# and a single extra line in this file would make it an open endpoint. Same origin as everything
+	# else on :8080, so no CORS is involved.
+	handle /agent-auth/* {
+		reverse_proxy agent-runtime:4700
+	}
+
 	handle {
 		reverse_proxy web:3000
 	}

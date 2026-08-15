@@ -1,4 +1,7 @@
 import type {
+  AgentAuthTicketDto,
+  AgentRunSummaryDto,
+  AgentRuntimeStatusDto,
   AiStatusDto,
   AutoNextStepMap,
   CompanyDto,
@@ -314,6 +317,34 @@ export const api = {
 
   /** ADMIN ONLY — every number of ontology section 7, each rate carrying its denominator. */
   metrics: () => call<MetricsDto>('/metrics'),
+
+  /**
+   * ADMIN ONLY. Mints the five-minute ticket the login panel carries to `agent-runtime`.
+   *
+   * This is the ONLY call in this feature that goes through `api`. The two that follow it —
+   * starting the session and posting the authorisation code — go to `/agent-auth/*` directly and
+   * are deliberately NOT wrapped in this file, because this file is "everything that talks to the
+   * API" and those do not. See the comment on that fetch in `claude-login-panel.tsx` before
+   * tidying them in here: routing the OAuth code through `api` would put a Claude credential in
+   * the one process that holds `DATABASE_URL_SYSTEM`, which ADR-0038 exists to prevent.
+   */
+  agentAuthTicket: () => call<AgentAuthTicketDto>('/settings/agent-auth-ticket', { method: 'POST' }),
+
+  /**
+   * ADMIN ONLY. Which credential `agent-runtime` is running on, proxied by the API because Caddy
+   * forwards only `/agent-auth/*` of that container — its `/health` is not public and should not
+   * become public for a diagnostic. Carries a mode NAME, never a token.
+   */
+  agentStatus: () => call<AgentRuntimeStatusDto>('/settings/agent-status'),
+
+  /**
+   * ADMIN ONLY. Forces one real run so the panel can say Claude Code works instead of assuming it
+   * from the presence of a credential — an expired session, an exhausted quota and a missing
+   * binary all look identical to `agentStatus` above.
+   *
+   * SPENDS QUOTA. Never call it on mount: an admin opening `/quan-tri` must not cost a run.
+   */
+  agentCheck: () => call<AgentRunSummaryDto>('/settings/agent-check', { method: 'POST' }),
 
   /**
    * The demo control: which stored snapshot counts as a company's source right now. On the admin

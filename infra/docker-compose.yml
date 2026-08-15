@@ -120,6 +120,13 @@ services:
       context: ..
       dockerfile: apps/agent-runtime/Dockerfile
     restart: unless-stopped
+    # A real init as PID 1, for one concrete reason: the login flow spawns `script`, which spawns
+    # `claude`. When a session is abandoned we kill the process GROUP, so both die — but the
+    # `claude` half is a GRANDCHILD, and once its parent is gone it is reparented to PID 1. Node
+    # only reaps its own children, so it sits there as a zombie forever: one leaked PID per
+    # abandoned login, observed as two `[claude]` entries after two cancelled attempts. `tini`
+    # reaps them and forwards signals, which Node as PID 1 does not.
+    init: true
     environment:
       AGENT_PORT: 4700
       AGENT_TOKEN: '${AGENT_TOKEN:-}'
@@ -127,8 +134,10 @@ services:
       # Falls back to an API key when no subscription token is present, so one image covers
       # both credentials rather than two images differing by which line is commented out.
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:-}'
-    # Never published and never routed through Caddy. A reachable /run endpoint is a way to
-    # spend somebody's subscription quota from outside.
+    # Never published on a host port. Caddy forwards exactly ONE prefix of this container,
+    # `/agent-auth/*`, which is the browser-driven Claude login and is gated by a five-minute HMAC
+    # ticket signed by `api`. `/run/*` is NOT forwarded and must never be: a reachable /run is a way
+    # to spend somebody's subscription quota from outside.
     expose:
       - '4700'
     # The third auth path (ADR-0042): `docker compose exec agent-runtime claude /login` writes a
