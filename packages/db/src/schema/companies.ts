@@ -1,7 +1,6 @@
 import { boolean, check, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
-import { companyTypeEnum } from './enums'
 import { users } from './users'
 
 /**
@@ -13,6 +12,15 @@ import { users } from './users'
  * without it feature group 2 cannot interpret news correctly. That is also why I-11 FORBIDS
  * a `Proposal` from editing it — editing the lens creates a self-referential loop.
  *
+ * `companyType` is `text`, NOT a pg enum (ADR-0042 amendment, migration 0012). It used to be a
+ * 5-value enum (`traditional`/`it_solution`/`it_product`/`tech_startup`/`other_ito`), fine for a
+ * hand-typed demo fixture — but the real BTC `Account.csv` carries free text ("SIer", "Enduser",
+ * "drug store", "IT Consulting", 6 rows blank) that does not fold cleanly into 5 buckets, and
+ * forcing a reverse-lookup would mean silently GUESSING which of the 5 buckets a real company
+ * belongs to — exactly what rule 4 forbids. `text` stores the source value as-is; the 5-value
+ * dictionary in `@crm/contracts` becomes a set of SUGGESTED values for the create/edit form, not
+ * an enforced list.
+ *
  * `isWatched` means "Đang theo dõi". Turning it on delegates news-writing to the system
  * (ADR-0006, I-5).
  */
@@ -22,7 +30,7 @@ export const companies = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
     industry: text('industry').notNull(),
-    companyType: companyTypeEnum('company_type').notNull(),
+    companyType: text('company_type').notNull(),
     country: text('country'),
     size: text('size'),
     website: text('website'),

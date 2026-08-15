@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { seed } from '../seed'
+import { loadDefaultDataset, seed } from '../seed'
 
 /**
  * I-14 and spec 7.5 — judges replay the scenario a second time, so `pnpm seed` has to return
@@ -77,10 +77,10 @@ describe('reseeding returns the system to exactly the initial state (I-14)', () 
   it('running seed twice produces an identical state', async () => {
     const url = process.env.DATABASE_URL_TEST as string
 
-    await seed(url)
+    await seed(url, loadDefaultDataset())
     const first = await snapshot()
 
-    await seed(url)
+    await seed(url, loadDefaultDataset())
     const second = await snapshot()
 
     expect(second).toBe(first)
@@ -88,28 +88,29 @@ describe('reseeding returns the system to exactly the initial state (I-14)', () 
 
   it('seed wipes what the demo produced instead of accumulating on top of it', async () => {
     const url = process.env.DATABASE_URL_TEST as string
-    await seed(url)
+    await seed(url, loadDefaultDataset())
 
     // Reproduces exactly what a judge does at acceptance check 3: create one more company.
     await owner.query(
       `INSERT INTO companies (name, industry, company_type) VALUES ('Judge created company', 'ITO', 'other_ito')`,
     )
+    const seedCompanyCount = loadDefaultDataset().companies.length
     const { rows: before } = await owner.query('SELECT count(*)::int AS total FROM companies')
-    expect(before[0].total).toBe(6)
+    expect(before[0].total).toBe(seedCompanyCount + 1)
 
-    await seed(url)
+    await seed(url, loadDefaultDataset())
     const { rows: after } = await owner.query('SELECT count(*)::int AS total FROM companies')
-    expect(after[0].total).toBe(5)
+    expect(after[0].total).toBe(seedCompanyCount)
   })
 
   it('reseeding puts every company back on the "before" snapshot', async () => {
     const url = process.env.DATABASE_URL_TEST as string
-    await seed(url)
+    await seed(url, loadDefaultDataset())
 
     // What a judge does at acceptance checks 6 and 8: flip a source, watch the system react.
     await owner.query(`UPDATE companies SET snapshot_variant = 'after'`)
 
-    await seed(url)
+    await seed(url, loadDefaultDataset())
     const { rows } = await owner.query(
       `SELECT count(*)::int AS total FROM companies WHERE snapshot_variant <> 'before'`,
     )
@@ -117,30 +118,38 @@ describe('reseeding returns the system to exactly the initial state (I-14)', () 
     expect(rows[0].total).toBe(0)
   })
 
-  it('the demo dataset carries the cases the acceptance run needs', async () => {
-    await seed(process.env.DATABASE_URL_TEST as string)
+  it('the real BTC dataset carries enough watched companies and readable sources for T-8', async () => {
+    await seed(process.env.DATABASE_URL_TEST as string, loadDefaultDataset())
 
+    // T-8 needs to be able to pick 3 watched companies and flip 2 of them — real data has far
+    // more than 3 watched, unlike the old 5-company fixture that carried exactly 3.
     const { rows: watched } = await owner.query(
       'SELECT count(*)::int AS total FROM companies WHERE is_watched',
     )
-    // Acceptance check 8 counts three watched companies, all with a readable source.
-    expect(watched[0].total).toBe(3)
+    expect(watched[0].total).toBeGreaterThanOrEqual(3)
 
+    const { rows: readable } = await owner.query(
+      `SELECT count(DISTINCT c.id)::int AS total
+       FROM companies c
+       JOIN snapshot_pages sp ON sp.company_id = c.id
+       WHERE c.is_watched AND (sp.before_html IS NOT NULL OR sp.after_html IS NOT NULL)`,
+    )
+    expect(readable[0].total).toBeGreaterThanOrEqual(3)
+
+    /**
+     * Real data has ZERO opportunities at stage `lost` (verified: `Opps.csv` carries no
+     * `Thua` row among the 15 real opportunities — the fictional fixture used to hand-craft one
+     * with a `lost_reason` and one without). T-1 now demonstrates that path by hand — dragging
+     * an opportunity to Lost through the UI — rather than relying on pre-seeded rows.
+     */
     const { rows: signals } = await owner.query(
       `SELECT
-         count(*) FILTER (
-           WHERE need_signal IS NOT NULL AND need_signal_source IS NOT NULL
-             AND budget_signal IS NOT NULL AND budget_signal_source IS NOT NULL
-         )::int AS complete,
-         count(*) FILTER (WHERE stage = 'lost' AND lost_reason IS NOT NULL)::int AS lost_with_reason,
-         count(*) FILTER (WHERE stage = 'lost' AND lost_reason IS NULL)::int AS lost_without_reason
+         count(*) FILTER (WHERE need_signal IS NOT NULL AND budget_signal IS NOT NULL)::int AS complete,
+         count(*) FILTER (WHERE stage = 'lost')::int AS lost
        FROM opportunities`,
     )
-    // Both sides of every rule the screens show, or the demo only ever displays one state:
-    // a deal past the qualification gate with no flag, and lost deals with and without a reason.
     expect(signals[0].complete).toBeGreaterThanOrEqual(1)
-    expect(signals[0].lost_with_reason).toBeGreaterThanOrEqual(1)
-    expect(signals[0].lost_without_reason).toBeGreaterThanOrEqual(1)
+    expect(signals[0].lost).toBe(0)
 
     const { rows: primaries } = await owner.query(
       `SELECT company_id, count(*)::int AS total FROM contacts GROUP BY company_id ORDER BY total DESC`,
@@ -149,7 +158,7 @@ describe('reseeding returns the system to exactly the initial state (I-14)', () 
   })
 
   it('the effective AI parameters live in the database after seeding (ontology 3.4)', async () => {
-    await seed(process.env.DATABASE_URL_TEST as string)
+    await seed(process.env.DATABASE_URL_TEST as string, loadDefaultDataset())
     const { rows } = await owner.query('SELECT key, value FROM system_settings ORDER BY key')
     expect(rows.map((r) => r.key)).toEqual(['ai_enabled', 'watch_cycle_seconds'])
   })

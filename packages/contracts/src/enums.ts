@@ -17,6 +17,14 @@ export function enumCodes<T extends Record<string, string>>(
   return Object.keys(enumObj) as [keyof T & string, ...(keyof T & string)[]]
 }
 
+/**
+ * SUGGESTED values for the company create/edit form dropdown — NOT an enforced enum
+ * (schema migration 0012, ADR-0042 amendment). `companies.companyType` is plain `text`: the
+ * real BTC `Account.csv` carries free text ("SIer", "Enduser", "drug store", "IT Consulting",
+ * several blank rows) that does not fold into these 5 buckets without guessing, and rule 4
+ * (CLAUDE.md) forbids guessing a classification. A Sales user typing a new company by hand can
+ * still pick one of these five, or type anything else.
+ */
 export const COMPANY_TYPE = {
   traditional: 'Traditional',
   it_solution: 'IT Solution',

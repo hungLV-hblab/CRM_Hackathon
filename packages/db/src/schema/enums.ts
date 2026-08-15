@@ -1,7 +1,6 @@
 import { pgEnum } from 'drizzle-orm/pg-core'
 
 import {
-  COMPANY_TYPE,
   CONFIDENCE,
   CREATED_BY,
   DECISION,
@@ -26,8 +25,10 @@ import {
  *
  * All enums are declared even though the skeleton uses 5: adding a value to a Postgres
  * enum later needs `ALTER TYPE`, which costs far more than declaring them once now.
+ *
+ * `company_type` is NOT here — `companies.companyType` is plain `text` (see `companies.ts`
+ * and migration 0012). Real data does not fold into a closed 5-value set without guessing.
  */
-export const companyTypeEnum = pgEnum('company_type', enumCodes(COMPANY_TYPE))
 export const stageEnum = pgEnum('stage', enumCodes(STAGE))
 export const signalTypeEnum = pgEnum('signal_type', enumCodes(SIGNAL_TYPE))
 export const confidenceEnum = pgEnum('confidence', enumCodes(CONFIDENCE))

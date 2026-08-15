@@ -12,6 +12,7 @@ import { observations } from './observations'
 import { opportunities } from './opportunities'
 import { proposalDecisions } from './proposal-decisions'
 import { proposals } from './proposals'
+import { snapshotPages } from './snapshot-pages'
 import { systemSettings } from './system-settings'
 import { timelineEntries } from './timeline-entries'
 import { users } from './users'
@@ -44,6 +45,9 @@ export const ALL_TABLES = [
   // `companySources` is human-written configuration the AI only reads, so it belongs here
   // rather than above — but it references `companies` and `users`, hence before both.
   companySources,
+  // `snapshotPages` is the same shape of thing: written by the import path, only ever read by
+  // `crm_system`. References `companies`, must clear before it.
+  snapshotPages,
   auditEvents,
   watchCycleRuns,
   timelineEntries,
