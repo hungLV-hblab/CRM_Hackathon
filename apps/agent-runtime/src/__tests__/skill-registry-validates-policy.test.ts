@@ -2,7 +2,15 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { PROPOSAL_TARGET_FIELDS, SIGNAL_TYPE, SOURCE_TIER, enumCodes } from '@crm/contracts'
+import {
+  AUTO_WRITE_CONFIDENCE,
+  AUTO_WRITE_SIGNALS,
+  COMPANY_TYPE,
+  PROPOSAL_TARGET_FIELDS,
+  SIGNAL_TYPE,
+  SOURCE_TIER,
+  enumCodes,
+} from '@crm/contracts'
 import { describe, expect, it } from 'vitest'
 
 import { loadSkills, requireSkill } from '../skill-registry'
@@ -123,6 +131,19 @@ describe('loadSkills', () => {
 const shippedSkills = loadSkills(join(__dirname, '..', '..', 'skills'), SKILL_TEMPLATE_VARS)
 
 /**
+ * Assert against ONE section rather than the whole prompt, because most of these values also
+ * appear in the rendered enum list a few lines away. Whole-prompt containment would pass on the
+ * list alone, which is exactly the state these tests exist to reject.
+ */
+function between(prompt: string, startMarker: string, endMarker: string): string {
+  const start = prompt.indexOf(startMarker)
+  const end = prompt.indexOf(endMarker, start + 1)
+  if (start === -1) throw new Error(`Prompt không còn mục "${startMarker}"`)
+  if (end === -1) throw new Error(`Prompt không còn mục "${endMarker}" sau "${startMarker}"`)
+  return prompt.slice(start, end)
+}
+
+/**
  * Asserted across EVERY shipped skill rather than once per skill, so that a skill added later
  * cannot ship without the floor. Rule 4 of CLAUDE.md is the thing being defended: a model that
  * treats an empty answer as failure fills the gap with a guess.
@@ -159,6 +180,45 @@ describe('skill extract-claims đi kèm sản phẩm', () => {
   it('giữ nguyên luật câu trích nguyên văn — I-2 đứng hay đổ ở dòng này', () => {
     expect(requireSkill(skills, 'extract-claims').systemPrompt).toContain('NGUYÊN VĂN')
   })
+
+  /**
+   * `{{SIGNAL_TYPES}}` renders the list, so a new enum value reaches the model whether or not
+   * anybody explains it — and an unexplained value is one the model picks by the sound of its
+   * name. Asserted on the meaning section alone, and on the bold form, so the enum list itself
+   * cannot satisfy it: adding a signal type now forces adding what it means for Sales.
+   */
+  it('mỗi loại tín hiệu đều được giải thích, không chỉ được liệt kê', () => {
+    const prompt = requireSkill(skills, 'extract-claims').systemPrompt
+    const section = between(prompt, 'Ý NGHĨA TỪNG LOẠI TÍN HIỆU', 'ĐỌC DƯỚI LĂNG KÍNH')
+
+    for (const signal of enumCodes(SIGNAL_TYPE)) expect(section).toContain(`**${signal}**`)
+  })
+
+  /**
+   * `build-observation-prompt.ts` already puts `companyType` in the user turn, and
+   * `demo-snapshots.ts` builds a demo on it: the same funding news under two company types has
+   * to read differently, "and if it does not, the lens is decoration". Sending the value while
+   * the system prompt says nothing about it is exactly that decoration.
+   */
+  it('mọi loại hình công ty đều có mặt trong phần lăng kính', () => {
+    const prompt = requireSkill(skills, 'extract-claims').systemPrompt
+    const section = between(prompt, 'ĐỌC DƯỚI LĂNG KÍNH', 'NHỮNG THỨ TRÔNG NHƯ TÍN HIỆU')
+
+    for (const type of enumCodes(COMPANY_TYPE)) expect(section).toContain(type)
+  })
+
+  /**
+   * I-6 gates the zone-3 auto-write on exactly these two signal types and these two confidence
+   * levels (`auto-next-step-service.ts`). The model chooses both, so it has to be told what its
+   * choice sets in motion — a label picked "to be safe" costs a window measured in days.
+   */
+  it('nói cho model biết nhãn nào mở cổng tự ghi Việc tiếp theo', () => {
+    const prompt = requireSkill(skills, 'extract-claims').systemPrompt
+    const section = between(prompt, 'HỆ QUẢ CỦA NHÃN BẠN GÁN', '"statement" viết bằng')
+
+    for (const signal of AUTO_WRITE_SIGNALS) expect(section).toContain(signal)
+    for (const level of AUTO_WRITE_CONFIDENCE) expect(section).toContain(level)
+  })
 })
 
 describe('skill discover-sources đi kèm sản phẩm', () => {
@@ -186,5 +246,25 @@ describe('skill discover-sources đi kèm sản phẩm', () => {
 
   it('vẫn nói với model rằng hệ thống sẽ tự mở từng địa chỉ — bịa là mất trắng', () => {
     expect(requireSkill(skills, 'discover-sources').systemPrompt).toMatch(/TỰ MỞ/)
+  })
+
+  /**
+   * The richest signal source for an ITO seller and the one a generic "find pages about this
+   * company" prompt never reaches for: how many engineers a company is hiring, and for what
+   * stack, says more about an upcoming build than any press release does.
+   */
+  it('có nhắc trang tuyển dụng — nguồn tín hiệu bị bỏ quên nhiều nhất', () => {
+    expect(requireSkill(skills, 'discover-sources').systemPrompt).toMatch(/tuyển dụng|careers/)
+  })
+
+  /**
+   * A source that never changes produces nothing on every re-read, forever. The prompt has to
+   * separate "belongs to this company" from "worth reading again next week".
+   */
+  it('dạy phân biệt trang sẽ có tin mới với trang nằm im', () => {
+    const prompt = requireSkill(skills, 'discover-sources').systemPrompt
+
+    expect(prompt).toContain('sẽ có tin mới')
+    expect(prompt).toMatch(/Về chúng tôi/)
   })
 })

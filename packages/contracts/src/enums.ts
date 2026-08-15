@@ -83,6 +83,27 @@ export const SIGNAL_DUE_DAYS: Record<SignalType, number> = {
   other: 14,
 }
 
+/**
+ * I-6 — which findings are allowed to reach autonomy zone 3 and set a next step with nobody
+ * asked. Two halves, both chosen by the MODEL, which is why they live here rather than beside
+ * the service that enforces them.
+ *
+ * Half one: a funding round and a new decision-maker each open a window that closes on its own,
+ * so being a day late costs the deal. `expansion` and `mass_hiring` are real news with no such
+ * clock, so they go through the review queue where a person picks the moment.
+ *
+ * Half two: `speculative` never causes a write into official data — rule 4 of CLAUDE.md.
+ *
+ * Shared from contracts for the same reason as `SIGNAL_DUE_DAYS` directly above, and one more:
+ * `apps/agent-runtime` renders these into the extraction prompt so the model is told what its
+ * own label sets in motion. A second copy would be a prompt promising Sales one rule while the
+ * domain enforced another — and the prompt is the copy nobody type-checks.
+ */
+export const AUTO_WRITE_SIGNALS = ['funding', 'leadership_hire'] as const satisfies readonly SignalType[]
+export type AutoWriteSignal = (typeof AUTO_WRITE_SIGNALS)[number]
+
+export const AUTO_WRITE_CONFIDENCE = ['certain', 'likely'] as const satisfies readonly Confidence[]
+
 /** The reason shown on screen next to the date, so the number is never unexplained. */
 export const SIGNAL_DUE_REASON: Record<SignalType, string> = {
   funding: 'cửa sổ gọi vốn tính bằng ngày',
