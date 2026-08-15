@@ -1,12 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { join } from 'node:path'
 
-import { PROPOSAL_TARGET_FIELDS, SIGNAL_TYPE, enumCodes } from '@crm/contracts'
-
 import { runSkill, sandboxPath } from './claude-cli'
 import { AgentRunError } from './errors'
 import { JobQueue, QueueDeadlineError } from './job-queue'
 import { loadSkills, requireSkill } from './skill-registry'
+import { SKILL_TEMPLATE_VARS } from './skill-template-vars'
 
 /**
  * The agent runtime: a small HTTP surface in front of `claude -p`.
@@ -38,10 +37,7 @@ const queue = new JobQueue(Number(process.env.AGENT_QUEUE_DEADLINE_MS ?? 120_000
  * never came up: the API would keep routing to it and every call would return empty findings,
  * which looks exactly like "the model found nothing".
  */
-const skills = loadSkills(SKILLS_DIR, {
-  PROPOSAL_TARGET_FIELDS: PROPOSAL_TARGET_FIELDS.join(' | '),
-  SIGNAL_TYPES: enumCodes(SIGNAL_TYPE).join(' | '),
-})
+const skills = loadSkills(SKILLS_DIR, SKILL_TEMPLATE_VARS)
 
 /**
  * No token means DISABLED, not dead — and that distinction is the whole reason this is not a

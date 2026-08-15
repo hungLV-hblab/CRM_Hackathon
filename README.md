@@ -27,13 +27,18 @@ Mở `.env` và điền **ba** biến bắt buộc, thiếu một cái là `pnpm
 
 `ANTHROPIC_API_KEY` **không bắt buộc** và cố ý như vậy: bỏ trống thì lớp rút phát hiện chạy bằng `FixtureClaimExtractor` — đọc đúng bộ bản chụp trong repo, câu trích vẫn nguyên văn, vẫn qua đủ cửa kiểm, nên **bộ nghiệm thu 10 điểm chạy được khi không có key** ([ADR-0014](docs/decisions/0014-nhom-2-rut-phat-hien-bang-llm-that-code-kiem-cau-trich.md)). Điền key thì gọi LLM thật, `ANTHROPIC_MODEL` chọn model.
 
-Đang chạy bằng cái nào thì **đọc log lúc khởi động**, đừng đoán từ hành vi:
+Đang chạy bằng cái nào thì **đọc log lúc khởi động**, đừng đoán từ hành vi. Hai lớp AI có hai dòng log riêng:
 
 ```bash
-docker compose -f infra/docker-compose.yml logs api | grep ClaimExtractor
+docker compose -f infra/docker-compose.yml logs api | grep -E "ClaimExtractor|SourceDiscovery"
+# Rút phát hiện:
 # Dùng AgentClaimExtractor qua agent-runtime tại ...  ← Claude CLI trong container
 # Dùng AnthropicClaimExtractor (model ...)            ← SDK, LLM thật
 # Không có agent-runtime và ANTHROPIC_API_KEY trống → dùng FixtureClaimExtractor
+# Tìm nguồn:
+# Dùng AgentSourceDiscovery qua agent-runtime tại ... ← Claude CLI + WebSearch
+# Dùng AnthropicSourceDiscovery với web_search ...    ← SDK, tìm kiếm thật
+# ... → dùng FixtureSourceDiscovery
 ```
 
 Đổi key trong `.env` thì phải `docker compose ... up -d api worker` lại — container đọc biến môi trường một lần lúc khởi động.
@@ -60,7 +65,7 @@ Kiểm nó lên chưa:
 
 ```bash
 docker compose -f infra/docker-compose.yml exec api wget -qO- http://agent-runtime:4700/health
-# {"ok":true,"skills":["extract-claims"],"authMode":"oauth",...}
+# {"ok":true,"skills":["discover-sources","extract-claims"],"authMode":"oauth",...}
 ```
 
 Ba điều nên biết trước khi bật:
@@ -69,7 +74,14 @@ Ba điều nên biết trước khi bật:
 - **Mỗi lần gọi tốn thêm ~3,4s** khởi động tiến trình, nằm trên đường Sales bấm nút.
 - **Dùng subscription làm backend là ngoài điều khoản của Anthropic.** Được cho demo nội bộ, không mang lên production.
 
-Luật rút phát hiện lúc này nằm ở [`apps/agent-runtime/skills/extract-claims/SKILL.md`](apps/agent-runtime/skills/extract-claims/SKILL.md) — sửa file đó rồi `docker compose ... up -d --build agent-runtime` là đổi được cách AI đọc, không cần sửa TypeScript.
+Luật của hai skill lúc này nằm ở [`apps/agent-runtime/skills/extract-claims/SKILL.md`](apps/agent-runtime/skills/extract-claims/SKILL.md) (rút phát hiện) và [`apps/agent-runtime/skills/discover-sources/SKILL.md`](apps/agent-runtime/skills/discover-sources/SKILL.md) (tìm nguồn) — sửa file đó rồi `docker compose ... up -d --build agent-runtime` là đổi được cách AI đọc, không cần sửa TypeScript.
+
+Riêng `discover-sources` có một điểm **khác** đường SDK, đừng nhầm hai cái là một ([ADR-0039](docs/decisions/0039-tim-nguon-qua-agent-runtime-xac-minh-bang-cach-mo-that-tung-dia-chi.md)): SDK đối chiếu URL với kết quả `web_search` của cùng lượt gọi, còn CLI không trả về khối kết quả đó, nên bảo đảm chống bịa địa chỉ được **thay** bằng cách **mở thật từng ứng viên** — địa chỉ nào không trả lời thì bị bỏ trước khi ai nhìn thấy. Số bị bỏ và lý do có trong log:
+
+```bash
+docker compose -f infra/docker-compose.yml logs api | grep "ứng viên giữ lại"
+# Tìm nguồn "Sakura": 4 ứng viên giữ lại trên 6 đã xác minh · bỏ vì không mở được: http_4xx×2
+```
 
 ### Bước 2 — bật hệ thống (terminal 1)
 
