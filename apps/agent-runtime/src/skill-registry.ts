@@ -29,7 +29,10 @@ export interface SkillPolicy {
 
 export interface Skill {
   policy: SkillPolicy
-  /** Contents of `SKILL.md`, passed verbatim as `--system-prompt`. */
+  /**
+   * What actually reaches `--system-prompt`: `_base.md`, then the tool grant derived from the
+   * policy, then this skill's own `SKILL.md`. Composed at boot — see `compose()`.
+   */
   systemPrompt: string
 }
 
@@ -58,12 +61,74 @@ function render(template: string, vars: Record<string, string>, skillName: strin
 }
 
 /**
+ * The preamble every skill inherits, as a FILE in the skills directory rather than a constant
+ * here — same reason `SKILL.md` is a file: the rules a model answers to should be reviewable and
+ * diffable by someone who does not read TypeScript.
+ *
+ * It is a file and not a directory, so the `isDirectory()` check below skips it on its own and
+ * it can never be mistaken for a runnable skill.
+ */
+const BASE_FILE = '_base.md'
+
+/**
+ * Told, not just enforced.
+ *
+ * `--allowed-tools` already makes the whitelist true — a tool outside it cannot be called, and
+ * that stays the real boundary. What the flag does NOT do is inform: a model that does not know
+ * it has no search will still plan around searching, and a plan it cannot execute is where an
+ * invented result comes from. `extract-claims` runs with an EMPTY whitelist and, until this
+ * paragraph reached it, had no way to know that.
+ *
+ * Generated from `policy.allowedTools` instead of written into the markdown, because a second
+ * hand-typed copy of the tool list is a copy that drifts — and the drifted one would be the copy
+ * describing a boundary that no longer matches the flag.
+ */
+function toolGrant(policy: SkillPolicy): string {
+  if (policy.allowedTools.length === 0) {
+    return [
+      'CÔNG CỤ Ở LƯỢT NÀY: không có công cụ nào.',
+      'Mọi thứ cần thiết đã nằm trong nội dung gửi kèm. Không có gì để tra cứu thêm và không có',
+      'cách nào kiểm chứng ngoài chính nội dung đó — cái gì nội dung không nói thì coi như không biết.',
+    ].join('\n')
+  }
+
+  return [
+    `CÔNG CỤ Ở LƯỢT NÀY: ${policy.allowedTools.join(', ')} — và không gì khác.`,
+    'Đừng lên kế hoạch quanh một công cụ không có trong danh sách này: bạn sẽ không gọi được nó.',
+    'Đừng viết như thể đã kiểm tra một thứ mà bạn chưa mở được bằng đúng những công cụ trên.',
+  ].join('\n')
+}
+
+/**
+ * Base first (the frame), tool grant second (the situation), the skill's own body last (the
+ * task). The body goes at the end because it is what must stand out; the frame goes first
+ * because it has to hold even when the rest is read quickly.
+ */
+function compose(base: string, policy: SkillPolicy, body: string): string {
+  return `${base}\n\n${toolGrant(policy)}\n\n---\n\n${body}`
+}
+
+/**
  * Read once at boot rather than per call: a skill that changes under a running process would
  * make two calls a minute apart answer to different rules with nothing in the log saying so.
  * Restart the container to pick up an edit — the restart IS the audit trail.
  */
 export function loadSkills(skillsDir: string, vars: Record<string, string> = {}): Map<string, Skill> {
   const skills = new Map<string, Skill>()
+
+  /**
+   * A missing base is a boot failure, not an empty string, for the same reason a policy missing
+   * `maxTurns` is. It carries "do not invent" and "empty is a valid answer" — delete it and every
+   * skill gets quietly weaker with nothing erroring and nothing in the log to say so.
+   */
+  let base: string
+  try {
+    base = readFileSync(join(skillsDir, BASE_FILE), 'utf8').trim()
+  } catch {
+    throw new Error(`Thư mục skill "${skillsDir}" thiếu ${BASE_FILE} — mọi skill mất phần luật nền`)
+  }
+  if (base.length === 0) throw new Error(`${BASE_FILE} rỗng — mọi skill mất phần luật nền`)
+  const renderedBase = render(base, vars, BASE_FILE)
 
   for (const entry of readdirSync(skillsDir)) {
     const dir = join(skillsDir, entry)
@@ -90,15 +155,17 @@ export function loadSkills(skillsDir: string, vars: Record<string, string> = {})
       throw new Error(`Skill "${entry}": SKILL.md rỗng`)
     }
 
+    const resolved: SkillPolicy = {
+      name: entry,
+      allowedTools: policy.allowedTools,
+      maxTurns: policy.maxTurns,
+      timeoutMs: policy.timeoutMs,
+      model: policy.model,
+    }
+
     skills.set(entry, {
-      systemPrompt: render(systemPrompt, vars, entry),
-      policy: {
-        name: entry,
-        allowedTools: policy.allowedTools,
-        maxTurns: policy.maxTurns,
-        timeoutMs: policy.timeoutMs,
-        model: policy.model,
-      },
+      systemPrompt: compose(renderedBase, resolved, render(systemPrompt, vars, entry)),
+      policy: resolved,
     })
   }
 

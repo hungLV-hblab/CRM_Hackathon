@@ -78,6 +78,17 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       ok: ENABLED,
       enabled: ENABLED,
       skills: [...skills.keys()],
+      /**
+       * The autonomy ceiling, readable from OUTSIDE the container.
+       *
+       * Which tools each skill may reach for is otherwise only knowable by reading a
+       * `policy.json` inside the image, and "nobody can widen a skill's reach without anyone
+       * noticing" is a claim worth being able to check rather than assert. Added ALONGSIDE
+       * `skills` rather than replacing it — `agent-runtime-client.ts` types that field as
+       * `string[]`, and a breaking change to a shape the API already reads is not a thing to
+       * do for a diagnostic.
+       */
+      grants: Object.fromEntries([...skills].map(([name, skill]) => [name, skill.policy.allowedTools])),
       authMode: process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'oauth' : 'api_key',
       sandbox: sandboxPath(),
       queue: queue.stats(),
