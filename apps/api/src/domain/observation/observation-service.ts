@@ -168,9 +168,10 @@ export class ObservationService {
   /**
    * WHERE to read, and the only place the two source kinds differ.
    *
-   * Returns a LIST from phase 2 onward even though the live path has exactly one URL today
-   * (`companies.website`). Phase 3 replaces the contents with `company_sources` and touches
-   * nothing else — a loop written later is a loop written under time pressure.
+   * `demo_snapshot` reads every page `snapshot_pages` has for this company (up to N —
+   * generalised from a single page/company, see `demo-snapshots.ts`). The loop over the
+   * result below (`for (const read of reads)`) already handled N sources before this change,
+   * built for the `company_sources`/live-crawl path — no other code in this method changes.
    */
   private async collectReads(
     company: CompanyForReading,
@@ -178,25 +179,23 @@ export class ObservationService {
     decision: 'demo_snapshot' | 'live_crawl',
   ): Promise<SourceRead[]> {
     if (decision === 'demo_snapshot') {
-      const snapshot = this.snapshots.read(company.id, variant)
-      if (!snapshot) {
+      const snapshots = await this.snapshots.readAll(company.id, variant)
+      if (snapshots.length === 0) {
         return [
           {
-            sourceUrl: this.snapshots.sourceUrlFor(company.id) ?? 'unknown',
+            sourceUrl: (await this.snapshots.sourceUrlFor(company.id)) ?? 'unknown',
             sourceTier: 'company_website',
             rawHtml: null,
             fetchErrorReason: null,
           },
         ]
       }
-      return [
-        {
-          sourceUrl: snapshot.sourceUrl,
-          sourceTier: 'company_website',
-          rawHtml: snapshot.rawHtml,
-          fetchErrorReason: null,
-        },
-      ]
+      return snapshots.map((snapshot) => ({
+        sourceUrl: snapshot.sourceUrl,
+        sourceTier: 'company_website' as const,
+        rawHtml: snapshot.rawHtml,
+        fetchErrorReason: null,
+      }))
     }
 
     const reads: SourceRead[] = []

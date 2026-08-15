@@ -1,7 +1,7 @@
 import { Pool } from 'pg'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 
-import { SEED_COMPANIES, createConnection, resetTestDatabase } from '@crm/db'
+import { createConnection, loadDefaultDataset, resetTestDatabase } from '@crm/db'
 
 import { AuditEventService } from '../../../common/audit/audit-event-service'
 import { CompanyService } from '../company-service'
@@ -24,7 +24,7 @@ import type { Actor } from '../../../common/actor/actor-context'
  */
 
 const SALES_ID = '11111111-1111-4111-8111-111111111111'
-const SEED_COMPANY = SEED_COMPANIES[0]
+const SEED_COMPANY = loadDefaultDataset().companies[0]
 const OUTSIDE_SEED = 'eeeeeeee-0004-4000-8000-000000000004'
 
 const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
@@ -116,7 +116,7 @@ describe('I-16 · a seed company can never be opted in', () => {
 
   it('5 · every seed company is covered, not just the first one', async () => {
     const service = buildService()
-    for (const seeded of SEED_COMPANIES.slice(1)) {
+    for (const seeded of loadDefaultDataset().companies.slice(1)) {
       await owner.query(
         `INSERT INTO companies (id, name, industry, company_type, owner_id)
          VALUES ($1, $2, 'Ngành', 'traditional', $3)`,

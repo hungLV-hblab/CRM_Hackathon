@@ -37,12 +37,28 @@ interface SignalPattern {
 const SIGNAL_PATTERNS: SignalPattern[] = [
   {
     signalType: 'funding',
-    keywords: ['gọi vốn', 'vòng series', 'series a', 'series b', 'series c', 'huy động', 'funding round', 'raised'],
+    keywords: [
+      'gọi vốn', 'vòng series', 'series a', 'series b', 'series c', 'huy động', 'funding round', 'raised',
+      // Real BTC company pages are mostly Japanese-language — added after finding zero matches
+      // across all 86 real "after" pages with the Vietnamese/English list alone. Kept to
+      // COMPOUND phrases specific to a capital raise, not a bare word: 資金 ("funds") alone
+      // matches things like routine expense disclosures, which is exactly the false-positive
+      // failure mode found while hand-checking candidates for this dataset.
+      '資金調達', 'シリーズa', 'シリーズb', 'シリーズc', '億円を調達', '出資を受け',
+    ],
     statementPrefix: 'Công ty vừa gọi vốn',
   },
   {
     signalType: 'leadership_hire',
-    keywords: ['bổ nhiệm', 'tân ceo', 'giám đốc công nghệ mới', 'cto mới', 'appoints', 'new cto', 'new cio'],
+    keywords: [
+      'bổ nhiệm', 'tân ceo', 'giám đốc công nghệ mới', 'cto mới', 'appoints', 'new cto', 'new cio',
+      // Same reasoning as `funding` above. Deliberately NOT bare 就任/取締役/代表取締役: hand-checked
+      // real matches for those against this exact dataset and every one was a false positive (a
+      // celebrity brand-ambassador announcement, a sitting CEO's conference appearance, a
+      // treasury-stock disclosure) — none was an actual new appointment. Kept to phrases that
+      // name the CHANGE itself, not just an executive title appearing on the page.
+      '新社長', '新cto', '新cio', '社長交代', 'cto就任', '社長就任',
+    ],
     statementPrefix: 'Công ty có nhân sự cấp cao mới',
   },
   {

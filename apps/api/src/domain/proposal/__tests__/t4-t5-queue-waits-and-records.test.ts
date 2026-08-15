@@ -18,6 +18,7 @@ import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry
 import { WatchCycleRollup } from '../../../watch/watch-cycle-rollup'
 import { WatchCycleService } from '../../../watch/watch-cycle-service'
 import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * T-4 and T-5 — the two acceptance checks of feature group 3.
@@ -45,7 +46,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 const proposalService = new ProposalService(systemConnection.db, appConnection.db)
 const decisions = new ProposalDecisionService(
   appConnection.db,
@@ -116,6 +117,7 @@ beforeEach(async () => {
         'Singapore', '50-100', 'https://marlin-labs.example.com')`,
     [SAKURA, MARLIN, SALES_ID],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, MARLIN])
   await owner.query(
     `INSERT INTO opportunities (id, company_id, name, stage, next_step_text, next_step_source)
      VALUES ($1, $2, 'Thuê ngoài đội bảo trì MES', 'qualified',

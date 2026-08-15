@@ -15,6 +15,7 @@ import { ProposalService } from '../proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * The generation half of feature group 3: which suggestions come into existence, and which are
@@ -42,7 +43,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 
 function buildIngest(extractor: ClaimExtractor = new FixtureClaimExtractor()): ObservationService {
   const claims = new ClaimService(systemConnection.db, appConnection.db)
@@ -95,6 +96,7 @@ beforeEach(async () => {
         'Singapore', '50-100', 'https://marlin-labs.example.com')`,
     [SAKURA, KITEFIN, MARLIN, SALES_ID],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, KITEFIN, MARLIN])
   await owner.query(
     `INSERT INTO system_settings (key, value) VALUES ('ai_enabled', 'true'), ('watch_cycle_seconds', '60')
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,

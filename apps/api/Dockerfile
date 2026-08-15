@@ -54,6 +54,12 @@ COPY --from=build /repo/packages/db/dist packages/db/dist
 COPY --from=build /repo/apps/api/dist apps/api/dist
 # Drizzle reads the SQL files at run time; without them the migrate job silently applies nothing.
 COPY packages/db/migrations packages/db/migrations
+# `loadDefaultDataset()` (`packages/db/src/seed/default-dataset.ts`) reads this zip at run time —
+# both `pnpm seed`'s CLI path AND `resolve-observation-source.ts`'s I-16 gate, the latter at
+# MODULE LOAD time, so its absence crashes the api/worker container on boot rather than failing
+# one request. Exactly the ENOENT-on-standalone-build risk ADR-0021 named and declined to take
+# for a different reason — caught here by actually running `pnpm start`, not by reasoning about it.
+COPY packages/db/seed-assets packages/db/seed-assets
 
 WORKDIR /repo/apps/api
 # `node dist/main.js` — never `nest start`, never `--watch`. Spec 7.3 asks for a real build.

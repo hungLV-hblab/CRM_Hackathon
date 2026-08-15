@@ -3,7 +3,6 @@ import { and, asc, eq, ilike, isNull } from 'drizzle-orm'
 
 import type {
   CompanyDto,
-  CompanyType,
   CreateCompanyDto,
   ListCompaniesQuery,
   UpdateCompanyDto,
@@ -55,7 +54,7 @@ export class CompanyService {
     if (query.q) conditions.push(ilike(companies.name, `%${query.q}%`))
     if (query.industry) conditions.push(eq(companies.industry, query.industry))
     if (query.companyType) {
-      conditions.push(eq(companies.companyType, query.companyType as CompanyType))
+      conditions.push(eq(companies.companyType, query.companyType))
     }
     if (query.country) conditions.push(eq(companies.country, query.country))
     if (query.isWatched !== undefined) conditions.push(eq(companies.isWatched, query.isWatched))

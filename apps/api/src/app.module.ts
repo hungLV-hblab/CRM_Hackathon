@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { APP_INTERCEPTOR } from '@nestjs/core'
 
 import { ActorInterceptor } from './common/actor/actor.interceptor'
+import { AdminModule } from './admin/admin.module'
 import { AuditEventService } from './common/audit/audit-event-service'
 import { AutoNextStepController } from './domain/opportunity/auto-next-step.controller'
 import { AutoNextStepService } from './domain/opportunity/auto-next-step-service'
@@ -46,7 +47,7 @@ import { WatchLogModule } from './watch/watch-log.module'
  * nobody ends up with two watch cycles by scaling the API container.
  */
 @Module({
-  imports: [DbModule, AuthModule, MetricsModule, WatchLogModule],
+  imports: [DbModule, AuthModule, MetricsModule, WatchLogModule, AdminModule],
   controllers: [
     AutoNextStepController,
     CompanyController,

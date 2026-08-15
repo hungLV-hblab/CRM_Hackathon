@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { SEED_COMPANIES } from '@crm/db'
+import { loadDefaultDataset } from '@crm/db'
 
 import { resolveObservationSource } from '../resolve-observation-source'
+
+const SEED_COMPANIES = loadDefaultDataset().companies
 
 /**
  * I-16 and I-17 at the only layer that can hold them: the decision of WHICH source a read uses.
