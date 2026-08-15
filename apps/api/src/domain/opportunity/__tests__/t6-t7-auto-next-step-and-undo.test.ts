@@ -17,6 +17,7 @@ import { SYSTEM_ACTOR, humanActor } from '../../../common/actor/actor-context'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * T-6, T-7 and the four invariants of feature group 4 — autonomy zone 3, the one place the AI
@@ -64,7 +65,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 
 const sales = humanActor(SALES_ID, 'sales')
 
@@ -203,6 +204,7 @@ beforeEach(async () => {
       HUMAN_NEXT_STEP,
     ],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, NIMBUS, KITEFIN])
   await owner.query(
     `INSERT INTO system_settings (key, value) VALUES ('ai_enabled', 'true'),
                                                     ('watch_cycle_seconds', '60')

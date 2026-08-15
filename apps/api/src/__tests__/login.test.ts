@@ -5,7 +5,7 @@ import { Pool } from 'pg'
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { DEMO_PASSWORDS, SEED_USERS, seed } from '@crm/db'
+import { DEMO_PASSWORDS, SEED_USERS, loadDefaultDataset, seed } from '@crm/db'
 
 import { AppModule } from '../app.module'
 
@@ -17,7 +17,7 @@ const ADMIN = SEED_USERS[1]
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
-  await seed(process.env.DATABASE_URL_TEST as string)
+  await seed(process.env.DATABASE_URL_TEST as string, loadDefaultDataset())
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile()
   app = moduleRef.createNestApplication()

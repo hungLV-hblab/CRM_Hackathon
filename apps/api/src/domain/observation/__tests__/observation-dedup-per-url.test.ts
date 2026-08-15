@@ -2,7 +2,7 @@ import { Pool } from 'pg'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 
 import type { ClaimDraft, ClaimExtractor, ObservationInput } from '@crm/contracts'
-import { createConnection, resetTestDatabase } from '@crm/db'
+import { type CrmDatabase, createConnection, resetTestDatabase } from '@crm/db'
 
 import { AuditEventService } from '../../../common/audit/audit-event-service'
 import { AutoNextStepService } from '../../opportunity/auto-next-step-service'
@@ -49,28 +49,33 @@ const settings = new SystemSettingService(
 )
 
 /**
- * A source under the test's control, standing in for `DemoSnapshotSource`. `SNAPSHOTS` is keyed by
- * the five seed company ids and cannot express "two URLs for one company", which is the whole
- * subject here — so the port is swapped rather than the fixture edited.
+ * A source under the test's control, standing in for `DemoSnapshotSource`. `snapshot_pages` is
+ * keyed by `(company_id, page_slug)` and cannot express "two URLs for one company" through the
+ * base class's `readAll()` without inserting two page rows and coordinating IDs — so the port
+ * is swapped rather than the fixture edited. `super(db)` is passed but never used: every method
+ * this test relies on is overridden below.
  */
 class TwoUrlSource extends DemoSnapshotSource {
-  constructor(private page: { sourceUrl: string; rawHtml: string }) {
-    super()
+  constructor(
+    db: CrmDatabase,
+    private page: { sourceUrl: string; rawHtml: string },
+  ) {
+    super(db)
   }
 
   setPage(page: { sourceUrl: string; rawHtml: string }): void {
     this.page = page
   }
 
-  override read(_companyId: string, _variant: SnapshotVariant): Snapshot | null {
+  override async readAll(_companyId: string, _variant: SnapshotVariant): Promise<Snapshot[]> {
     // Same contract as the base class: empty content means "this source cannot be read", and the
     // caller records `failed` rather than guessing. Diverging here would make test 5 measure a
     // stub's behaviour instead of the service's.
-    if (this.page.rawHtml.trim().length === 0) return null
-    return { sourceUrl: this.page.sourceUrl, rawHtml: this.page.rawHtml }
+    if (this.page.rawHtml.trim().length === 0) return []
+    return [{ sourceUrl: this.page.sourceUrl, rawHtml: this.page.rawHtml }]
   }
 
-  override sourceUrlFor(): string | null {
+  override async sourceUrlFor(): Promise<string | null> {
     return this.page.sourceUrl
   }
 }
@@ -148,7 +153,7 @@ afterAll(async () => {
 
 describe('I-3 · the same URL read twice costs one row and one LLM call', () => {
   it('1 · unchanged content on the same URL → no second row, extractor called ONCE', async () => {
-    const source = new TwoUrlSource({ sourceUrl: URL_A, rawHtml: SAME_TEXT })
+    const source = new TwoUrlSource(systemConnection.db, { sourceUrl: URL_A, rawHtml: SAME_TEXT })
     const extractor = new CountingExtractor()
     const service = buildService(source, extractor)
 
@@ -166,7 +171,7 @@ describe('I-3 · the same URL read twice costs one row and one LLM call', () => 
 
 describe('I-3 · two URLs are two sources, even with byte-identical content', () => {
   it('2 · the same text on a different URL IS stored — one row per source', async () => {
-    const source = new TwoUrlSource({ sourceUrl: URL_A, rawHtml: SAME_TEXT })
+    const source = new TwoUrlSource(systemConnection.db, { sourceUrl: URL_A, rawHtml: SAME_TEXT })
     const extractor = new CountingExtractor()
     const service = buildService(source, extractor)
 
@@ -188,7 +193,7 @@ describe('I-3 · two URLs are two sources, even with byte-identical content', ()
   })
 
   it('3 · alternating between two URLs stays quiet after each has been seen once', async () => {
-    const source = new TwoUrlSource({ sourceUrl: URL_A, rawHtml: SAME_TEXT })
+    const source = new TwoUrlSource(systemConnection.db, { sourceUrl: URL_A, rawHtml: SAME_TEXT })
     const extractor = new CountingExtractor()
     const service = buildService(source, extractor)
 
@@ -207,7 +212,7 @@ describe('I-3 · two URLs are two sources, even with byte-identical content', ()
   })
 
   it('4 · a real change on one URL is still detected while the other stays quiet', async () => {
-    const source = new TwoUrlSource({ sourceUrl: URL_A, rawHtml: SAME_TEXT })
+    const source = new TwoUrlSource(systemConnection.db, { sourceUrl: URL_A, rawHtml: SAME_TEXT })
     const extractor = new CountingExtractor()
     const service = buildService(source, extractor)
 
@@ -232,7 +237,7 @@ describe('I-3 does not apply to a failed read', () => {
   it('5 · two consecutive failures are two rows — an outage must stay visible', async () => {
     // An empty page is how `DemoSnapshotSource` expresses "cannot be read", so the same source
     // class covers this case; no cast and no second stub needed.
-    const source = new TwoUrlSource({ sourceUrl: URL_A, rawHtml: '' })
+    const source = new TwoUrlSource(systemConnection.db, { sourceUrl: URL_A, rawHtml: '' })
     const extractor = new CountingExtractor()
     const service = buildService(source, extractor)
 

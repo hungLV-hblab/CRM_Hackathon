@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { companyIdByName, seedSnapshotPage } from './watch-cycle-scenario'
+
 /**
  * T-6 and T-7 in a real browser — autonomy zone 3 as a judge will actually meet it.
  *
@@ -14,19 +16,36 @@ import { expect, test } from '@playwright/test'
  * A build that quietly wrote the cell with no mark and no button would leave every backend test
  * green — which is the whole reason this file exists rather than one more service test.
  *
+ * ── Why this test creates its own company (feature 260815-1026) ──────────────────────────
+ * I-6 needs BOTH an open opportunity with an EMPTY next step AND a source page whose content a
+ * `ClaimExtractor` classifies as `funding`/`leadership_hire`. Checked directly against the real
+ * BTC import: (a) EVERY real open opportunity already carries a Sales-typed next step — real
+ * deals never sit empty, so the precondition itself does not occur naturally; (b) a full
+ * line-level diff of all 86 real before/after pages against every recognised keyword
+ * (Vietnamese/English/Japanese) found zero funding/leadership_hire matches. So this spec creates
+ * its OWN company + opportunity through the UI (same pattern T-1 uses) — real product actions,
+ * not fixture data — and seeds ONE `snapshot_pages` row with genuine recognisable content for
+ * that company only. No real imported company's data is touched or fabricated.
+ *
  * Runs against the compose stack on :8080 (`pnpm start`), like the rest of the e2e suite.
  */
 
 const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
 
-/**
- * Nimbus is the zone 3 case in the seed: an open deal at `negotiation` with an EMPTY next step,
- * and an `after` page announcing a new CTO. Empty cell + `leadership_hire` is exactly the pair
- * I-6 lets the system write on, and no other spec reads Nimbus, so this one does not depend on
- * run order against the shared demo database.
- */
-const COMPANY = 'Nimbus Cloud Solutions'
-const OPPORTUNITY = 'Đội phát triển nền tảng tích hợp'
+const COMPANY = 'Cty Thu Nghiem T6 T7'
+const OPPORTUNITY = 'Doi phat trien nen tang tich hop T6T7'
+const PAGE_SLUG = 'news'
+const SOURCE_URL = 'https://example.test/t6-t7-harness'
+
+/** A new CTO announcement — matches `leadership_hire`'s keyword list verbatim. */
+const AFTER_HTML = `<html><body><article>
+  <h1>Cty Thu Nghiem T6 T7</h1>
+  <p>Công ty bổ nhiệm ông Trần Văn Long làm tân CTO phụ trách mảng nền tảng tích hợp.</p>
+</article></body></html>`
+const BEFORE_HTML = `<html><body><article>
+  <h1>Cty Thu Nghiem T6 T7</h1>
+  <p>Công ty cung cấp dịch vụ tích hợp hệ thống cho khách hàng doanh nghiệp.</p>
+</article></body></html>`
 
 /**
  * Reading a source calls the model, and since feature group 5 the WORKER is calling it too, on
@@ -43,6 +62,34 @@ async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.getByLabel('Mật khẩu').fill(SALES.password)
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
   await expect(page).toHaveURL(/\/cong-ty$/)
+}
+
+/** Creates the demo company + an open opportunity with an EMPTY next step, once per test file. */
+async function ensureFixture(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/cong-ty')
+  if (await page.getByRole('cell', { name: COMPANY }).isVisible().catch(() => false)) return
+
+  await page.getByRole('button', { name: 'Thêm công ty' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Tên công ty').fill(COMPANY)
+  await dialog.getByLabel('Ngành').fill('Tích hợp hệ thống')
+  await dialog.getByLabel('Loại hình').fill('IT Solution')
+  await dialog.getByRole('button', { name: 'Lưu' }).click()
+  await expect(page.getByRole('cell', { name: COMPANY })).toBeVisible()
+
+  await page.goto('/co-hoi')
+  await page.getByRole('button', { name: 'Thêm cơ hội' }).click()
+  const oppDialog = page.getByRole('dialog')
+  await oppDialog.getByLabel('Công ty').selectOption({ label: COMPANY })
+  await oppDialog.getByLabel('Tên cơ hội').fill(OPPORTUNITY)
+  await oppDialog.getByLabel('Giá trị dự kiến (để trống nếu chưa biết)').fill('480000')
+  await oppDialog.getByRole('button', { name: 'Lưu' }).click()
+  await expect(
+    page.getByRole('region', { name: 'Tiếp cận' }).getByText(OPPORTUNITY),
+  ).toBeVisible()
+
+  const companyId = await companyIdByName(COMPANY)
+  await seedSnapshotPage(companyId, PAGE_SLUG, SOURCE_URL, BEFORE_HTML, AFTER_HTML)
 }
 
 /**
@@ -71,6 +118,7 @@ test('T-6 · đổi sang bản chụp sau thì Việc tiếp theo tự đổi, c
   page,
 }) => {
   await login(page)
+  await ensureFixture(page)
 
   await test.step('đọc bản chụp "sau" của công ty có cơ hội đang mở, ô Việc tiếp theo trống', async () => {
     await readAfterSnapshot(page)
@@ -114,6 +162,7 @@ test('T-7 · Hoàn tác một cú bấm, giá trị cũ trở lại, thông báo
   page,
 }) => {
   await login(page)
+  await ensureFixture(page)
   await readAfterSnapshot(page)
   await page.goto('/co-hoi')
 
@@ -155,8 +204,8 @@ test('T-7 · Hoàn tác một cú bấm, giá trị cũ trở lại, thông báo
   })
 
   await test.step('ô trở về đúng nguyên trạng: trống, và cơ hội lại mang cờ thiếu Việc tiếp theo', async () => {
-    // Nimbus' cell was empty before the machine wrote, so "back" means empty — not the
-    // machine's sentence with a different label on it (I-8).
+    // The cell was empty before the machine wrote, so "back" means empty — not the machine's
+    // sentence with a different label on it (I-8).
     await expect(card(page)).toContainText('Chưa có Việc tiếp theo')
   })
 

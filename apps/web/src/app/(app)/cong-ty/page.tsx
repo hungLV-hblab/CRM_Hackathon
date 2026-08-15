@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
 
-import { COMPANY_TYPE, type CreateCompanyDto, type ListCompaniesQuery } from '@crm/contracts'
+import { type CreateCompanyDto, type ListCompaniesQuery } from '@crm/contracts'
 
 import { toast } from 'sonner'
 
@@ -26,7 +26,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PageBody } from '@/components/shell/page-body'
 import { api, ApiError } from '@/lib/api-client'
 
-const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: 'traditional' }
+const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: '' }
 const EMPTY_FILTERS: ListCompaniesQuery = {}
 
 export default function CompanyListPage() {
@@ -59,6 +59,15 @@ export default function CompanyListPage() {
   )
   const countries = useMemo(
     () => unique((allCompanies.data ?? []).map((row) => row.country).filter(Boolean) as string[]),
+    [allCompanies.data],
+  )
+  /**
+   * `companyType` is free text (schema migration 0012) — no fixed dictionary to render a
+   * dropdown from anymore. Same pattern as `industries`/`countries` above: the filter options
+   * are whatever values are actually in the data, not a hand-typed 5-value list.
+   */
+  const companyTypes = useMemo(
+    () => unique((allCompanies.data ?? []).map((row) => row.companyType)),
     [allCompanies.data],
   )
 
@@ -161,9 +170,9 @@ export default function CompanyListPage() {
           }
         >
           <option value="">Tất cả</option>
-          {Object.entries(COMPANY_TYPE).map(([code, label]) => (
-            <option key={code} value={code}>
-              {label}
+          {companyTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
             </option>
           ))}
         </Select>
@@ -233,7 +242,7 @@ export default function CompanyListPage() {
                 </Link>
               </Cell>
               <Cell>{company.industry}</Cell>
-              <Cell>{COMPANY_TYPE[company.companyType as keyof typeof COMPANY_TYPE]}</Cell>
+              <Cell>{company.companyType}</Cell>
               {/* Rule 4: an empty cell says it is empty. It never gets a plausible filler. */}
               <Cell>
                 {company.country ?? <span className="text-ink-500">Chưa ghi quốc gia</span>}
@@ -261,20 +270,19 @@ export default function CompanyListPage() {
             value={form.industry}
             onChange={(event) => setForm({ ...form, industry: event.target.value })}
           />
-          <Select
+          <Input
             label="Loại hình"
+            required
+            list="company-type-suggestions"
             value={form.companyType}
-            onChange={(event) =>
-              setForm({ ...form, companyType: event.target.value as CreateCompanyDto['companyType'] })
-            }
-          >
-            {/* Codes come from contracts, labels from the same place — ontology 3.5 or nothing. */}
-            {Object.entries(COMPANY_TYPE).map(([code, label]) => (
-              <option key={code} value={code}>
-                {label}
-              </option>
+            onChange={(event) => setForm({ ...form, companyType: event.target.value })}
+          />
+          {/* Text tự do (schema migration 0012) — datalist chỉ gợi ý, không ép chọn. */}
+          <datalist id="company-type-suggestions">
+            {companyTypes.map((type) => (
+              <option key={type} value={type} />
             ))}
-          </Select>
+          </datalist>
 
           {createCompany.isError && (
             <p role="alert" className="text-sm text-danger">
@@ -316,7 +324,7 @@ function filterChips(
     chips.push({ label: `Ngành: ${filters.industry}`, onRemove: without('industry') })
   if (filters.companyType)
     chips.push({
-      label: `Loại hình: ${COMPANY_TYPE[filters.companyType as keyof typeof COMPANY_TYPE]}`,
+      label: `Loại hình: ${filters.companyType}`,
       onRemove: without('companyType'),
     })
   if (filters.country)

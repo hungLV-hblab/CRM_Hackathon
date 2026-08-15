@@ -4,7 +4,10 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "migrations"],
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -15,12 +18,15 @@
   },
   "dependencies": {
     "@crm/contracts": "workspace:*",
+    "adm-zip": "^0.6.0",
     "bcryptjs": "^2.4.3",
+    "csv-parse": "^7.0.2",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.4",
     "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.30.2",

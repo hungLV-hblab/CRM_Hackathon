@@ -1,58 +1,84 @@
-import { describe, expect, it } from 'vitest'
+import { Pool } from 'pg'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+
+import { createConnection, resetTestDatabase } from '@crm/db'
 
 import { DemoSnapshotSource } from '../demo-snapshots'
 
 /**
- * The demo dataset carries two properties that the acceptance run silently depends on, and
- * both are easy to break by editing a paragraph. Neither is visible from reading one snapshot.
+ * `DemoSnapshotSource` reads `snapshot_pages` — replaces the old hand-typed TS map (ADR-0021),
+ * generalised to N pages/company. These tests exercise the class against a real database with
+ * its own small, throwaway fixture rows, not the product's actual imported dataset.
  */
 
-const SAKURA = 'aaaaaaaa-0001-4000-8000-000000000001'
-const MARLIN = 'aaaaaaaa-0005-4000-8000-000000000005'
-const OHARA = 'aaaaaaaa-0004-4000-8000-000000000004'
+const COMPANY_ID = 'eeeeeeee-0003-4000-8000-000000000001'
+const USER_ID = '11111111-1111-4111-8111-111111111111'
 
-const FUNDING = 'vòng Series B huy động 20 triệu USD do Mizuho Capital dẫn dắt'
+const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
+const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const source = new DemoSnapshotSource()
+const source = new DemoSnapshotSource(systemConnection.db)
 
-describe('the company-type lens has exactly one variable to be the difference', () => {
-  it('Sakura and Marlin carry the SAME funding news in their "after" snapshot', () => {
-    const sakura = source.read(SAKURA, 'after')
-    const marlin = source.read(MARLIN, 'after')
-
-    expect(sakura?.rawHtml).toContain(FUNDING)
-    expect(marlin?.rawHtml).toContain(FUNDING)
-    // `traditional` and `it_product`. Same news, two lenses — if the two readings come out the
-    // same, `company_type` is decoration, and that is the question this pair exists to ask.
-  })
-
-  it('neither "before" snapshot mentions the funding yet', () => {
-    expect(source.read(SAKURA, 'before')?.rawHtml).not.toContain(FUNDING)
-    expect(source.read(MARLIN, 'before')?.rawHtml).not.toContain(FUNDING)
-  })
-
-  it('each "after" snapshot adds exactly ONE paragraph', () => {
-    for (const companyId of [SAKURA, MARLIN]) {
-      const before = source.read(companyId, 'before')?.rawHtml ?? ''
-      const after = source.read(companyId, 'after')?.rawHtml ?? ''
-      // More than one new paragraph and a finding has several passages it could be quoting
-      // from, which makes provenance assertions pass for the wrong reason.
-      expect(paragraphCount(after) - paragraphCount(before)).toBe(1)
-    }
-  })
+beforeEach(async () => {
+  await resetTestDatabase(owner)
+  await owner.query(
+    `INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, 'sales@test.local', 'x', 'Sales', 'sales')`,
+    [USER_ID],
+  )
+  await owner.query(
+    `INSERT INTO companies (id, name, industry, company_type, owner_id) VALUES ($1, 'Công ty test', 'ITO', 'it_solution', $2)`,
+    [COMPANY_ID, USER_ID],
+  )
 })
 
-describe('an unreadable source stays unreadable', () => {
-  it('Ohara returns null in both variants, so `fetch_status = failed` has a real case', () => {
-    expect(source.read(OHARA, 'before')).toBeNull()
-    expect(source.read(OHARA, 'after')).toBeNull()
-  })
-
-  it('a company with no snapshot at all is a failed read, not a crash', () => {
-    expect(source.read('00000000-0000-4000-8000-000000000000', 'after')).toBeNull()
-  })
+afterAll(async () => {
+  await Promise.all([owner.end(), systemConnection.close()])
 })
 
-function paragraphCount(html: string): number {
-  return html.match(/<p>/g)?.length ?? 0
+async function insertPage(pageSlug: string, before: string | null, after: string | null): Promise<void> {
+  await owner.query(
+    `INSERT INTO snapshot_pages (company_id, page_slug, source_url, before_html, after_html)
+     VALUES ($1, $2, 'https://example.test', $3, $4)`,
+    [COMPANY_ID, pageSlug, before, after],
+  )
 }
+
+describe('DemoSnapshotSource.readAll — nhiều trang/công ty', () => {
+  it('1 · trả về đúng nội dung của biến thể được hỏi', async () => {
+    await insertPage('homepage', '<p>trước</p>', '<p>sau</p>')
+
+    const before = await source.readAll(COMPANY_ID, 'before')
+    const after = await source.readAll(COMPANY_ID, 'after')
+
+    expect(before).toHaveLength(1)
+    expect(before[0].rawHtml).toBe('<p>trước</p>')
+    expect(after[0].rawHtml).toBe('<p>sau</p>')
+  })
+
+  it('2 · nhiều trang → trả về nhiều kết quả (không còn giới hạn 1 trang/công ty)', async () => {
+    await insertPage('homepage', '<p>a</p>', '<p>a2</p>')
+    await insertPage('news', '<p>b</p>', '<p>b2</p>')
+    await insertPage('recruit', '<p>c</p>', '<p>c2</p>')
+
+    const after = await source.readAll(COMPANY_ID, 'after')
+    expect(after).toHaveLength(3)
+  })
+
+  it('3 · trang có HTML rỗng/NULL cho biến thể đang hỏi bị bỏ qua, không crash', async () => {
+    await insertPage('homepage', '<p>trước</p>', null)
+
+    const after = await source.readAll(COMPANY_ID, 'after')
+    expect(after).toHaveLength(0)
+  })
+
+  it('4 · công ty không có trang nào trả về mảng rỗng', async () => {
+    const after = await source.readAll(COMPANY_ID, 'after')
+    expect(after).toEqual([])
+  })
+
+  it('5 · sourceUrlFor trả về url của một trang bất kỳ, null nếu không có trang nào', async () => {
+    expect(await source.sourceUrlFor(COMPANY_ID)).toBeNull()
+    await insertPage('homepage', '<p>x</p>', '<p>y</p>')
+    expect(await source.sourceUrlFor(COMPANY_ID)).toBe('https://example.test')
+  })
+})

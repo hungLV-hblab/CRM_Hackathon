@@ -1,7 +1,5 @@
 import { z } from 'zod'
 
-import { enumCodes, COMPANY_TYPE } from '../enums'
-
 /**
  * The contract between the frontend and the API for `Company`. It lives in contracts so
  * `apps/web` can build screens against real types as soon as phase 1 lands, without waiting
@@ -9,11 +7,15 @@ import { enumCodes, COMPANY_TYPE } from '../enums'
  *
  * `name`, `industry` and `companyType` are required — exactly the `*` fields of ontology 3.1.
  * Validation messages stay Vietnamese: Sales reads them.
+ *
+ * `companyType` is free text (schema migration 0012), not `z.enum(COMPANY_TYPE)`: the real BTC
+ * data does not fold into the 5-value dictionary without guessing. `COMPANY_TYPE` in `../enums`
+ * is still exported as a set of SUGGESTED values for the create/edit form, not an enforced list.
  */
 export const createCompanySchema = z.object({
   name: z.string().trim().min(1, 'Tên công ty không được để trống'),
   industry: z.string().trim().min(1, 'Ngành không được để trống'),
-  companyType: z.enum(enumCodes(COMPANY_TYPE)),
+  companyType: z.string().trim().min(1, 'Loại hình công ty không được để trống'),
   country: z.string().trim().min(1).optional(),
   size: z.string().trim().min(1).optional(),
   website: z.string().url('Website phải là một URL hợp lệ').optional(),

@@ -4,7 +4,7 @@
 | --- | --- |
 | **Ngày** | 2026-08-13 01:10 |
 | **Giai đoạn** | Development |
-| **Trạng thái** | Chấp nhận |
+| **Trạng thái** | Thay thế bởi [ADR-0042](0042-quyen-crm-owner-ngan-han-cho-import-tu-giao-dien.md) — BTC đã giao dữ liệu (2026-08-15), `seed-data.ts` bị xoá hẳn, `seed()` giờ nhận `SeedDataset` parse từ zip thật, không còn hằng số tự đặt |
 | **Người quyết định** | HungLV |
 | **Prompt log** | *không có* — quyết trực tiếp trong phiên rà soát trạng thái 13/08 |
 

@@ -17,6 +17,7 @@ import { SystemTimelineEntryService } from '../system-timeline-entry-service'
 import { WatchCycleRollup } from '../watch-cycle-rollup'
 import { WatchCycleService } from '../watch-cycle-service'
 import { liveSourceThatMustNotRun } from '../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * The closed loop of feature group 5: a timer fires, sources are read, entries appear, and the
@@ -48,7 +49,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 
 let worker: WatchCycleService
 
@@ -158,6 +159,7 @@ beforeEach(async () => {
        ($4, 'Marlin Product Labs', 'Phần mềm', 'it_product', $5, false, 'after')`,
     [SAKURA, NIMBUS, KITEFIN, MARLIN, SALES_ID],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, NIMBUS, KITEFIN, MARLIN])
   await owner.query(
     `INSERT INTO system_settings (key, value) VALUES ('ai_enabled', 'true'), ('watch_cycle_seconds', '60')
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,

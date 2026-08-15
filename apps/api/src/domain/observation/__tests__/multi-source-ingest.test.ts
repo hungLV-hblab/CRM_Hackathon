@@ -98,7 +98,7 @@ function buildService(live: LiveCrawlSource, extractor: ClaimExtractor): Observa
     appConnection.db,
     extractor,
     new ClaimService(systemConnection.db, appConnection.db),
-    new DemoSnapshotSource(),
+    new DemoSnapshotSource(systemConnection.db),
     settings,
     reactions,
     live,

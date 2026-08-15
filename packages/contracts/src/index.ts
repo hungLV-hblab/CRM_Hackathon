@@ -6,6 +6,7 @@ export * from './ports/claim-extractor'
  * the name — so the line below is part of adding a port, not an afterthought.
  */
 export * from './ports/source-discovery'
+export * from './dto/admin-import'
 export * from './dto/company'
 export * from './dto/company-source'
 export * from './dto/contact'

@@ -11,32 +11,37 @@ import {
   companies,
   contacts,
   opportunities,
+  snapshotPages,
   systemSettings,
-  timelineEntries,
   users,
 } from '../schema'
-import {
-  SEED_COMPANIES,
-  SEED_CONTACTS,
-  SEED_OPPORTUNITIES,
-  SEED_TIMELINE_ENTRIES,
-  SEED_USERS,
-} from './seed-data'
+import { loadDefaultDataset } from './default-dataset'
+import { SEED_USERS } from './default-users'
+import type { SeedDataset } from './seed-dataset'
 
-export * from './seed-data'
+export * from './default-users'
+export * from './seed-dataset'
+export * from './parse-zip-dataset'
+export * from './default-dataset'
+export * from './deterministic-uuid'
 
 /**
- * I-14 and spec 7.5 — judges replay the scenario a second time, so `pnpm seed` has to return
- * the system to EXACTLY the initial state, not approximately.
+ * I-14 and spec 7 condition 5 — judges replay the scenario a second time, so both `pnpm seed`
+ * and the admin upload endpoint have to return the system to EXACTLY the initial state, not
+ * approximately.
  *
  * Hence TRUNCATE then INSERT, rather than `ON CONFLICT DO NOTHING`: the latter keeps
  * everything the demo produced (the company a judge just created, watch-cycle logs, audit
  * trail) and the second run would start from a different state than the first.
  *
+ * `dataset` is REQUIRED, not optional-with-a-default: a seed function that silently reads a
+ * file when nobody passed one is a hidden side effect. `loadDefaultDataset()` is the explicit
+ * way to get the checked-in dataset — see `runFromCli()` below and every test caller.
+ *
  * Runs as `crm_owner` — the only role allowed to delete. `crm_app` has no need to,
  * `crm_system` is forbidden outright (ontology section 5: never delete human-created data).
  */
-export async function seed(connectionString: string): Promise<void> {
+export async function seed(connectionString: string, dataset: SeedDataset): Promise<void> {
   const { db, close } = createConnection(connectionString)
   try {
     await db.transaction(async (tx) => {
@@ -48,10 +53,14 @@ export async function seed(connectionString: string): Promise<void> {
       )
 
       await tx.insert(users).values(SEED_USERS)
-      await tx.insert(companies).values(SEED_COMPANIES)
-      await tx.insert(contacts).values(SEED_CONTACTS)
-      await tx.insert(opportunities).values(SEED_OPPORTUNITIES)
-      await tx.insert(timelineEntries).values(SEED_TIMELINE_ENTRIES)
+      if (dataset.companies.length > 0) await tx.insert(companies).values(dataset.companies)
+      if (dataset.contacts.length > 0) await tx.insert(contacts).values(dataset.contacts)
+      if (dataset.opportunities.length > 0) {
+        await tx.insert(opportunities).values(dataset.opportunities)
+      }
+      if (dataset.snapshotPages.length > 0) {
+        await tx.insert(snapshotPages).values(dataset.snapshotPages)
+      }
 
       /**
        * ontology 3.4: env holds the INITIAL value and is read here, and only here. After
@@ -74,12 +83,15 @@ async function runFromCli(): Promise<void> {
   if (!url) {
     throw new Error('Missing DATABASE_URL_OWNER. Copy .env.example to .env and fill it in.')
   }
-  await seed(url)
+  const dataset = loadDefaultDataset()
+  await seed(url, dataset)
+  if (dataset.warnings.length > 0) {
+    console.warn(`Cảnh báo lúc parse dữ liệu:\n${dataset.warnings.map((w) => `  - ${w}`).join('\n')}`)
+  }
   console.log(
-    `Seed complete: ${SEED_USERS.length} users, ${SEED_COMPANIES.length} companies, ` +
-      `${SEED_CONTACTS.length} contacts, ${SEED_OPPORTUNITIES.length} opportunities, ` +
-      `${SEED_TIMELINE_ENTRIES.length} timeline entries. Every company is back on the ` +
-      `"before" snapshot.`,
+    `Seed complete: ${SEED_USERS.length} users, ${dataset.companies.length} companies, ` +
+      `${dataset.contacts.length} contacts, ${dataset.opportunities.length} opportunities, ` +
+      `${dataset.snapshotPages.length} snapshot pages.`,
   )
 }
 

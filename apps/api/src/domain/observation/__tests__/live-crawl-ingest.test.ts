@@ -2,7 +2,7 @@ import { Pool } from 'pg'
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import type { ClaimDraft, ClaimExtractor, ObservationInput } from '@crm/contracts'
-import { SEED_COMPANIES, createConnection, resetTestDatabase } from '@crm/db'
+import { createConnection, loadDefaultDataset, resetTestDatabase } from '@crm/db'
 
 import { AuditEventService } from '../../../common/audit/audit-event-service'
 import { AutoNextStepService } from '../../opportunity/auto-next-step-service'
@@ -33,7 +33,7 @@ import type { FetchPage, FetchPageResult } from '../../../ai/fetch-page'
 
 const SALES_ID = '11111111-1111-4111-8111-111111111111'
 const OUTSIDE_SEED_ID = 'eeeeeeee-0007-4000-8000-000000000007'
-const SEED_COMPANY = SEED_COMPANIES[0]
+const SEED_COMPANY = loadDefaultDataset().companies[0]
 
 const LIVE_URL = 'https://ngoai-seed.example.com/tin-tuc'
 const LIVE_PAGE =
@@ -96,7 +96,7 @@ function buildService(live: LiveCrawlSource, extractor: ClaimExtractor): Observa
     appConnection.db,
     extractor,
     new ClaimService(systemConnection.db, appConnection.db),
-    new DemoSnapshotSource(),
+    new DemoSnapshotSource(systemConnection.db),
     settings,
     reactions,
     live,
@@ -140,6 +140,16 @@ beforeEach(async () => {
      VALUES ($1, $2, 'Sản xuất', 'traditional', $3, false, 'https://sakura-mfg.example.jp', true)`,
     [SEED_COMPANY.id, SEED_COMPANY.name, SALES_ID],
   )
+  /** `SEED_COMPANY` is a real imported company now — give it its actual stored page(s), not a
+   *  hand-typed fixture, so test 1 has real content to read instead of an empty result set. */
+  const realPages = loadDefaultDataset().snapshotPages.filter((p) => p.companyId === SEED_COMPANY.id)
+  for (const page of realPages) {
+    await owner.query(
+      `INSERT INTO snapshot_pages (company_id, page_slug, source_url, before_html, after_html)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [page.companyId, page.pageSlug, page.sourceUrl, page.beforeHtml, page.afterHtml],
+    )
+  }
   await owner.query(
     `INSERT INTO system_settings (key, value) VALUES ('ai_enabled', 'true'), ('watch_cycle_seconds', '60')
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
@@ -167,10 +177,10 @@ describe('the acceptance suite cannot be reached by the live path (I-16)', () =>
 
     expect(result.fetchStatus).toBe('ok')
     const rows = await observationRows(SEED_COMPANY.id)
-    expect(rows).toHaveLength(1)
-    // The stored page, under the stored URL, labelled as what it is.
-    expect(rows[0].source_kind).toBe('demo_snapshot')
-    expect(rows[0].source_url).toBe('https://sakura-mfg.example.jp/news')
+    // A real seed company can have several stored pages (generalised from 1 page/company,
+    // `demo-snapshots.ts`) — every one of them must come back `demo_snapshot`, none `live_crawl`.
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every((row) => row.source_kind === 'demo_snapshot')).toBe(true)
     /**
      * The assertion that protects the score. `source_kind` alone would still pass on a version
      * that fetched the page, threw the bytes away and wrote the snapshot anyway — the packet

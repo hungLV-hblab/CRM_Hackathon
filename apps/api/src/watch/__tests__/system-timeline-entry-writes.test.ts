@@ -14,6 +14,7 @@ import { ProposalService } from '../../domain/proposal/proposal-service'
 import { SystemSettingService } from '../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../system-timeline-entry-service'
 import { liveSourceThatMustNotRun } from '../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * Autonomy zone 4 — the watch cycle writing to the official timeline WITHOUT asking anyone.
@@ -54,7 +55,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 
 /** The real chain, group 4 → group 3 → group 5. A stub anywhere here proves nothing about I-5. */
 function buildService(): ObservationService {
@@ -111,6 +112,7 @@ beforeEach(async () => {
        ($2, 'Marlin Product Labs', 'Phần mềm', 'it_product', $3, false)`,
     [SAKURA, MARLIN, SALES_ID],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, MARLIN])
   await owner.query(
     `INSERT INTO system_settings (key, value) VALUES ('ai_enabled', 'true'), ('watch_cycle_seconds', '60')
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,

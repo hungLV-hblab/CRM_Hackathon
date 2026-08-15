@@ -1,4 +1,4 @@
-import { SEED_COMPANIES } from '@crm/db'
+import { loadDefaultDataset } from '@crm/db'
 
 /**
  * Which source a single read is allowed to use — I-16 and I-17 in one place (ADR-0035).
@@ -17,8 +17,21 @@ import { SEED_COMPANIES } from '@crm/db'
  * I-16. Derived from the seed data itself rather than retyped: a hand-copied id list is a second
  * source of truth that goes stale the first time someone adds a demo company, and going stale
  * here means a seed company silently becomes crawlable.
+ *
+ * `loadDefaultDataset()` reads and parses the CHECKED-IN `hackathon-1-data.zip`, synchronously,
+ * cached after the first call — found and fixed during `/ck:plan validate`: this computation
+ * has to stay pure and DB-free (a gate that needs a database is a gate nobody re-checks), which
+ * is exactly why `parseZipDataset` was built with a fully synchronous API.
+ *
+ * Protection scope, decided explicitly (validate session 1, question 2): this protects the
+ * companies of the CHECKED-IN default zip only. A company imported from a different zip an
+ * admin uploads through the UI is NOT in this set. That is acceptable — I-16 exists to keep
+ * T-6/T-8 replayable on the official graded dataset, not to protect every file anyone could
+ * ever upload.
  */
-const SEED_COMPANY_IDS: ReadonlySet<string> = new Set(SEED_COMPANIES.map((company) => company.id))
+const SEED_COMPANY_IDS: ReadonlySet<string> = new Set(
+  loadDefaultDataset().companies.map((company) => company.id),
+)
 
 /** The only value of `OBSERVATION_SOURCE` that opens the live path. Compared verbatim — see below. */
 const LIVE_CRAWL = 'live_crawl'

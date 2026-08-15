@@ -3,10 +3,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
-import { COMPANY_TYPE, type CompanyDto, type UpdateCompanyDto } from '@crm/contracts'
+import { type CompanyDto, type UpdateCompanyDto } from '@crm/contracts'
 
 import { Button } from '@/components/ui/button'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
 import { SectionCard } from '@/components/ui/section-card'
 import { api, ApiError } from '@/lib/api-client'
 
@@ -37,7 +37,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
     setForm({
       name: company.name,
       industry: company.industry,
-      companyType: company.companyType as UpdateCompanyDto['companyType'],
+      companyType: company.companyType,
       country: company.country ?? undefined,
       size: company.size ?? undefined,
       website: company.website ?? undefined,
@@ -63,10 +63,7 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
       >
         <dl className="grid gap-3 sm:grid-cols-2">
           <Field label="Ngành" value={company.industry} />
-          <Field
-            label="Loại hình"
-            value={COMPANY_TYPE[company.companyType as keyof typeof COMPANY_TYPE]}
-          />
+          <Field label="Loại hình" value={company.companyType} />
           <Field label="Quốc gia" value={company.country} />
           <Field label="Quy mô" value={company.size} />
           <Field label="Website" value={company.website} />
@@ -90,19 +87,11 @@ export function CompanyProfileSection({ company }: { company: CompanyDto }) {
             value={form.industry ?? ''}
             onChange={(event) => setForm({ ...form, industry: event.target.value })}
           />
-          <Select
+          <Input
             label="Loại hình"
-            value={form.companyType ?? 'traditional'}
-            onChange={(event) =>
-              setForm({ ...form, companyType: event.target.value as UpdateCompanyDto['companyType'] })
-            }
-          >
-            {Object.entries(COMPANY_TYPE).map(([code, label]) => (
-              <option key={code} value={code}>
-                {label}
-              </option>
-            ))}
-          </Select>
+            value={form.companyType ?? ''}
+            onChange={(event) => setForm({ ...form, companyType: event.target.value })}
+          />
           <Input
             label="Quốc gia"
             value={form.country ?? ''}

@@ -2,7 +2,7 @@ import { Pool } from 'pg'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 
 import type { SourceCandidate, SourceDiscovery } from '@crm/contracts'
-import { SEED_COMPANIES, createConnection, resetTestDatabase } from '@crm/db'
+import { createConnection, loadDefaultDataset, resetTestDatabase } from '@crm/db'
 
 import { AuditEventService } from '../../../common/audit/audit-event-service'
 import { CompanySourceService } from '../company-source-service'
@@ -23,7 +23,7 @@ import type { Actor } from '../../../common/actor/actor-context'
 
 const SALES_ID = '11111111-1111-4111-8111-111111111111'
 const COMPANY_ID = 'eeeeeeee-0009-4000-8000-000000000009'
-const SEED_COMPANY = SEED_COMPANIES[0]
+const SEED_COMPANY = loadDefaultDataset().companies[0]
 
 const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)

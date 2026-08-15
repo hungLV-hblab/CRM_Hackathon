@@ -15,6 +15,7 @@ import { ProposalService } from '../../proposal/proposal-service'
 import { SystemSettingService } from '../../../settings/system-setting-service'
 import { SystemTimelineEntryService } from '../../../watch/system-timeline-entry-service'
 import { liveSourceThatMustNotRun } from '../../../ai/__tests__/live-crawl-source-doubles'
+import { insertLegacySnapshotPages } from '../../../ai/__tests__/legacy-snapshot-fixtures'
 
 /**
  * Feature group 2 end to end, against a REAL database and with no network: the extractor is
@@ -41,7 +42,7 @@ const settings = new SystemSettingService(
   systemConnection.db,
   new AuditEventService(appConnection.db, systemConnection.db),
 )
-const snapshots = new DemoSnapshotSource()
+const snapshots = new DemoSnapshotSource(systemConnection.db)
 
 function buildService(extractor: ClaimExtractor): {
   observations: ObservationService
@@ -112,6 +113,7 @@ beforeEach(async () => {
        ($3, 'Marlin Product Labs', 'Phần mềm', 'it_product', $4, false)`,
     [SAKURA, OHARA, MARLIN, SALES_ID],
   )
+  await insertLegacySnapshotPages(owner.query.bind(owner), [SAKURA, OHARA, MARLIN])
   await setAiEnabled(true)
 })
 

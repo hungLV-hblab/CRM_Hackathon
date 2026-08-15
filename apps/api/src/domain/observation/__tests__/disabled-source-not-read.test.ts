@@ -94,7 +94,7 @@ function buildService(live: LiveCrawlSource): ObservationService {
     appConnection.db,
     new SingleClaimExtractor(),
     new ClaimService(systemConnection.db, appConnection.db),
-    new DemoSnapshotSource(),
+    new DemoSnapshotSource(systemConnection.db),
     settings,
     reactions,
     live,

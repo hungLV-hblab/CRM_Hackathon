@@ -46,7 +46,8 @@ test('ứng viên nguồn sống qua reload, tick vào danh sách đọc, tắt 
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('Tên công ty').fill(COMPANY)
   await dialog.getByLabel('Ngành').fill('Kiểm thử')
-  await dialog.getByLabel('Loại hình').selectOption('it_solution')
+  // Free text now (schema migration 0012 — real company_type does not fold into 5 codes).
+  await dialog.getByLabel('Loại hình').fill('IT Solution')
   await dialog.getByRole('button', { name: 'Lưu' }).click()
 
   await page.getByRole('link', { name: COMPANY }).click()

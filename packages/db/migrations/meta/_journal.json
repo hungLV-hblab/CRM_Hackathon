@@ -85,6 +85,20 @@
       "when": 1786663200000,
       "tag": "0011_source_enabled_view",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786668000000,
+      "tag": "0012_company_type_free_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786672800000,
+      "tag": "0013_snapshot_pages",
+      "breakpoints": true
     }
   ]
 }
