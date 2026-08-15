@@ -80,7 +80,7 @@ Riêng `discover-sources` có một điểm **khác** đường SDK, đừng nh�
 
 ```bash
 docker compose -f infra/docker-compose.yml logs api | grep "ứng viên giữ lại"
-# Tìm nguồn "Sakura": 4 ứng viên giữ lại trên 6 đã xác minh · bỏ vì không mở được: http_4xx×2
+# Tìm nguồn "Genky": 4 ứng viên giữ lại trên 6 đã xác minh · bỏ vì không mở được: http_4xx×2
 ```
 
 ### Bước 2 — bật hệ thống (terminal 1)
@@ -96,25 +96,25 @@ Thứ tự khởi động là tự động: `postgres` (chờ healthy) → `migr
 
 `migrate` là **job chạy một lần rồi exit 0**, không phải service. Thấy dòng `Container crm-hackathon-migrate-1 Exited` trong log khởi động là **đúng**, không phải lỗi — `api` và `worker` chỉ khởi động sau khi job này thành công, nên không bao giờ có hai tiến trình cùng chạy migration. Vì đã exit, nó không hiện trong `ps`; muốn xem thì `ps -a`.
 
-### Bước 3 — nạp dữ liệu demo (terminal 2)
+### Bước 3 — nạp dữ liệu demo
+
+Hai cách, cùng một hàm parse zip ở dưới (`parseZipDataset()`), cùng ghi lại **đúng trạng thái ban đầu** mỗi lần chạy (I-14):
+
+**Cách chính — giám khảo dùng, qua giao diện (spec mục 7 điều kiện 5):** đăng nhập `admin@hblab.vn` / `admin123`, vào `/quan-tri`, bấm "Chọn file zip…", chọn `hackathon-1-data.zip` (hoặc file BTC phát khác cùng định dạng), xác nhận "Xoá và nạp lại". Nạp lại đúng file bất cứ lúc nào — kể cả giữa demo — để xoá sạch mọi thứ AI/Sales sinh ra và về lại đúng 25 công ty / 38 liên hệ / 15 cơ hội / bản chụp gốc. Xem [ADR-0042](docs/decisions/0042-quyen-crm-owner-ngan-han-cho-import-tu-giao-dien.md).
+
+**Cách phụ — dev/CI, từ terminal (terminal 2):**
 
 ```bash
 pnpm seed
 ```
 
-**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Kỳ vọng:
+**Phải chạy sau khi stack lên**, vì seed ghi vào bảng do `migrate` tạo. Đọc `hackathon-1-data.zip` checked-in ở `packages/db/seed-assets/`. Kỳ vọng:
 
 ```text
-Seed complete: 2 users, 5 companies, 3 contacts, 5 opportunities, 2 timeline entries. Every company is back on the "before" snapshot.
+Seed complete: 2 users, 25 companies, 38 contacts, 15 opportunities, 86 snapshot pages.
 ```
 
-Chạy lại `pnpm seed` bất cứ lúc nào để về đúng trạng thái ban đầu — kể cả sau khi đã diễn demo (I-14). Nó xoá luôn mọi thứ AI sinh ra trong lần diễn trước và đưa **mọi công ty về bản chụp "trước"**.
-
-Lúc diễn, để giả tin mới về với một công ty:
-
-```bash
-pnpm switch-snapshot "Sakura" after
-```
+Mỗi công ty có sẵn 3–4 trang bản chụp (`snapshot_pages`), đọc qua nút "Đọc bản chụp sau" trên màn chi tiết công ty — không cần lệnh nào để "giả tin mới về" nữa, bản "sau" đã nằm sẵn trong dữ liệu thật.
 
 Hoặc gọi `POST /api/demo/companies/:id/snapshot-variant` với body `{"variant":"after"}` khi đã đăng nhập. Đây là đường của **người**: `crm_system` chỉ đọc được cột này, không ghi được — AI không tự đổi được nguồn nó đọc ([ADR-0022](docs/decisions/0022-ban-chup-hien-tai-la-cot-text-tren-companies-khong-phai-enum-cua-ontology.md)).
 
@@ -174,8 +174,8 @@ docker compose -f infra/docker-compose.yml --env-file .env logs -f worker
 | Chỉ bật Postgres (app chạy tay khi dev) | `pnpm dev` |
 | Tắt · tắt và xoá sạch dữ liệu | `pnpm stop` · `pnpm reset` |
 | Test | `pnpm test` · `pnpm test:unit` · `pnpm test:e2e` |
-| Nạp dữ liệu demo | `pnpm seed` |
-| Đổi nguồn một công ty sang bản chụp "sau" (diễn tin mới về) | `pnpm switch-snapshot "Sakura" after` |
+| Nạp dữ liệu demo (giám khảo dùng: upload zip ở `/quan-tri`) | `pnpm seed` (dev/CI, dùng zip checked-in) |
+| Đổi nguồn một công ty sang bản chụp "sau" (diễn tin mới về, ngoài `snapshot_pages`) | `pnpm switch-snapshot "<tên công ty>" after` |
 | CSDL | `pnpm db:generate` · `pnpm db:migrate` |
 | lint · typecheck · build | `pnpm lint` · `pnpm typecheck` · `pnpm build` |
 | Phản biện yêu cầu (persona) | `/hack:req-challenge <specs hoặc mô tả>` |

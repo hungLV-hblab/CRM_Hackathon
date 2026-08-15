@@ -4,7 +4,7 @@
 | --- | --- |
 | **Ngày** | 2026-08-13 19:56 |
 | **Giai đoạn** | Design (phase 4 — seed + bản chụp trước/sau + T-1) |
-| **Trạng thái** | Chấp nhận |
+| **Trạng thái** | Thay thế bởi [ADR-0042](0042-quyen-crm-owner-ngan-han-cho-import-tu-giao-dien.md) — điều kiện xem lại ADR này tự nêu ("bộ bản chụp phình quá ~5 công ty") đã xảy ra: dữ liệu BTC thật mang 25 công ty × tới 4 trang/công ty. `demo-snapshots.ts` bị xoá, bản chụp giờ nằm ở bảng `snapshot_pages`, đọc qua `DemoSnapshotSource` DB-backed |
 | **Người quyết định** | HungLV |
 | **Prompt log** | phiên brainstorm phase 4 ngày 13/08 19:36 — [báo cáo](../../plans/reports/from-brainstorm-to-planner-260813-1956-GH-3-phase-04-seed-ban-chup-va-t1-report.md) |
 
