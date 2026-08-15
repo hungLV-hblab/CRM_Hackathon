@@ -14,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test'
  * Runs against the compose stack on :8080 (`pnpm start`), same as every other e2e spec.
  */
 
-const ADMIN = { email: 'admin@hblab.vn', password: 'admin123' }
+const ADMIN = { email: 'admin@hblab.vn', password: 'hackathon#1' }
 const ZIP_PATH = resolve(__dirname, '../packages/db/seed-assets/hackathon-1-data.zip')
 
 async function login(page: Page): Promise<void> {
@@ -61,7 +61,7 @@ test('admin nạp lại dữ liệu qua giao diện — xác nhận, tóm tắt 
 test('sales không thấy được panel nạp dữ liệu', async ({ page }) => {
   await page.goto('/dang-nhap')
   await page.getByLabel('Email').fill('sales@hblab.vn')
-  await page.getByLabel('Mật khẩu').fill('sales123')
+  await page.getByLabel('Mật khẩu').fill('hackathon#1')
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
   await page.goto('/quan-tri')
 

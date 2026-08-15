@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 import {
   NEXT_STEP_TARGET_FIELD,
@@ -17,6 +17,7 @@ import {
   observations,
   opportunities,
   proposals,
+  users,
 } from '@crm/db'
 
 import { DRIZZLE_APP, DRIZZLE_SYSTEM } from '../../common/db/db.module'
@@ -361,20 +362,36 @@ export class ProposalService {
     })
   }
 
-  /** The review queue. Human identity: Sales looking at their own work. */
-  async listPending(): Promise<ProposalDto[]> {
+  /**
+   * The review queue, narrowed to the companies the reader looks after (ADR-0046).
+   *
+   * `ownerId` arrives already decided — `null` means an admin and therefore no restriction. The
+   * role question is answered in the controller, so this method cannot accidentally widen itself
+   * by misreading an actor, and `ownerScopeFor` stays the only place the rule is written.
+   *
+   * `deletedAt` is checked too. A soft-deleted company disappears from every company screen but
+   * its suggestions used to stay decidable here, and accepting one wrote to a row no screen can
+   * show.
+   */
+  async listPending(ownerId: string | null): Promise<ProposalDto[]> {
+    const conditions = [eq(proposals.status, 'pending'), isNull(companies.deletedAt)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const rows = await this.dbApp
       .select({
         proposal: proposals,
         claim: claims,
         companyName: companies.name,
+        companyOwnerId: companies.ownerId,
+        ownerName: users.name,
         opportunityName: opportunities.name,
       })
       .from(proposals)
       .innerJoin(claims, eq(claims.id, proposals.claimId))
       .innerJoin(companies, eq(companies.id, proposals.companyId))
+      .leftJoin(users, eq(users.id, companies.ownerId))
       .leftJoin(opportunities, eq(opportunities.id, proposals.opportunityId))
-      .where(eq(proposals.status, 'pending'))
+      .where(and(...conditions))
       .orderBy(desc(proposals.createdAt))
 
     return rows.map((row) => toDto(row))
@@ -385,11 +402,21 @@ export class ProposalService {
    * rather than a field on `CompanyDto`: the deal list needs the count per company too, and
    * widening two DTOs to carry the same number would give the badge two sources.
    */
-  async pendingSummary(): Promise<PendingProposalSummary> {
+  async pendingSummary(ownerId: string | null): Promise<PendingProposalSummary> {
+    /**
+     * Scoped by the SAME conditions as `listPending`, and that is not tidiness. A count that
+     * included a company the reader cannot open would put a badge on a queue they are not
+     * allowed to see; a count that excluded one they CAN open would render nothing next to a
+     * company that has work waiting — and "nothing waiting" is a sentence, not a blank. Rule 4.
+     */
+    const conditions = [eq(proposals.status, 'pending'), isNull(companies.deletedAt)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const rows = await this.dbApp
       .select({ companyId: proposals.companyId, total: sql<number>`count(*)::int` })
       .from(proposals)
-      .where(eq(proposals.status, 'pending'))
+      .innerJoin(companies, eq(companies.id, proposals.companyId))
+      .where(and(...conditions))
       .groupBy(proposals.companyId)
 
     return Object.fromEntries(rows.map((row) => [row.companyId, row.total]))
@@ -463,6 +490,8 @@ function toDto(row: {
   proposal: typeof proposals.$inferSelect
   claim: typeof claims.$inferSelect
   companyName: string
+  companyOwnerId: string | null
+  ownerName: string | null
   opportunityName: string | null
 }): ProposalDto {
   const { proposal, claim } = row
@@ -471,6 +500,13 @@ function toDto(row: {
     id: proposal.id,
     companyId: proposal.companyId,
     companyName: row.companyName,
+    /**
+     * Who looks after the company this suggestion is about. Carried on the row so the queue
+     * screen can offer an admin a "filter by sales person" control without a second endpoint —
+     * the only consumer that needs it, and the only role that ever sees more than one value.
+     */
+    ownerId: row.companyOwnerId,
+    ownerName: row.ownerName,
     proposalType: proposal.proposalType as ProposalType,
     targetField: proposal.targetField as ProposalDto['targetField'],
     opportunityId: proposal.opportunityId,

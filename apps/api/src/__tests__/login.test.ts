@@ -5,7 +5,8 @@ import { Pool } from 'pg'
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { DEMO_PASSWORDS, SEED_USERS, loadDefaultDataset, seed } from '@crm/db'
+import { DEMO_PASSWORD } from '@crm/contracts'
+import { SEED_USERS, loadDefaultDataset, seed } from '@crm/db'
 
 import { AppModule } from '../app.module'
 
@@ -13,7 +14,8 @@ let app: INestApplication
 let owner: Pool
 
 const SALES = SEED_USERS[0]
-const ADMIN = SEED_USERS[1]
+// Located by role, not by position: the seed now lists three sales rows before the admin.
+const ADMIN = SEED_USERS.find((user) => user.role === 'admin') as (typeof SEED_USERS)[number]
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
@@ -44,7 +46,7 @@ describe('real login through an httpOnly cookie (spec 7.3)', () => {
   it('correct password → 200 and the cookie carries the HttpOnly flag', async () => {
     const res = await http()
       .post('/api/auth/login')
-      .send({ email: SALES.email, password: DEMO_PASSWORDS.sales })
+      .send({ email: SALES.email, password: DEMO_PASSWORD })
       .expect(200)
 
     const cookie = res.headers['set-cookie']?.[0] ?? ''
@@ -67,12 +69,12 @@ describe('real login through an httpOnly cookie (spec 7.3)', () => {
   })
 
   it('Sales calling an admin-only endpoint → 403 (RolesGuard tells the roles apart)', async () => {
-    const cookie = await login(SALES.email, DEMO_PASSWORDS.sales)
+    const cookie = await login(SALES.email, DEMO_PASSWORD)
     await http().get('/api/settings').set('Cookie', cookie).expect(403)
   })
 
   it('Admin calling that same endpoint → 200 (blocking the right role, not every role)', async () => {
-    const cookie = await login(ADMIN.email, DEMO_PASSWORDS.admin)
+    const cookie = await login(ADMIN.email, DEMO_PASSWORD)
     const res = await http().get('/api/settings').set('Cookie', cookie).expect(200)
     expect(res.body).toEqual({ aiEnabled: true, watchCycleSeconds: expect.any(Number) })
   })
@@ -80,7 +82,7 @@ describe('real login through an httpOnly cookie (spec 7.3)', () => {
 
 describe('the life of one company over HTTP (acceptance check 3)', () => {
   it('create then list shows it, and the row really is in Postgres', async () => {
-    const cookie = await login(SALES.email, DEMO_PASSWORDS.sales)
+    const cookie = await login(SALES.email, DEMO_PASSWORD)
 
     await http()
       .post('/api/companies')
@@ -89,7 +91,11 @@ describe('the life of one company over HTTP (acceptance check 3)', () => {
       .expect(201)
 
     const list = await http().get('/api/companies').set('Cookie', cookie).expect(200)
-    expect(list.body.map((company: { name: string }) => company.name)).toContain('Cty Kiem Thu')
+    // `.items` since ADR-0047: the list answers with a paginated envelope, and no `page` was
+    // asked for, so that one page holds everything.
+    expect(list.body.items.map((company: { name: string }) => company.name)).toContain(
+      'Cty Kiem Thu',
+    )
 
     const { rows } = await owner.query(
       'SELECT count(*)::int AS total FROM companies WHERE name = $1',
@@ -99,7 +105,7 @@ describe('the life of one company over HTTP (acceptance check 3)', () => {
   })
 
   it('a payload missing a required field → 400, and nothing is created', async () => {
-    const cookie = await login(SALES.email, DEMO_PASSWORDS.sales)
+    const cookie = await login(SALES.email, DEMO_PASSWORD)
     await http()
       .post('/api/companies')
       .set('Cookie', cookie)

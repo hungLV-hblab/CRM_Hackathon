@@ -16,8 +16,8 @@ import { expect, test, type Page } from '@playwright/test'
  * Runs against the compose stack on :8080 (`pnpm start`).
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
-const ADMIN = { email: 'admin@hblab.vn', password: 'admin123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
+const ADMIN = { email: 'admin@hblab.vn', password: 'hackathon#1' }
 
 test('admin thấy panel và mở được phiên uỷ quyền thật', async ({ page }) => {
   await login(page, ADMIN)

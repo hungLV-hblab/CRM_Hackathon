@@ -14,7 +14,14 @@ import { companyIdByName, seedSnapshotPage } from './watch-cycle-scenario'
  * Runs against the compose stack on :8080 (`pnpm start`), like the rest of the e2e suite.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+/**
+ * Signed in as the administrator, because this spec deliberately roams the WHOLE seed: it needs
+ * a readable company, a re-readable one, and the one company whose snapshot fails — and after
+ * ADR-0046 those three belong to two different Sales people. An administrator has the same CRM
+ * rights as Sales (ADR-0033) and is the only role that sees every company, so this is the honest
+ * account for a spec about provenance rendering rather than about one person's workflow.
+ */
+const SALES = { email: 'admin@hblab.vn', password: 'hackathon#1' }
 /**
  * ONE COMPANY PER TEST, deliberately. The e2e suite shares a single seeded database and runs
  * with one worker, so a test that reads the same company as an earlier one inherits its state

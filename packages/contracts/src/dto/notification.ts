@@ -1,3 +1,7 @@
+import { z } from 'zod'
+
+import { booleanQuerySchema, paginationQuerySchema } from './pagination'
+
 /**
  * ontology 3.3 — "thông báo trong sản phẩm". Half of the zone 3 safety mechanism: the system
  * writing to official data without asking is only acceptable if Sales is told immediately and
@@ -11,6 +15,20 @@
  * tác" button without a second request. `canUndo` is computed by the API against server time:
  * a client comparing its own clock to the deadline would offer an undo that then fails.
  */
+/**
+ * ONE endpoint, two callers. The strip on the deal board asks for the unread ones; `/thong-bao`
+ * asks for the history. A second endpoint differing by a `WHERE` would give "a notice does not
+ * disappear before it is read" two implementations, and only one of them would stay true.
+ *
+ * `unreadOnly` uses `booleanQuerySchema`, never `z.coerce.boolean()` — see ADR-0047 for the bug
+ * that choice prevents.
+ */
+export const listNotificationsQuerySchema = paginationQuerySchema.extend({
+  unreadOnly: booleanQuerySchema,
+})
+
+export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>
+
 export interface NotificationDto {
   id: string
   message: string

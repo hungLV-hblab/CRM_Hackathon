@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import type { Decision, ProposalDto, RejectReason } from '@crm/contracts'
 
@@ -9,6 +9,8 @@ import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Dialog } from '@/components/ui/dialog'
+import { FilterBar, type FilterChip } from '@/components/ui/filter-bar'
+import { Select } from '@/components/ui/input'
 import { ProposalCard } from './proposal-card'
 import { SourceViewer } from '@/components/provenance/source-viewer'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -33,11 +35,25 @@ export default function ProposalQueuePage() {
   const queryClient = useQueryClient()
   const [source, setSource] = useState<ProposalDto | null>(null)
   const clockStartedAt = useRef<number>(Date.now())
+  const [companyFilter, setCompanyFilter] = useState('')
+  const [ownerFilter, setOwnerFilter] = useState('')
 
   const proposals = useQuery({
     queryKey: ['proposals'],
     queryFn: () => api.listPendingProposals(),
   })
+
+  /**
+   * The filters narrow the VIEW; the permission boundary already narrowed the DATA (ADR-0046).
+   * Two different jobs: a Sales person who looks after eight companies still wants to see one of
+   * them at a time, and an administrator looking at the whole team needs to pick a person.
+   *
+   * Deliberately NOT part of the query key. The rows are already scoped by the server, so
+   * filtering further is a client-side narrowing of what is on screen; putting it in the key
+   * would mint a cache entry per combination and refetch for nothing.
+   */
+  const me = useQuery({ queryKey: ['me'], queryFn: () => api.me() })
+  const isAdmin = me.data?.role === 'admin'
 
   const decide = useMutation({
     mutationFn: ({
@@ -90,7 +106,50 @@ export default function ProposalQueuePage() {
     },
   })
 
-  const rows = proposals.data ?? []
+  const all = proposals.data ?? []
+
+  /**
+   * Options come from what is actually in the queue, not from a fixed list — a company with
+   * nothing waiting is not worth an entry that can only ever empty the list. For the sales
+   * dropdown that also means an administrator sees exactly the people who have work pending.
+   */
+  const companies = useMemo(() => uniqueBy(all, (row) => [row.companyId, row.companyName]), [all])
+  const owners = useMemo(
+    () => uniqueBy(all, (row) => (row.ownerId ? [row.ownerId, row.ownerName ?? '—'] : null)),
+    [all],
+  )
+
+  const rows = useMemo(
+    () =>
+      all.filter(
+        (row) =>
+          (companyFilter === '' || row.companyId === companyFilter) &&
+          (ownerFilter === '' || row.ownerId === ownerFilter),
+      ),
+    [all, companyFilter, ownerFilter],
+  )
+
+  const chips: FilterChip[] = [
+    companyFilter
+      ? {
+          label: `Công ty: ${companies.find(([id]) => id === companyFilter)?.[1] ?? ''}`,
+          onRemove: () => setCompanyFilter(''),
+        }
+      : null,
+    ownerFilter
+      ? {
+          label: `Phụ trách: ${owners.find(([id]) => id === ownerFilter)?.[1] ?? ''}`,
+          onRemove: () => setOwnerFilter(''),
+        }
+      : null,
+  ].filter((chip): chip is FilterChip => chip !== null)
+
+  const isFiltered = companyFilter !== '' || ownerFilter !== ''
+
+  function resetFilters() {
+    setCompanyFilter('')
+    setOwnerFilter('')
+  }
 
   return (
     <PageBody>
@@ -110,10 +169,63 @@ export default function ProposalQueuePage() {
         </div>
       ) : null}
 
-      {!proposals.isLoading && rows.length === 0 ? (
+      {!proposals.isLoading && all.length > 0 ? (
+        <FilterBar chips={chips} onReset={isFiltered ? resetFilters : undefined}>
+          <Select
+            label="Lọc theo công ty"
+            value={companyFilter}
+            onChange={(event) => setCompanyFilter(event.target.value)}
+          >
+            <option value="">Tất cả công ty</option>
+            {companies.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </Select>
+
+          {/**
+           * Admin only, and HIDDEN rather than disabled for Sales — a control that names other
+           * people's work would be the only place on this screen suggesting there is more of it.
+           * This is a convenience, not the boundary: the boundary is in the server (ADR-0046),
+           * which is why hiding a control is enough here.
+           */}
+          {isAdmin ? (
+            <Select
+              label="Lọc theo người phụ trách"
+              value={ownerFilter}
+              onChange={(event) => setOwnerFilter(event.target.value)}
+            >
+              <option value="">Tất cả người phụ trách</option>
+              {owners.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          ) : null}
+        </FilterBar>
+      ) : null}
+
+      {/**
+       * TWO different sentences, on purpose. "The queue is empty" and "your filter matched
+       * nothing" are different facts, and saying the first when the second is true would tell the
+       * reader their work is done when it is not.
+       */}
+      {!proposals.isLoading && all.length === 0 ? (
         <p className="rounded-control bg-ink-50 p-4 text-sm text-ink-600" data-testid="queue-empty">
           Không có gợi ý nào đang chờ. Hàng đợi trống là trạng thái bình thường — hệ thống chỉ đề
           xuất khi đọc được nguồn mới.
+        </p>
+      ) : null}
+
+      {!proposals.isLoading && all.length > 0 && rows.length === 0 ? (
+        <p
+          className="rounded-control bg-ink-50 p-4 text-sm text-ink-600"
+          data-testid="queue-filtered-empty"
+        >
+          Không có gợi ý nào khớp bộ lọc đang bật. Bỏ bộ lọc để xem lại {all.length} gợi ý đang
+          chờ.
         </p>
       ) : null}
 
@@ -123,6 +235,7 @@ export default function ProposalQueuePage() {
             key={proposal.id}
             proposal={proposal}
             busy={decide.isPending}
+            showOwner={isAdmin}
             onOpenSource={() => setSource(proposal)}
             onDecide={(decision, extra) =>
               decide.mutate({ id: proposal.id, decision, extra })
@@ -134,6 +247,23 @@ export default function ProposalQueuePage() {
       {source ? <SourceDialog proposal={source} onClose={() => setSource(null)} /> : null}
     </PageBody>
   )
+}
+
+/**
+ * Distinct `[id, label]` pairs in the order they appear, skipping rows the picker returns `null`
+ * for — that is how a company with no assigned owner stays out of the sales dropdown instead of
+ * becoming a blank option that filters to nothing.
+ */
+function uniqueBy(
+  rows: ProposalDto[],
+  pick: (row: ProposalDto) => [string, string] | null,
+): [string, string][] {
+  const seen = new Map<string, string>()
+  for (const row of rows) {
+    const pair = pick(row)
+    if (pair && !seen.has(pair[0])) seen.set(pair[0], pair[1])
+  }
+  return [...seen.entries()]
 }
 
 /**

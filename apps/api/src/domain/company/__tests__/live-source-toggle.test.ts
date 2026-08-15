@@ -31,7 +31,12 @@ const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
 const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const HUMAN: Actor = { kind: 'human', userId: SALES_ID }
+/**
+ * The role is not decoration since ADR-0046: `ownerScopeFor` refuses a human actor that carries
+ * none, on purpose, so that an actor assembled by hand cannot fall through to the widest branch.
+ * `sales` is the honest value here — the companies this file inserts are owned by this id.
+ */
+const HUMAN: Actor = { kind: 'human', userId: SALES_ID, role: 'sales' }
 const SYSTEM: Actor = { kind: 'system' }
 
 function buildService(): CompanyService {

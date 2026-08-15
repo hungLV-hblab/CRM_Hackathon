@@ -34,7 +34,8 @@ export function SnapshotVariantSwitch() {
       setVariants((current) => ({ ...current, [result.id]: result.snapshotVariant })),
   })
 
-  const rows = companies.data ?? []
+  // No `page` was requested, so the envelope carries every company in one page.
+  const rows = companies.data?.items ?? []
 
   return (
     <SectionCard title="Bản chụp nguồn (dùng khi demo)">

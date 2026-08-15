@@ -40,9 +40,17 @@ export interface ProposalCardProps {
   onDecide: (decision: Decision, extra: { rejectReason?: RejectReason; finalValue?: string }) => void
   busy: boolean
   onOpenSource: () => void
+  /** Name the Sales person who looks after the company. Only useful to someone who sees more than one. */
+  showOwner?: boolean
 }
 
-export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: ProposalCardProps) {
+export function ProposalCard({
+  proposal,
+  onDecide,
+  busy,
+  onOpenSource,
+  showOwner = false,
+}: ProposalCardProps) {
   const [reasonsOpen, setReasonsOpen] = useState(false)
   const [editValue, setEditValue] = useState<string | null>(null)
 
@@ -59,6 +67,14 @@ export function ProposalCard({ proposal, onDecide, busy, onOpenSource }: Proposa
         <span className="text-sm font-medium text-ink-900">{proposal.companyName}</span>
         {proposal.opportunityName ? (
           <span className="text-sm text-ink-600">· {proposal.opportunityName}</span>
+        ) : null}
+        {/**
+         * Only when asked for, which in practice means only for an administrator: a Sales person
+         * sees nothing here but their own name on every card, which is noise. It gives the
+         * "filter by sales person" control the context it needs to be usable.
+         */}
+        {showOwner && proposal.ownerName ? (
+          <span className="text-sm text-ink-600">· {proposal.ownerName}</span>
         ) : null}
         <span className="ml-auto">
           <ConfidenceBadge confidence={proposal.claim.confidence} />

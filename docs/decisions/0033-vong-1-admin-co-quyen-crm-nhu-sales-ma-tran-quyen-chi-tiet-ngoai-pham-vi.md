@@ -4,7 +4,19 @@
 | --- | --- |
 | **Ngày** | 2026-08-14 10:12 |
 | **Giai đoạn** | Requirement (diễn giải chỗ Specs không nói — Q-6) |
-| **Trạng thái** | Chấp nhận — **kiểm bằng đọc ba controller, số dòng ghi ở mục verify** |
+| **Trạng thái** | **Bị thay thế MỘT PHẦN 15/08** bởi [ADR-0046](0046-phan-quyen-theo-nguoi-phu-trach-toan-he-thong.md) — xem hộp dưới |
+
+> ### Bị thay thế một phần — 2026-08-15
+>
+> Mục Hệ quả của chính ADR này nêu điều kiện xem lại: *"seed có từ hai người sở hữu trở lên. Điều kiện thứ hai quan trọng hơn: ngay khi hai Sales cùng tồn tại, 'Admin sửa dữ liệu của ai' đổi từ câu hỏi lý thuyết thành lỗ thật."*
+>
+> [ADR-0045](0045-dang-nhap-demo-tai-dung-luong-mat-khau-va-dashboard-scope-theo-vai.md) đổi seed thành nhiều Sales (nay là 5, nhập từ cột `sales_owner`) sáng 15/08 → **điều kiện đã xảy ra**. [ADR-0046](0046-phan-quyen-theo-nguoi-phu-trach-toan-he-thong.md) dựng ma trận quyền theo người phụ trách.
+>
+> - **Bị thay:** mệnh đề *"Ma trận quyền theo người sở hữu chưa có, và đó là quyết định về phạm vi"*.
+> - **Vẫn giữ:** hai vai khác nhau ở chỗ Admin nhìn thấy được (`GET /settings`, bảng điều khiển, nhật ký vòng quét); Admin vẫn có quyền CRM đầy đủ, nay là vai duy nhất thấy dữ liệu của mọi Sales.
+> - **Vẫn giữ:** phân tích ở mục "Phương án đã cân nhắc" — phương án B bị loại ngày 14/08 vì **thời điểm** (buổi cuối trước freeze), không phải vì sai về nguyên tắc.
+>
+> Nội dung gốc bên dưới giữ nguyên, không sửa: nó là bằng chứng đội đã quyết định đúng với thông tin có lúc 14/08.
 | **Người quyết định** | HungLV |
 | **Prompt log** | phiên phản biện phase 8 ngày 14/08 10:12 — [báo cáo](../../plans/reports/from-brainstorm-to-planner-260814-1012-phase-08-nhom-6-bang-dieu-khien-va-bo-nghiem-thu-report.md) |
 

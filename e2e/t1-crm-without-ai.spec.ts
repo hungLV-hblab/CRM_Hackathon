@@ -16,7 +16,7 @@ import { setAiEnabled } from './turn-ai-off'
  * fails the product for a fault in the harness.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 const COMPANY = 'Cty Thu Nghiem T1'
 const INDUSTRY = 'Kiem thu T-1'
@@ -64,7 +64,12 @@ test.skip('T-1 · nhóm 1 chạy đủ khi AI đang tắt', async ({ page }) => 
   await test.step('AI đang tắt, và nhìn thấy được trên màn hình', async () => {
     await login(page)
 
-    // A real imported company — AI is off, so this click cannot change its state anyway.
+    /**
+     * A real imported company, and one THIS account looks after (ADR-0046) — `Account.csv` puts
+     * Genky under Thảo, who is who `SALES` signs in as. A company belonging to another sales
+     * person is not on this list at all. Nothing accumulates from the click either way: the AI
+     * is off, so the button answers with the message below instead of storing a snapshot.
+     */
     await page.getByRole('link', { name: 'Genky' }).click()
     await page.getByRole('button', { name: 'Đọc bản chụp sau' }).click()
 
@@ -175,14 +180,25 @@ test.skip('T-1 · nhóm 1 chạy đủ khi AI đang tắt', async ({ page }) => 
     await page.goto('/tong-quan')
     await expect(page.getByRole('heading', { name: 'Tổng quan' })).toBeVisible()
 
-    await expect(page.getByRole('cell', { name: 'Thương lượng' })).toBeVisible()
-    await expect(page.getByText('Pipeline đang chạy:')).toBeVisible()
-    await expect(page.getByRole('cell', { name: INDUSTRY })).toBeVisible()
+    // A sales sees THEIR OWN numbers and the screen says so; the whole-team view is the
+    // admin's — asserted in dashboard-role-view.spec.ts.
+    await expect(page.getByText('Đang xem: dữ liệu của bạn.')).toBeVisible()
+    await expect(page.getByLabel('Xem theo Sales')).toHaveCount(0)
 
-    // Real BTC data carries ZERO "Thua" opportunities (verified: `Opps.csv` has none among its
-    // 15 real rows) — rule 4 in the exact place it matters: the block shows the honest empty
-    // state rather than a fabricated table row.
+    // Real BTC data carries ZERO "Thua" opportunities (verified: `Opps.csv` has none among the
+    // 15 rows whose company survives the import) — rule 4 in the exact place it matters: the
+    // block shows the honest empty state rather than a fabricated table row.
     await expect(page.getByText('Chưa có cơ hội Thua nào có lý do được ghi.')).toBeVisible()
+
+    // "Soạn đề xuất" is a stage Thảo genuinely has (C16 and C18 in `Opps.csv`) — the assertion
+    // is scoped to the stage table because the same label also names a cell in the
+    // missing-next-step block, and an unscoped lookup cannot tell the two apart.
+    const stageTable = page.getByRole('table', { name: 'Cơ hội theo giai đoạn' })
+    await expect(stageTable.getByRole('cell', { name: 'Soạn đề xuất' })).toBeVisible()
+    await expect(page.getByText('Pipeline đang chạy:')).toBeVisible()
+    await expect(
+      page.getByRole('table', { name: 'Công ty theo ngành' }).getByRole('cell', { name: INDUSTRY }),
+    ).toBeVisible()
   })
 })
 

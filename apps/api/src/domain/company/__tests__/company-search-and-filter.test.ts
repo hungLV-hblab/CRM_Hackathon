@@ -53,9 +53,13 @@ afterAll(async () => {
   await Promise.all([owner.end(), appConnection.close(), systemConnection.close()])
 })
 
+/**
+ * `.items` since ADR-0047 made the list return a paginated envelope. No `page` is passed here, so
+ * one page holds every match and these assertions keep measuring the filters, not the paging.
+ */
 async function namesFrom(query: Parameters<typeof companies.list>[0]): Promise<string[]> {
-  const rows = await companies.list(query)
-  return rows.map((row) => row.name)
+  const { items } = await companies.list(query)
+  return items.map((row) => row.name)
 }
 
 describe('search by name', () => {

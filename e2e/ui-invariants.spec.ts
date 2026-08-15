@@ -27,7 +27,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
  * — which requires a `DialogTitle` and wires the name itself — is what turns it green.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+/**
+ * Signed in as the administrator (ADR-0046): this file checks design invariants across screens
+ * and reaches for companies that `Account.csv` gives to different Sales people. The invariants
+ * are about tokens and colour meaning, not about whose data is on screen, so the widest account
+ * is the one that keeps the file measuring what it is named after.
+ */
+const SALES = { email: 'admin@hblab.vn', password: 'hackathon#1' }
 
 /** brand-400 — the one colour that means "a human is meant to press this". */
 const BRAND_400 = 'rgb(255, 194, 15)'

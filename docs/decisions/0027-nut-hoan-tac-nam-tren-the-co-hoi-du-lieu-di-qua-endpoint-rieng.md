@@ -8,6 +8,16 @@
 | **Người quyết định** | HungLV |
 | **Prompt log** | *không có* — phiên phản biện thiết kế Phase 6, [báo cáo](../../plans/reports/from-brainstorm-to-planner-260813-2354-phase-06-nhom-4-tu-dat-viec-tiep-theo-report.md) |
 
+> ### Làm rõ 15/08 — ranh giới giữa "hai hiện thực" và "hai bố cục"
+>
+> ADR này (và comment trong `thong-bao/page.tsx`) từng nói: dựng một danh sách thứ hai ở `/thong-bao` sẽ cho luật *"thông báo không tự biến mất trước khi được đọc"* **hai hiện thực, và chỉ một cái giữ được đúng**. Câu đó đúng về ý, nhưng cần chỉ rõ nó nói về cái gì.
+>
+> Luật đó sống ở **tầng dữ liệu**, không ở bố cục: `read_at` chỉ được ghi khi người bấm, và `crm_system` không có quyền nào trên cột đó ([ADR-0015](0015-grant-insert-phai-theo-cot-khi-bang-co-cot-thuoc-quyet-dinh-cua-nguoi.md) · migration `0003`). Không có màn hình nào có thể lách nó, dù vẽ kiểu gì.
+>
+> Nên từ 15/08, `/thong-bao` có **màn riêng** — vì strip có việc là *nhắc cái chưa đọc*, còn trang có việc là *chứng minh không mất gì*, và hai việc đó đòi bố cục ngược nhau (một bên gộp trùng và giấu cái đã đọc, một bên liệt kê đủ theo thứ tự kèm trạng thái). Thứ **thật sự** dùng chung là cách vẽ một dòng, nay nằm ở `components/notification/notification-row.tsx`. Hai bản sao của **markup đó** mới là trùng lặp nguy hiểm: nút "Đã xem" và nút Hoàn tác sẽ trôi khỏi nhau, mà Hoàn tác là nửa cơ chế an toàn của vùng tự chủ 3.
+>
+> Kéo theo: prop `show` của `NotificationStrip` bị bỏ (chỉ còn một giá trị thật); T-7 đổi `notification-strip` → `notification-history` khi kiểm `/thong-bao`, các assertion khác giữ nguyên.
+
 ## Bối cảnh
 
 Vùng tự chủ 3 đổi quyền tự ghi lấy ba thứ, trong đó có **Hoàn tác một cú bấm**. CLAUDE.md mục 4 nói rõ hơn: *chỗ nào máy tự làm thì sửa lại phải dễ hơn cả lúc máy làm*.

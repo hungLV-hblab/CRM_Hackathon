@@ -80,6 +80,19 @@ export const updateStageSchema = z.object({
 
 export type UpdateStageDto = z.infer<typeof updateStageSchema>
 
+/**
+ * Reordering a deal inside its stage column on the board. Anchored to a CARD, not an index:
+ * the board can be filtered (chỉ quá hạn), so a visual index counted on the filtered column
+ * would land the deal somewhere else in the full one. "Take the slot of card X" survives
+ * every filter.
+ */
+export const reorderOpportunitySchema = z.object({
+  /** The card whose slot the moved deal takes; absent/null means "end of the column". */
+  targetId: z.string().uuid().nullish(),
+})
+
+export type ReorderOpportunityDto = z.infer<typeof reorderOpportunitySchema>
+
 export interface OpportunityDto {
   id: string
   companyId: string

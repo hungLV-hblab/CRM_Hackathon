@@ -1,10 +1,17 @@
 'use client'
 
 import { Plus } from 'lucide-react'
+import { arrayMove } from '@dnd-kit/sortable'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
-import { STAGE, type CreateOpportunityDto, type Stage, type UpdateStageDto } from '@crm/contracts'
+import {
+  STAGE,
+  type CreateOpportunityDto,
+  type OpportunityDto,
+  type Stage,
+  type UpdateStageDto,
+} from '@crm/contracts'
 
 import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
@@ -39,11 +46,60 @@ export default function OpportunityBoardPage() {
   const changeStage = useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: UpdateStageDto }) =>
       api.updateOpportunityStage(id, dto),
-    onSuccess: async () => {
-      // The stage move also writes a timeline entry, so both caches are stale.
+    /**
+     * Optimistic: the card lands in its new column the moment it is dropped. Waiting for the
+     * round trip made every drop look like a failed drag — the card snapped back to the old
+     * column, sat there for the length of a request plus two refetches, then jumped.
+     */
+    onMutate: async ({ id, dto }) => {
+      await queryClient.cancelQueries({ queryKey: ['opportunities'] })
+      const previous = queryClient.getQueryData<OpportunityDto[]>(['opportunities'])
+      // Moved to the FRONT of the list, not patched in place: the server puts a deal that
+      // changed column at the TOP of its new one, and the optimistic board must land it on
+      // the same slot or the refetch visibly shuffles it.
+      queryClient.setQueryData<OpportunityDto[]>(['opportunities'], (rows) => {
+        const moved = rows?.find((row) => row.id === id)
+        if (!rows || !moved) return rows
+        return [{ ...moved, stage: dto.stage }, ...rows.filter((row) => row.id !== id)]
+      })
+      setPending(null)
+      return { previous }
+    },
+    onError: (_error, _variables, context) => {
+      // The server refused the move, so the board must not keep pretending it happened. The
+      // ErrorState below tells Sales why the card went back.
+      if (context?.previous) queryClient.setQueryData(['opportunities'], context.previous)
+    },
+    onSettled: async () => {
+      // The stage move also writes a timeline entry and recomputes warning flags server-side,
+      // so both caches are stale even after an optimistic move.
       await queryClient.invalidateQueries({ queryKey: ['opportunities'] })
       await queryClient.invalidateQueries({ queryKey: ['timeline'] })
-      setPending(null)
+    },
+  })
+
+  /**
+   * Same-column reorder, optimistic like the stage change and mirroring the server exactly:
+   * both sides run the same arrayMove anchored to `targetId`, so the card settles where it
+   * was dropped and the refetch confirms rather than corrects.
+   */
+  const reorder = useMutation({
+    mutationFn: ({ id, targetId }: { id: string; targetId: string | null }) =>
+      api.reorderOpportunity(id, { targetId }),
+    onMutate: async ({ id, targetId }) => {
+      await queryClient.cancelQueries({ queryKey: ['opportunities'] })
+      const previous = queryClient.getQueryData<OpportunityDto[]>(['opportunities'])
+      queryClient.setQueryData<OpportunityDto[]>(['opportunities'], (rows) =>
+        rows ? moveWithinColumn(rows, id, targetId) : rows,
+      )
+      return { previous }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(['opportunities'], context.previous)
+    },
+    onSettled: async () => {
+      // No timeline invalidation: arranging the board is not a business event and writes none.
+      await queryClient.invalidateQueries({ queryKey: ['opportunities'] })
     },
   })
 
@@ -87,7 +143,7 @@ export default function OpportunityBoardPage() {
         machine write Sales does not notice is a machine write with no safety mechanism at all
         (ADR-0027). Renders nothing when there is nothing unread.
       */}
-      <NotificationStrip show="unread" showLink />
+      <NotificationStrip showLink />
 
       <FilterBar
         chips={[
@@ -130,8 +186,17 @@ export default function OpportunityBoardPage() {
       {changeStage.isError && (
         <ErrorState error={changeStage.error} fallback={'Không đổi được giai đoạn'} />
       )}
+      {reorder.isError && (
+        <ErrorState error={reorder.error} fallback={'Không xếp lại được thứ tự, thẻ đã trở về chỗ cũ'} />
+      )}
 
-      {opportunities.data && <StageBoard opportunities={visible} onStageChange={onStageChange} />}
+      {opportunities.data && (
+        <StageBoard
+          opportunities={visible}
+          onStageChange={onStageChange}
+          onReorder={(id, targetId) => reorder.mutate({ id, targetId })}
+        />
+      )}
 
       <StageTransitionDialog
         open={pending !== null}
@@ -146,11 +211,34 @@ export default function OpportunityBoardPage() {
 
       <CreateOpportunityDialog
         open={isCreateOpen}
-        companies={(companies.data ?? []).map((row) => ({ id: row.id, name: row.name }))}
+        companies={(companies.data?.items ?? []).map((row) => ({ id: row.id, name: row.name }))}
         onClose={() => setCreateOpen(false)}
       />
     </PageBody>
   )
+}
+
+/**
+ * The optimistic mirror of the server's reorder: the same arrayMove, anchored to the same
+ * card. Runs on the FULL cached list while the board may be filtered — anchoring to
+ * `targetId` instead of a visual index is what keeps the two consistent (see the contract).
+ */
+function moveWithinColumn(
+  rows: OpportunityDto[],
+  id: string,
+  targetId: string | null,
+): OpportunityDto[] {
+  const moved = rows.find((row) => row.id === id)
+  if (!moved) return rows
+
+  const column = rows.filter((row) => row.stage === moved.stage)
+  const from = column.findIndex((row) => row.id === id)
+  const to = targetId ? column.findIndex((row) => row.id === targetId) : column.length - 1
+  if (from < 0 || to < 0) return rows
+
+  const reordered = arrayMove(column, from, to)
+  let cursor = 0
+  return rows.map((row) => (row.stage === moved.stage ? reordered[cursor++] : row))
 }
 
 /** Shaped like the board: four columns at column width, two cards each. */

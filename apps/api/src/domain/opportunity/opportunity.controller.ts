@@ -13,10 +13,12 @@ import {
 
 import {
   type CreateOpportunityDto,
+  type ReorderOpportunityDto,
   type Stage,
   type UpdateOpportunityDto,
   type UpdateStageDto,
   createOpportunitySchema,
+  reorderOpportunitySchema,
   updateOpportunitySchema,
   updateStageSchema,
 } from '@crm/contracts'
@@ -25,6 +27,7 @@ import { JwtGuard } from '../../auth/jwt.guard'
 import { OpportunityService } from './opportunity-service'
 import { ZodValidationPipe } from '../../common/zod-validation.pipe'
 import { getCurrentActor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 /**
  * There is no DELETE here. The Specs ask for "tạo và quản lý cơ hội" and nothing more; a deal
@@ -42,11 +45,14 @@ export class OpportunityController {
     @Query('stage') stage?: string,
     @Query('overdueOnly') overdueOnly?: string,
   ) {
-    return this.opportunities.list({
-      companyId,
-      stage: stage as Stage | undefined,
-      overdueOnly: overdueOnly === 'true',
-    })
+    return this.opportunities.list(
+      {
+        companyId,
+        stage: stage as Stage | undefined,
+        overdueOnly: overdueOnly === 'true',
+      },
+      ownerScopeFor(this.actor()),
+    )
   }
 
   @Get(':id')
@@ -82,6 +88,19 @@ export class OpportunityController {
   ) {
     const { stage, ...cells } = dto
     return this.opportunities.updateStage(this.actor(), id, stage, cells)
+  }
+
+  /**
+   * Same-column reorder. Separate from `PATCH :id/stage` because the two mean different
+   * things: a stage change is a business event that writes a timeline entry, a reorder is
+   * Sales arranging their own board and writes nothing but positions.
+   */
+  @Patch(':id/board-order')
+  reorder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(reorderOpportunitySchema)) dto: ReorderOpportunityDto,
+  ) {
+    return this.opportunities.reorderOnBoard(this.actor(), id, dto.targetId ?? null)
   }
 
   private actor() {

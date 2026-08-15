@@ -1,8 +1,8 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
-import { desc, eq } from 'drizzle-orm'
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 
 import type { CreateTimelineEntryDto, TimelineEntryDto } from '@crm/contracts'
-import { type CrmDatabase, contacts, timelineEntries } from '@crm/db'
+import { type CrmDatabase, companies, contacts, timelineEntries } from '@crm/db'
 
 import { DRIZZLE_APP } from '../../common/db/db.module'
 import { AuditEventService } from '../../common/audit/audit-event-service'
@@ -28,6 +28,23 @@ export class TimelineService {
     @Inject(DRIZZLE_APP) private readonly db: CrmDatabase,
     private readonly audit: AuditEventService,
   ) {}
+
+  /**
+   * ADR-0046 — is this company inside the caller's boundary? Missing and out-of-boundary answer
+   * the same way, so a refusal cannot be read as "this id is real, you just may not have it".
+   */
+  private async assertCompanyVisible(companyId: string, ownerId: string | null): Promise<void> {
+    const conditions = [eq(companies.id, companyId), isNull(companies.deletedAt)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
+    const [row] = await this.db
+      .select({ id: companies.id })
+      .from(companies)
+      .where(and(...conditions))
+      .limit(1)
+
+    if (!row) throw new NotFoundException('Không tìm thấy công ty')
+  }
 
   async add(
     actor: Actor,
@@ -58,7 +75,16 @@ export class TimelineService {
     return entries.find((entry) => entry.id === created.id) as TimelineEntryDto
   }
 
-  async listByCompany(companyId: string): Promise<TimelineEntryDto[]> {
+  async listByCompany(
+    companyId: string,
+    ownerId: string | null = null,
+  ): Promise<TimelineEntryDto[]> {
+    /**
+     * ADR-0046. The timeline carries accepted findings verbatim, so leaving it open would hand
+     * back the content of suggestions the reader is not allowed to see in the queue.
+     */
+    await this.assertCompanyVisible(companyId, ownerId)
+
     const rows = await this.db
       .select({
         id: timelineEntries.id,

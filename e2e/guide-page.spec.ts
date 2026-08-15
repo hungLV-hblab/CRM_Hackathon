@@ -10,7 +10,7 @@ import { expect, test, type Page } from '@playwright/test'
  * out of it actually resolves.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 const ZONES = [
   'Vùng 1 · Tự do',

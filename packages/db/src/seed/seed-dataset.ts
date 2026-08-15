@@ -18,7 +18,12 @@ export interface SeedCompany {
   size: string | null
   website: string | null
   isWatched: boolean
-  ownerId: string
+  /**
+   * Imported from `sales_owner` (ADR-0046). `null` when the cell names nobody the system knows
+   * — such a company is administrator-only until someone assigns it, which is the honest state
+   * rather than a guessed owner.
+   */
+  ownerId: string | null
 }
 
 export interface SeedContact {

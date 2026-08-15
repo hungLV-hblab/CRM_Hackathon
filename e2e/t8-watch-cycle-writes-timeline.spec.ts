@@ -44,7 +44,14 @@ import {
  * scan log page) still runs for real.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+/**
+ * Signed in as the administrator (ADR-0046). The watch cycle is a system-wide mechanism and this
+ * spec measures it across the WHOLE watch set, whose companies `Account.csv` spreads over several
+ * Sales people. Scoping by owner would leave a Sales session unable to see most of the arithmetic
+ * this test is built on, which would make it measure the permission rule instead of the cycle.
+ * Admin has the same CRM rights as Sales (ADR-0033).
+ */
+const SALES = { email: 'admin@hblab.vn', password: 'hackathon#1' }
 
 /** Three real, watched companies with full before/after page pairs. */
 const WATCHED = ['GFF AI', 'audax', 'Sato']

@@ -38,6 +38,11 @@ import { insertLegacySnapshotPages } from '../../../ai/__tests__/legacy-snapshot
  */
 
 const SALES_ID = '11111111-1111-4111-8111-111111111111'
+/**
+ * The list is paginated since ADR-0047. One page is plenty here — this file raises a handful of
+ * notices — and naming it once keeps the assertions about what they measure.
+ */
+const NOTICES_PAGE = { page: 1, pageSize: 20, unreadOnly: false }
 /** Human-typed next step. The I-7 case: news arrives, the cell is NOT overwritten. */
 const SAKURA = 'aaaaaaaa-0001-4000-8000-000000000001'
 /** Empty next step + `leadership_hire` news in its `after` page. The T-6/T-7 case. */
@@ -257,7 +262,7 @@ describe('T-6 · reading the "after" page sets the next step, announces it, and 
   it('3 · Sales is told immediately, and the notice says what, for which deal, and why', async () => {
     await buildIngest().ingest(NIMBUS, 'after', 'watch_cycle')
 
-    const list = await notifications.list(sales)
+    const list = (await notifications.list(sales, NOTICES_PAGE)).items
     expect(list).toHaveLength(1)
     expect(list[0].readAt).toBeNull()
     expect(list[0].autoEventId).not.toBeNull()
@@ -573,14 +578,14 @@ describe('ontology 3.3 · a notice does not disappear before it is read', () => 
     await buildIngest().ingest(NIMBUS, 'after', 'watch_cycle')
 
     // Reading the list three times must not mark anything: scrolling past is not reading.
-    await notifications.list(sales)
-    await notifications.list(sales)
-    let list = await notifications.list(sales)
+    await notifications.list(sales, NOTICES_PAGE)
+    await notifications.list(sales, NOTICES_PAGE)
+    let list = (await notifications.list(sales, NOTICES_PAGE)).items
     expect(list[0].readAt).toBeNull()
 
     await notifications.markRead(sales, list[0].id)
 
-    list = await notifications.list(sales)
+    list = (await notifications.list(sales, NOTICES_PAGE)).items
     // Still present — marked, not deleted. The record that Sales was told is part of the trail.
     expect(list).toHaveLength(1)
     expect(list[0].readAt).not.toBeNull()

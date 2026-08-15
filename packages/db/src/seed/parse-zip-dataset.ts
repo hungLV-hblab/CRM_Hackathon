@@ -3,7 +3,7 @@ import { parse } from 'csv-parse/sync'
 
 import { STAGE, type Stage } from '@crm/contracts'
 
-import { SALES_ID } from './default-users'
+import { SALES_ID_BY_OWNER_NAME } from './default-users'
 import { deterministicUuid } from './deterministic-uuid'
 import type {
   SeedCompany,
@@ -58,6 +58,34 @@ function nullableFullDate(value: string | undefined, code: string, warnings: str
     return null
   }
   return trimmed
+}
+
+/**
+ * `sales_owner` → the id of the account that person signs in with (ADR-0046). The CSV names
+ * five sales people and `DEMO_ACCOUNTS` gives each one a login, so ownership is IMPORTED rather
+ * than dealt out: hand-assigning owners over real companies would invent a fact the source
+ * already states (rule 4).
+ *
+ * An unrecognised name leaves the company with NO owner rather than parking it on whoever
+ * happens to be first. That matters for the admin upload endpoint, which accepts a zip nobody
+ * has seen: a company with `owner_id IS NULL` is visible to administrators only, so the row
+ * survives, stays reachable, and says out loud that it needs assigning — instead of quietly
+ * appearing in one sales person's list as if it were theirs.
+ */
+function ownerIdFor(value: string | undefined, code: string, warnings: string[]): string | null {
+  const name = value?.trim()
+  if (!name) {
+    warnings.push(`${code}: không có sales_owner — công ty này chưa có người phụ trách, chỉ Admin thấy`)
+    return null
+  }
+  const ownerId = SALES_ID_BY_OWNER_NAME.get(name)
+  if (!ownerId) {
+    warnings.push(
+      `${code}: sales_owner "${name}" không khớp tài khoản nào — công ty này chưa có người phụ trách, chỉ Admin thấy`,
+    )
+    return null
+  }
+  return ownerId
 }
 
 /** `"45,000"` → `"45000.00"` — thousands separators the CSV uses, `numeric` column wants a plain string. */
@@ -130,7 +158,7 @@ function parseAccounts(files: Map<string, Buffer>): { result: AccountsResult; wa
       size: nullableText(row.company_size),
       website: nullableText(row.website_url),
       isWatched: yesNo(row.is_tracked),
-      ownerId: SALES_ID,
+      ownerId: ownerIdFor(row.sales_owner, code, warnings),
     }
     companies.push(company)
     byCode.set(code, company)

@@ -1,7 +1,7 @@
 'use client'
 
 import { Plus, Search } from 'lucide-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
 
@@ -28,20 +28,45 @@ import { api, ApiError } from '@/lib/api-client'
 
 const EMPTY_FORM: CreateCompanyDto = { name: '', industry: '', companyType: '' }
 const EMPTY_FILTERS: ListCompaniesQuery = {}
+/** One screen of rows. Changing a filter or the sort sends the reader back to page one. */
+const PAGE_SIZE = 20
 
 export default function CompanyListPage() {
   const queryClient = useQueryClient()
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<CreateCompanyDto>(EMPTY_FORM)
-  const [filters, setFilters] = useState<ListCompaniesQuery>(EMPTY_FILTERS)
+  const [filters, setFiltersState] = useState<ListCompaniesQuery>(EMPTY_FILTERS)
+
+  /**
+   * Every filter change goes back to page one. Narrowing a list while standing on page four
+   * usually lands past the end of the new result — an empty table that reads as "nothing
+   * matched" when the matches are simply on page one.
+   */
+  function setFilters(next: ListCompaniesQuery) {
+    setFiltersState(next)
+    setPage(1)
+  }
 
   /**
    * Filtering happens on the server, so the key carries the filters: two different filter
    * sets are two different results and must not share a cache entry.
    */
+  const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<TableSort | undefined>(undefined)
+
+  const listQuery: ListCompaniesQuery = {
+    ...filters,
+    page,
+    pageSize: PAGE_SIZE,
+    sortBy: sort?.key === 'industry' ? 'industry' : sort ? 'name' : undefined,
+    sortDir: sort?.direction,
+  }
+
   const companies = useQuery({
-    queryKey: ['companies', filters],
-    queryFn: () => api.listCompanies(filters),
+    queryKey: ['companies', listQuery],
+    queryFn: () => api.listCompanies(listQuery),
+    /** Turning a page keeps the current rows on screen instead of flashing an empty table. */
+    placeholderData: keepPreviousData,
   })
 
   /**
@@ -50,16 +75,23 @@ export default function CompanyListPage() {
    * somebody types a new one. Read from an unfiltered fetch so choosing one filter never
    * empties the other dropdown.
    */
-  const allCompanies = useQuery({ queryKey: ['companies', {}], queryFn: () => api.listCompanies() })
+  /**
+   * ITS OWN KEY, not `['companies', {}]`. That key is already owned by the command palette with a
+   * different `queryFn`, and TanStack Query stores one entry per key — opening ⌘K first would
+   * have filled this one and built the dropdowns from whatever the palette asked for. The name
+   * says what it is for: the distinct values behind the filters, never a paged view.
+   */
+  const allCompanies = useQuery({
+    queryKey: ['company-facets'],
+    queryFn: () => api.listCompanies(),
+  })
   /** Specs group 3: the list must show which companies have something waiting for a decision. */
   const pendingProposals = usePendingProposalCounts()
-  const industries = useMemo(
-    () => unique((allCompanies.data ?? []).map((row) => row.industry)),
-    [allCompanies.data],
-  )
+  const facets = allCompanies.data?.items ?? []
+  const industries = useMemo(() => unique(facets.map((row) => row.industry)), [facets])
   const countries = useMemo(
-    () => unique((allCompanies.data ?? []).map((row) => row.country).filter(Boolean) as string[]),
-    [allCompanies.data],
+    () => unique(facets.map((row) => row.country).filter(Boolean) as string[]),
+    [facets],
   )
   /**
    * `companyType` is free text (schema migration 0012) — no fixed dictionary to render a
@@ -67,22 +99,21 @@ export default function CompanyListPage() {
    * are whatever values are actually in the data, not a hand-typed 5-value list.
    */
   const companyTypes = useMemo(
-    () => unique((allCompanies.data ?? []).map((row) => row.companyType)),
-    [allCompanies.data],
+    () => unique(facets.map((row) => row.companyType)),
+    [facets],
   )
 
   /**
-   * The screen owns the order, not the Table. A component that sorts its own rows becomes a
-   * second source of truth about sequence, free to disagree with whatever the server sent —
-   * so `Table` reports the click and this decides what it means.
+   * The screen reports the click; the SERVER decides the order (ADR-0047).
    *
-   * Vietnamese collation is explicit: the default comparison puts Đ after D-with-anything and
-   * gets the vowels with diacritics wrong, which for a list of Vietnamese company names is
-   * simply the wrong alphabet.
+   * It used to sort here with `localeCompare(..., 'vi')`, which was right while the whole list
+   * was in the browser. Once the list is paged that becomes sorting one page — the rows on page
+   * two never enter the comparison — and the result looks ordered while being wrong. Postgres
+   * does it now, and `company-list-pagination.test.ts` asserts the Vietnamese ordering rather
+   * than trusting it: Đ after D, and the diacritics in vowel order.
    */
-  const [sort, setSort] = useState<TableSort | undefined>(undefined)
-
   function toggleSort(key: string) {
+    setPage(1)
     setSort((current) =>
       current?.key === key
         ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
@@ -90,19 +121,9 @@ export default function CompanyListPage() {
     )
   }
 
-  const sorted = useMemo(() => {
-    const rows = companies.data ?? []
-    if (!sort) return rows
-    const factor = sort.direction === 'asc' ? 1 : -1
-    return [...rows].sort(
-      (a, b) =>
-        factor *
-        String(a[sort.key as 'name' | 'industry']).localeCompare(
-          String(b[sort.key as 'name' | 'industry']),
-          'vi',
-        ),
-    )
-  }, [companies.data, sort])
+  const sorted = companies.data?.items ?? []
+  const total = companies.data?.total ?? 0
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const createCompany = useMutation({
     mutationFn: api.createCompany,
@@ -213,13 +234,13 @@ export default function CompanyListPage() {
       {/* No "Xoá bộ lọc" button here any more. The filter bar above carries one whenever a
           filter is on, and two buttons with the same name are ambiguous to a screen reader and
           to `getByRole` alike — the way out has to be in exactly one place. */}
-      {companies.data?.length === 0 && (
+      {companies.data && total === 0 && (
         <EmptyState message="Không có công ty nào khớp bộ lọc đang chọn. Bỏ bớt điều kiện ở thanh lọc phía trên để xem lại danh sách." icon={Search} />
       )}
 
-      {companies.data && companies.data.length > 0 && (
+      {companies.data && total > 0 && (
         <Table
-          caption={`Danh sách công ty — ${companies.data.length} dòng`}
+          caption={`Danh sách công ty — ${sorted.length}/${total} dòng`}
           sort={sort}
           onSort={toggleSort}
           headers={[
@@ -254,6 +275,24 @@ export default function CompanyListPage() {
             </tr>
           ))}
         </Table>
+      )}
+
+      {lastPage > 1 && (
+        <nav aria-label="Phân trang công ty" className="flex items-center gap-3">
+          <Button variant="ghost" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+            ← Trang trước
+          </Button>
+          <span className="text-sm text-ink-600">
+            Trang {page}/{lastPage} · {total} công ty
+          </span>
+          <Button
+            variant="ghost"
+            disabled={page >= lastPage}
+            onClick={() => setPage((n) => n + 1)}
+          >
+            Trang sau →
+          </Button>
+        </nav>
       )}
 
       <Dialog open={isDialogOpen} onClose={() => setDialogOpen(false)} title="Thêm công ty">

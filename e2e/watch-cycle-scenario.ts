@@ -234,15 +234,11 @@ export async function toggleAiAuditEvents(): Promise<{ from: boolean; to: boolea
  * Written by the harness rather than produced by reading a source, because the queue's contents at
  * this point depend on which specs ran before and on what the model returned; a T-9 that asserted
  * "the queue is decidable" against whatever happened to be there would pass vacuously on an empty
- * queue. It hangs off Ohara: not watched, and its stored snapshot is empty, so no other spec ever
- * produces a card for it.
+ * queue. It hangs off `San-e` (real BTC company, `C27`): one of only two imported companies with
+ * `is_tracked = Không`, and it carries no opportunity, so no other spec's flow ever touches it
+ * and no other spec ever produces a card for it.
  *
  * Fixed ids, cleared first: running the suite twice must not accumulate copies.
- *
- * `San-e` (real BTC company, `C27`) replaces the old fictional "Ohara Retail Group": it is one
- * of only two real companies with `is_watched = false`, and it carries no opportunity in the
- * real dataset, so no other spec's flow ever touches it. Same property Ohara was picked for,
- * different company because Ohara no longer exists (real data import, feature 260815-1026).
  */
 export const SEEDED_PROPOSAL_COMPANY = 'San-e'
 export const SEEDED_PROPOSAL_VALUE = 'https://san-e.example.jp/gian-hang-moi'
@@ -273,13 +269,13 @@ export async function seedPendingProposal(): Promise<void> {
     await pool.query(
       `INSERT INTO observations (id, company_id, source_url, raw_content, extractor_version,
                                  content_hash, fetch_status)
-       VALUES ($1, $2, 'https://ohara-retail.example.jp', $3, 't9-harness', 't9-harness-hash', 'ok')`,
+       VALUES ($1, $2, 'https://san-e.example.jp', $3, 't9-harness', 't9-harness-hash', 'ok')`,
       [SEEDED_OBSERVATION_ID, companyId, rawContent],
     )
     await pool.query(
       `INSERT INTO claims (id, company_id, observation_id, statement, signal_type, confidence,
                            quote_text, quote_start, quote_end, trigger_context)
-       VALUES ($1, $2, $3, 'Ohara công bố website mới', 'expansion', 'likely', $4, $5, $6,
+       VALUES ($1, $2, $3, 'San-e công bố website mới', 'expansion', 'likely', $4, $5, $6,
                'manual_ingest')`,
       [
         SEEDED_CLAIM_ID,

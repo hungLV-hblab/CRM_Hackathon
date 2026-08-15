@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
-import { and, asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
 
 import {
   CLAIM_EXTRACTOR,
@@ -367,8 +367,21 @@ export class ObservationService {
     }
   }
 
-  /** The read zone: snapshots newest first, each with the findings drawn from it. */
-  async readingZone(companyId: string): Promise<ObservationWithClaimsDto[]> {
+  /**
+   * The read zone: snapshots newest first, each with the findings drawn from it.
+   *
+   * SCOPED (ADR-0046), and this endpoint is the reason the boundary could not stop at the
+   * suggestion queue. A `timeline_entry` suggestion's proposed value IS its claim's statement,
+   * and what comes back from here is that same claim with the verbatim quote and its offsets
+   * attached. Blocking the queue while leaving this open would have moved the leak, not closed
+   * it — company ids are enumerable, so "you cannot see the card" would have meant nothing.
+   */
+  async readingZone(
+    companyId: string,
+    ownerId: string | null = null,
+  ): Promise<ObservationWithClaimsDto[]> {
+    await this.assertCompanyVisible(companyId, ownerId)
+
     const rows = await this.dbApp
       .select()
       .from(observations)
@@ -443,6 +456,27 @@ export class ObservationService {
       .limit(1)
 
     return latest
+  }
+
+  /**
+   * ADR-0046 — is this company inside the caller's boundary at all?
+   *
+   * Read through `dbApp`, the human pool, because this is a question about a PERSON's rights;
+   * `loadCompanyForReading` below reads the same table through `dbSystem` for a different
+   * purpose entirely and the two must not be confused. Missing and out-of-boundary give the
+   * same NOT FOUND: a distinct refusal would confirm the id names a real company.
+   */
+  private async assertCompanyVisible(companyId: string, ownerId: string | null): Promise<void> {
+    const conditions = [eq(companies.id, companyId), isNull(companies.deletedAt)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
+    const [row] = await this.dbApp
+      .select({ id: companies.id })
+      .from(companies)
+      .where(and(...conditions))
+      .limit(1)
+
+    if (!row) throw new NotFoundException('Không tìm thấy công ty')
   }
 
   /** Read under the AI identity: `crm_system` holds SELECT on `companies` and nothing more. */

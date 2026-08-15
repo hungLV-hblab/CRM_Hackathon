@@ -36,8 +36,18 @@ import {
  * phase 4 lost two runs to a stale web container and the results looked like product bugs.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
-const ADMIN = { email: 'admin@hblab.vn', password: 'admin123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
+const ADMIN = { email: 'admin@hblab.vn', password: 'hackathon#1' }
+/**
+ * The queue is scoped by `companies.owner_id` (ADR-0046), and the harness hangs its guaranteed
+ * pending suggestion off San-e — which `Account.csv` gives to Phúc, not to the Sales account
+ * above. So the "the queue is still decidable" step runs in HIS session.
+ *
+ * A third context rather than reusing `admin`: the claim being tested is that a SALES person can
+ * still decide while the machine is off, and deciding it as the administrator would quietly
+ * weaken that to "somebody with full rights can".
+ */
+const SALES_QUEUE_OWNER = { email: 'sales3@hblab.vn', password: 'hackathon#1' }
 
 const CYCLE_SECONDS = 10
 /** Generous about WHEN inside the window, strict about the window. Same reasoning as T-8. */
@@ -78,12 +88,15 @@ test('T-9 · tắt AI trên màn Quản trị → 2 chu kỳ không sinh gì, Sa
 }) => {
   const adminContext = await browser.newContext()
   const salesContext = await browser.newContext()
+  const queueOwnerContext = await browser.newContext()
   const admin = await adminContext.newPage()
   const sales = await salesContext.newPage()
+  const queueOwner = await queueOwnerContext.newPage()
 
   try {
     await login(admin, ADMIN)
     await login(sales, SALES)
+    await login(queueOwner, SALES_QUEUE_OWNER)
 
     await test.step('trước khi tắt: màn Quản trị nói AI đang bật, Sales không thấy banner', async () => {
       await admin.goto('/quan-tri')
@@ -145,8 +158,8 @@ test('T-9 · tắt AI trên màn Quản trị → 2 chu kỳ không sinh gì, Sa
     })
 
     await test.step('hàng đợi tồn vẫn duyệt được — nút tắt chỉ dừng SINH MỚI (ADR-0009)', async () => {
-      await sales.goto('/hang-doi')
-      const card = sales
+      await queueOwner.goto('/hang-doi')
+      const card = queueOwner
         .getByTestId('proposal-card')
         .filter({ hasText: SEEDED_PROPOSAL_VALUE })
         .first()
@@ -197,6 +210,7 @@ test('T-9 · tắt AI trên màn Quản trị → 2 chu kỳ không sinh gì, Sa
   } finally {
     await adminContext.close()
     await salesContext.close()
+    await queueOwnerContext.close()
   }
 })
 
