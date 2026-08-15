@@ -37,8 +37,18 @@ export class JobQueue {
 
   /**
    * @param deadlineMs how long a job may sit waiting before it is no longer worth running.
+   * @param now the clock. Injected for ONE reason: the deadline is the only rule in this class,
+   *        and testing it against the real clock means racing the event loop. A test that has to
+   *        pick a deadline small enough to trip the second job ends up small enough to trip the
+   *        FIRST one too, because the check below runs a microtask after `run()` returns and that
+   *        hop measures more than 0ms on a loaded machine. That is a flaky test, and a flaky test
+   *        on the one guard standing between a button and a spent quota is worse than none — it
+   *        gets muted. With a clock in hand the rule is checked exactly, load or no load.
    */
-  constructor(private readonly deadlineMs = 120_000) {}
+  constructor(
+    private readonly deadlineMs = 120_000,
+    private readonly now: () => number = Date.now,
+  ) {}
 
   stats(): QueueStats {
     return {
@@ -50,14 +60,14 @@ export class JobQueue {
   }
 
   run<T>(job: () => Promise<T>): Promise<T> {
-    const queuedAt = Date.now()
+    const queuedAt = this.now()
     this.depth += 1
     this.accepted += 1
 
     const result = this.chain.then(async () => {
       this.depth -= 1
 
-      const waited = Date.now() - queuedAt
+      const waited = this.now() - queuedAt
       if (waited > this.deadlineMs) {
         this.droppedPastDeadline += 1
         throw new QueueDeadlineError(waited)
