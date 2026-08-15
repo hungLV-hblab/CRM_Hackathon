@@ -92,6 +92,12 @@ describe('forbidden direction — crm_system cannot touch the absolute no-go zon
     ).rejects.toThrow(/permission denied/i)
   })
 
+  it('2b · rearranging the board is refused — board_order sits outside the three-column grant', async () => {
+    await expect(
+      system.query(`UPDATE opportunities SET board_order = 0 WHERE id = $1`, [OPPORTUNITY_ID]),
+    ).rejects.toThrow(/permission denied/i)
+  })
+
   it('3 · deleting an opportunity is refused', async () => {
     await expect(system.query('DELETE FROM opportunities')).rejects.toThrow(/permission denied/i)
   })

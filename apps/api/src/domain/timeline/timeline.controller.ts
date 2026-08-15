@@ -15,6 +15,7 @@ import { JwtGuard } from '../../auth/jwt.guard'
 import { TimelineService } from './timeline-service'
 import { ZodValidationPipe } from '../../common/zod-validation.pipe'
 import { getCurrentActor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 @Controller('companies/:companyId/timeline')
 @UseGuards(JwtGuard)
@@ -24,7 +25,7 @@ export class TimelineController {
   /** Newest first, all three kinds merged — the Specs ask for one stream, not three tabs. */
   @Get()
   list(@Param('companyId', ParseUUIDPipe) companyId: string) {
-    return this.timeline.listByCompany(companyId)
+    return this.timeline.listByCompany(companyId, ownerScopeFor(this.actor()))
   }
 
   /** Only `activity` and `note`: the schema refuses the two kinds nobody types by hand. */

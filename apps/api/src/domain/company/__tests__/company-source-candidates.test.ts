@@ -29,7 +29,8 @@ const owner = new Pool({ connectionString: process.env.DATABASE_URL_TEST })
 const appConnection = createConnection(process.env.DATABASE_URL_TEST_APP as string)
 const systemConnection = createConnection(process.env.DATABASE_URL_TEST_SYSTEM as string)
 
-const HUMAN: Actor = { kind: 'human', userId: SALES_ID }
+/** Carries a role since ADR-0046 — `ownerScopeFor` refuses a human actor without one. */
+const HUMAN: Actor = { kind: 'human', userId: SALES_ID, role: 'sales' }
 const SYSTEM: Actor = { kind: 'system' }
 
 const CANDIDATES: SourceCandidate[] = [

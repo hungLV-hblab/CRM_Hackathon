@@ -1,4 +1,4 @@
-import { date, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { date, integer, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { companies } from './companies'
 import { nextStepSourceEnum, stageEnum } from './enums'
@@ -25,6 +25,13 @@ export const opportunities = pgTable('opportunities', {
   /** `YYYY-MM` — the ontology says expected close MONTH, not a specific day. */
   expectedCloseMonth: text('expected_close_month'),
   stage: stageEnum('stage').notNull().default('prospecting'),
+  /**
+   * Position within the stage column on the board, 0 at the top. Purely how Sales arranged
+   * their own board — no business meaning, so reordering writes no timeline entry. Kept
+   * OUTSIDE the three-column grant of `crm_system` (0001_grants.sql): the board arrangement
+   * belongs to the person who reads it, and the AI has no reason to touch it.
+   */
+  boardOrder: integer('board_order').notNull().default(0),
 
   nextStepText: text('next_step_text'),
   nextStepDueDate: date('next_step_due_date'),

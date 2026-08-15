@@ -14,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test'
  * stops someone adding auto-run later "to be friendly" without anyone noticing.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 async function login(page: Page) {
   await page.goto('/dang-nhap')

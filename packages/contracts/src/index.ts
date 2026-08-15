@@ -1,4 +1,5 @@
 export * from './enums'
+export * from './demo-accounts'
 export * from './ports/claim-extractor'
 /**
  * Ports are exported ONE BY ONE, not with `export * from './ports'`. Adding a port file without
@@ -7,6 +8,7 @@ export * from './ports/claim-extractor'
  */
 export * from './ports/source-discovery'
 export * from './dto/admin-import'
+export * from './dto/pagination'
 export * from './dto/company'
 export * from './dto/company-source'
 export * from './dto/contact'

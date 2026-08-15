@@ -26,6 +26,7 @@ import { CompanyService } from './company-service'
 import { JwtGuard } from '../../auth/jwt.guard'
 import { ZodValidationPipe } from '../../common/zod-validation.pipe'
 import { getCurrentActor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 @Controller('companies')
 @UseGuards(JwtGuard)
@@ -49,21 +50,37 @@ export class CompanyController {
     @Query('companyType') companyType?: string,
     @Query('country') country?: string,
     @Query('isWatched') isWatched?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortDir') sortDir?: string,
   ) {
-    return this.companies.list({
-      q,
-      industry,
-      companyType,
-      country,
-      // Query strings have no booleans: only the literal 'true'/'false' means anything, and
-      // anything else has to leave the filter off rather than guess.
-      isWatched: isWatched === 'true' ? true : isWatched === 'false' ? false : undefined,
-    })
+    return this.companies.list(
+      {
+        q,
+        industry,
+        companyType,
+        country,
+        // Query strings have no booleans: only the literal 'true'/'false' means anything, and
+        // anything else has to leave the filter off rather than guess.
+        isWatched: isWatched === 'true' ? true : isWatched === 'false' ? false : undefined,
+        /**
+         * An unreadable `page` leaves paging OFF rather than defaulting to the first page, for
+         * the same reason the boolean above refuses to guess: five of this endpoint's six callers
+         * want every row, and quietly handing them twenty would be a shorter list nobody notices.
+         */
+        page: positiveInt(page),
+        pageSize: positiveInt(pageSize),
+        sortBy: sortBy === 'industry' ? 'industry' : sortBy === 'name' ? 'name' : undefined,
+        sortDir: sortDir === 'desc' ? 'desc' : sortDir === 'asc' ? 'asc' : undefined,
+      },
+      ownerScopeFor(this.actor()),
+    )
   }
 
   @Get(':id')
   byId(@Param('id', ParseUUIDPipe) id: string) {
-    return this.companies.byId(id)
+    return this.companies.byId(id, ownerScopeFor(this.actor()))
   }
 
   @Patch(':id')
@@ -102,4 +119,11 @@ export class CompanyController {
     if (!actor) throw new UnauthorizedException('Không xác định được người thao tác')
     return actor
   }
+}
+
+/** `undefined` for anything that is not a whole number above zero — no guessing, no clamping. */
+function positiveInt(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined
+  const value = Number(raw)
+  return Number.isInteger(value) && value > 0 ? value : undefined
 }

@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test'
  * that actually proves the session is a real httpOnly cookie rather than React state.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 const NEW_COMPANY = 'Cty Kiem Thu'
 
 test('đăng nhập, giữ phiên qua reload, tạo công ty, đăng xuất', async ({ page }) => {

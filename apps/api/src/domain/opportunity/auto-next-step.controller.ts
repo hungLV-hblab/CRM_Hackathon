@@ -11,6 +11,7 @@ import {
 import { AutoNextStepService } from './auto-next-step-service'
 import { JwtGuard } from '../../auth/jwt.guard'
 import { getCurrentActor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 /**
  * Its own controller rather than two more routes on `opportunity.controller.ts` (ADR-0027).
@@ -37,7 +38,7 @@ export class AutoNextStepController {
    */
   @Get('opportunities/auto-next-steps')
   listActive() {
-    return this.autoNextSteps.listActive()
+    return this.autoNextSteps.listActive(ownerScopeFor(this.actor()))
   }
 
   /** One click, 7 days. Returns what the cell was put back to, so the client need not refetch blind. */

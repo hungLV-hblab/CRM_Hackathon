@@ -1,5 +1,11 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm'
 
 import {
   STAGE,
@@ -62,7 +68,7 @@ const SELECTION = {
  * the nullability of every column, so `expectedValue` came back as `string` and a `null` in
  * the middle of the money column type-checked fine.
  */
-type OpportunityRow = Omit<typeof opportunities.$inferSelect, 'createdAt'> & {
+type OpportunityRow = Omit<typeof opportunities.$inferSelect, 'createdAt' | 'boardOrder'> & {
   companyName: string
 }
 
@@ -94,6 +100,7 @@ export class OpportunityService {
         expectedValue: dto.expectedValue ?? null,
         expectedCloseMonth: dto.expectedCloseMonth ?? null,
         stage: dto.stage ?? 'prospecting',
+        boardOrder: endOfColumn(dto.stage ?? 'prospecting'),
         nextStepText: dto.nextStepText ?? null,
         nextStepDueDate: dto.nextStepDueDate ?? null,
         // A human typed it, and I-7 later reads this to decide whether the system may touch it.
@@ -192,6 +199,11 @@ export class OpportunityService {
         .update(opportunities)
         .set({
           stage,
+          // A deal arriving from another column enters at the TOP of its new one — where the
+          // eye (and the pre-board_order sort by updatedAt) expects the thing just moved.
+          // Recomputed here, not sent by the client, so a stale board cannot write a stale
+          // position.
+          boardOrder: topOfColumn(stage),
           // Only cells the dialog actually collected. `undefined` leaves the column alone;
           // an explicit `null` is Sales clearing it.
           ...(cells.needSignal !== undefined ? { needSignal: cells.needSignal } : {}),
@@ -217,6 +229,72 @@ export class OpportunityService {
         description: `Đổi giai đoạn: ${STAGE[current.stage]} → ${STAGE[stage]}`,
         createdBy: 'human',
       })
+    })
+
+    return this.byId(opportunityId)
+  }
+
+  /**
+   * Moving a deal to another slot of the SAME column. Not a business event — no timeline
+   * entry, no `updatedAt` bump: the board arrangement is Sales organising their own reading
+   * order, and pretending it edited the deal would put noise in both.
+   *
+   * `targetId` anchors the move to a card rather than an index (see the contract note), and
+   * the splice below is deliberately the same arrayMove the board performs optimistically,
+   * so both sides land the card in the same slot.
+   *
+   * Human-only, on both defence layers: refused here for `actor=system`, and `crm_system`
+   * holds no UPDATE privilege on `board_order` (its grant names exactly the three
+   * `next_step_*` columns).
+   */
+  async reorderOnBoard(
+    actor: Actor,
+    opportunityId: string,
+    targetId: string | null,
+  ): Promise<OpportunityDto> {
+    const db = this.poolFor(actor)
+
+    if (actor.kind === 'system') {
+      await this.audit.recordRefusal(actor, 'reorder_board', 'opportunity', opportunityId, {
+        reason: 'the board arrangement belongs to the person reading it, not to the AI',
+      })
+      throw new ForbiddenException('Hệ thống không được xếp lại bảng cơ hội')
+    }
+
+    if (targetId === opportunityId) return this.byId(opportunityId)
+
+    const current = await this.rowOrThrow(db, opportunityId)
+
+    await db.transaction(async (tx) => {
+      // Locked in board order: two rearrangements of one column must queue, or both would
+      // renumber from the same snapshot and the loser's write would scramble the column.
+      const column = await tx
+        .select({ id: opportunities.id })
+        .from(opportunities)
+        .where(eq(opportunities.stage, current.stage))
+        .orderBy(asc(opportunities.boardOrder), desc(opportunities.updatedAt))
+        .for('update')
+
+      const ids = column.map((row) => row.id)
+      const from = ids.indexOf(opportunityId)
+      const to = targetId ? ids.indexOf(targetId) : ids.length - 1
+      if (from < 0) throw new NotFoundException('Không tìm thấy cơ hội')
+      if (to < 0) {
+        // The anchor changed stage between the drag and the drop. Refusing beats guessing:
+        // a card that lands where nobody put it is a wrong row, and rule 4 prices that
+        // higher than a drag Sales has to repeat.
+        throw new BadRequestException('Thẻ mốc không còn trong cùng cột, kéo lại giúp nhé')
+      }
+
+      ids.splice(from, 1)
+      ids.splice(to, 0, opportunityId)
+
+      for (const [index, id] of ids.entries()) {
+        await tx
+          .update(opportunities)
+          .set({ boardOrder: index })
+          .where(and(eq(opportunities.id, id), ne(opportunities.boardOrder, index)))
+      }
     })
 
     return this.byId(opportunityId)
@@ -275,9 +353,18 @@ export class OpportunityService {
    * Reads for a screen always go through `crm_app`: this is Sales looking at their own data,
    * whoever triggered the request.
    */
-  async list(query: ListOpportunitiesQuery = {}): Promise<OpportunityDto[]> {
+  async list(
+    query: ListOpportunitiesQuery = {},
+    ownerId: string | null = null,
+  ): Promise<OpportunityDto[]> {
     const today = todayIso()
     const conditions = [isNull(companies.deletedAt)]
+    /**
+     * ADR-0046 — ownership travels through the company, not through the deal. The join to
+     * `companies` is already here for the soft-delete rule, so the boundary costs one predicate
+     * and stays in the one place a deal's owner is defined.
+     */
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
     if (query.companyId) conditions.push(eq(opportunities.companyId, query.companyId))
     if (query.stage) conditions.push(eq(opportunities.stage, query.stage))
 
@@ -288,7 +375,9 @@ export class OpportunityService {
       // them: no extra column, no migration, and undeleting brings everything back.
       .innerJoin(companies, eq(companies.id, opportunities.companyId))
       .where(and(...conditions))
-      .orderBy(desc(opportunities.updatedAt))
+      // Board order first: within a stage this IS the column, top to bottom. `updatedAt`
+      // only breaks ties between rows the backfill or a concurrent insert left equal.
+      .orderBy(asc(opportunities.boardOrder), desc(opportunities.updatedAt))
 
     const dtos = rows.map((row) => toDto(row, today))
     return query.overdueOnly ? dtos.filter((dto) => dto.isOverdue) : dtos
@@ -321,6 +410,20 @@ export class OpportunityService {
     if (!row) throw new NotFoundException('Không tìm thấy cơ hội')
     return row
   }
+}
+
+/**
+ * Column entry points, as subqueries so the insert or update carrying one stays a single
+ * statement — two board writes racing through separate select-then-write pairs would hand
+ * out the same slot twice. Orders may go negative or grow gaps; the next reorder of that
+ * column renumbers it 0..n-1, and nothing reads the values as anything but a sort key.
+ */
+function endOfColumn(stage: Stage) {
+  return sql<number>`(select coalesce(max(${opportunities.boardOrder}), -1) + 1 from ${opportunities} where ${opportunities.stage} = ${stage})`
+}
+
+function topOfColumn(stage: Stage) {
+  return sql<number>`(select coalesce(min(${opportunities.boardOrder}), 1) - 1 from ${opportunities} where ${opportunities.stage} = ${stage})`
 }
 
 /**

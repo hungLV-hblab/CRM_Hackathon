@@ -56,7 +56,10 @@ export async function seed(connectionString: string, dataset: SeedDataset): Prom
       if (dataset.companies.length > 0) await tx.insert(companies).values(dataset.companies)
       if (dataset.contacts.length > 0) await tx.insert(contacts).values(dataset.contacts)
       if (dataset.opportunities.length > 0) {
-        await tx.insert(opportunities).values(dataset.opportunities)
+        // Board positions assigned here, not left to the column default: one INSERT gives every
+        // row the same `updated_at`, so the tiebreak would order tied rows arbitrarily and the
+        // board would deal a different column order on every reseed.
+        await tx.insert(opportunities).values(withBoardOrder(dataset.opportunities))
       }
       if (dataset.snapshotPages.length > 0) {
         await tx.insert(snapshotPages).values(dataset.snapshotPages)
@@ -75,6 +78,16 @@ export async function seed(connectionString: string, dataset: SeedDataset): Prom
   } finally {
     await close()
   }
+}
+
+/** Position within each stage column, in the order the imported dataset lists the deals. */
+function withBoardOrder<T extends { stage: string }>(rows: T[]): (T & { boardOrder: number })[] {
+  const counters = new Map<string, number>()
+  return rows.map((row) => {
+    const position = counters.get(row.stage) ?? 0
+    counters.set(row.stage, position + 1)
+    return { ...row, boardOrder: position }
+  })
 }
 
 async function runFromCli(): Promise<void> {

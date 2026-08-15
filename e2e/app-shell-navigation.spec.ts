@@ -14,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test'
  * than for breakage, which teaches the team to stop trusting it.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 async function login(page: Page) {
   await page.goto('/dang-nhap')

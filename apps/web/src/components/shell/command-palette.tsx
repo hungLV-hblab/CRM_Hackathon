@@ -69,9 +69,9 @@ export function CommandPalette({
             ))}
           </PaletteGroup>
 
-          {(companies.data ?? []).length > 0 && (
+          {(companies.data?.items ?? []).length > 0 && (
             <PaletteGroup heading="Công ty">
-              {(companies.data ?? []).map((company) => (
+              {(companies.data?.items ?? []).map((company) => (
                 <PaletteItem
                   key={company.id}
                   value={company.name}

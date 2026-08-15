@@ -116,7 +116,7 @@ Thứ tự khởi động là tự động: `postgres` (chờ healthy) → `migr
 
 Hai cách, cùng một hàm parse zip ở dưới (`parseZipDataset()`), cùng ghi lại **đúng trạng thái ban đầu** mỗi lần chạy (I-14):
 
-**Cách chính — giám khảo dùng, qua giao diện (spec mục 7 điều kiện 5):** đăng nhập `admin@hblab.vn` / `admin123`, vào `/quan-tri`, bấm "Chọn file zip…", chọn `hackathon-1-data.zip` (hoặc file BTC phát khác cùng định dạng), xác nhận "Xoá và nạp lại". Nạp lại đúng file bất cứ lúc nào — kể cả giữa demo — để xoá sạch mọi thứ AI/Sales sinh ra và về lại đúng 25 công ty / 38 liên hệ / 15 cơ hội / bản chụp gốc. Xem [ADR-0042](docs/decisions/0042-quyen-crm-owner-ngan-han-cho-import-tu-giao-dien.md).
+**Cách chính — giám khảo dùng, qua giao diện (spec mục 7 điều kiện 5):** đăng nhập `admin@hblab.vn` / `hackathon#1`, vào `/quan-tri`, bấm "Chọn file zip…", chọn `hackathon-1-data.zip` (hoặc file BTC phát khác cùng định dạng), xác nhận "Xoá và nạp lại". Nạp lại đúng file bất cứ lúc nào — kể cả giữa demo — để xoá sạch mọi thứ AI/Sales sinh ra và về lại đúng 25 công ty / 38 liên hệ / 15 cơ hội / bản chụp gốc. Xem [ADR-0042](docs/decisions/0042-quyen-crm-owner-ngan-han-cho-import-tu-giao-dien.md).
 
 **Cách phụ — dev/CI, từ terminal (terminal 2):**
 
@@ -144,12 +144,18 @@ curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}\n" http://localhost:808
 
 Rồi mở <http://localhost:8080>.
 
-| Vai | Email | Mật khẩu |
-| --- | --- | --- |
-| Sales | `sales@hblab.vn` | `sales123` |
-| Admin | `admin@hblab.vn` | `admin123` |
+| Vai | Email | Mật khẩu | Phụ trách |
+| --- | --- | --- | --- |
+| Sales | `sales@hblab.vn` | `hackathon#1` | Thảo — C15…C19 |
+| Sales | `sales2@hblab.vn` | `hackathon#1` | Vân — C20…C24 |
+| Sales | `sales3@hblab.vn` | `hackathon#1` | Phúc — C25…C29 |
+| Sales | `sales4@hblab.vn` | `hackathon#1` | Linh — C30…C34 |
+| Sales | `sales5@hblab.vn` | `hackathon#1` | Huệ — C35…C39 |
+| Admin | `admin@hblab.vn` | `hackathon#1` | cả đội |
 
-Mật khẩu demo công khai có chủ đích — giám khảo cần đăng nhập được.
+Năm tài khoản Sales vì cột `sales_owner` của `Account.csv` có đúng năm người, mỗi người 5 công ty — quyền sở hữu **nhập từ dữ liệu**, không chia tay ([ADR-0046](docs/decisions/0046-phan-quyen-theo-nguoi-phu-trach-toan-he-thong.md)). Đăng nhập bằng hai tài khoản Sales khác nhau là thấy hai danh sách công ty khác nhau.
+
+Mật khẩu mặc định `hackathon#1` theo yêu cầu BTC, công khai có chủ đích — giám khảo cần đăng nhập được. Nhanh hơn nữa: màn đăng nhập có tab **Tài khoản demo**, bấm một tài khoản là vào thẳng không cần gõ mật khẩu.
 
 ### Lần sau
 

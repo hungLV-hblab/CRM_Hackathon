@@ -24,7 +24,14 @@ import { companyIdByName, seedSnapshotPage } from './watch-cycle-scenario'
  * Runs against the compose stack on :8080 (`pnpm start`), like the rest of the e2e suite.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+/**
+ * ONE sales account is enough here even though the queue is owner-scoped (ADR-0046): both
+ * companies below are CREATED by this spec through the UI, and creating a company makes the
+ * creator its owner. So the two suggestions land in this account's queue by construction —
+ * no seeded ownership to line up, and no admin login that would sidestep the boundary the
+ * product now has.
+ */
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 /** The "blank cell" case: a fresh company (size starts NULL) whose page states one. */
 const COMPANY = 'Cty Thu Nghiem T5 Trong'

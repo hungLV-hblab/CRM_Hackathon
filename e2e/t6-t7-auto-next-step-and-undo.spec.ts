@@ -30,7 +30,7 @@ import { companyIdByName, seedSnapshotPage } from './watch-cycle-scenario'
  * Runs against the compose stack on :8080 (`pnpm start`), like the rest of the e2e suite.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 
 const COMPANY = 'Cty Thu Nghiem T6 T7'
 const OPPORTUNITY = 'Doi phat trien nen tang tich hop T6T7'
@@ -211,15 +211,21 @@ test('T-7 · Hoàn tác một cú bấm, giá trị cũ trở lại, thông báo
 
   await test.step('thông báo vẫn còn cho tới khi bấm Đã xem', async () => {
     await page.goto('/thong-bao')
-    const strip = page.getByTestId('notification-strip')
+    /**
+     * `notification-history`, not `notification-strip`: this route stopped rendering the strip
+     * when it became a history screen of its own. The assertions below are unchanged, because
+     * what they measure did not change — only the container they look inside.
+     */
+    const history = page.getByTestId('notification-history')
     // Undoing does not erase the record that Sales was told — that record is a third of what
     // buys zone 3 its privilege.
-    await expect(strip).toContainText(OPPORTUNITY)
+    await expect(history).toContainText(OPPORTUNITY)
 
     const row = page.getByTestId('notification-row').filter({ hasText: OPPORTUNITY }).first()
     await row.getByRole('button', { name: 'Đã xem' }).click()
 
-    // Marked, not deleted: it stays on the history screen wearing its new state.
+    // Marked, not deleted: it stays on the history screen wearing its new state — and the state
+    // is spelled out in words, so this passes on a greyscale printout too (rule 2).
     await expect(row).toContainText('Đã xem')
   })
 

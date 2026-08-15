@@ -13,6 +13,7 @@ import {
 import { type CrmDatabase, autoNextStepEvents, claims, companies, opportunities } from '@crm/db'
 
 import type { Actor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 import type { BlockedNextStep } from '../proposal/proposal-service'
 import type { SavedClaim } from '../claim/claim-service'
 import { AuditEventService } from '../../common/audit/audit-event-service'
@@ -314,7 +315,20 @@ export class AutoNextStepService {
    * to a human again the event stays in the trail — it happened — but it stops describing what
    * is on screen, so it stops being shown.
    */
-  async listActive(): Promise<AutoNextStepMap> {
+  async listActive(ownerId: string | null = null): Promise<AutoNextStepMap> {
+    /**
+     * SCOPED (ADR-0046), and this one is not merely a privacy nicety: the ids handed out here
+     * are exactly the ids `undo()` accepts. Left open, this list was the reconnaissance half of
+     * a cross-owner WRITE — read every `eventId` in the system, then undo somebody else's deal.
+     * The refusal in `undo()` closes the other half; both are needed, because either alone
+     * leaves a working attack or a broken button.
+     */
+    const conditions = [
+      isNull(autoNextStepEvents.undoneAt),
+      eq(opportunities.nextStepSource, 'system'),
+    ]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const rows = await this.dbApp
       .select({
         eventId: autoNextStepEvents.id,
@@ -328,7 +342,8 @@ export class AutoNextStepService {
       .from(autoNextStepEvents)
       .innerJoin(claims, eq(claims.id, autoNextStepEvents.claimId))
       .innerJoin(opportunities, eq(opportunities.id, autoNextStepEvents.opportunityId))
-      .where(and(isNull(autoNextStepEvents.undoneAt), eq(opportunities.nextStepSource, 'system')))
+      .innerJoin(companies, eq(companies.id, opportunities.companyId))
+      .where(and(...conditions))
       .orderBy(desc(autoNextStepEvents.createdAt))
 
     const now = Date.now()
@@ -375,9 +390,26 @@ export class AutoNextStepService {
     }
 
     const db = this.poolFor(actor)
+    const ownerId = ownerScopeFor(actor)
+
+    /**
+     * The boundary is checked HERE, before the transaction opens, and again inside `loadUndoable`.
+     *
+     * Twice, because the two checks do different jobs. This one can RECORD the refusal — an
+     * audit row written inside the transaction that then throws would roll back with it, leaving
+     * a cross-owner attempt with no trace at all, which is the opposite of what ADR-0046 asks
+     * for. The one in the `WHERE` clause is the guarantee: it holds even if a future caller
+     * reaches `loadUndoable` by some path that skips this.
+     */
+    if (ownerId && !(await this.isWithinBoundary(eventId, ownerId))) {
+      await this.audit.recordRefusal(actor, 'undo_auto_next_step', 'auto_next_step_event', eventId, {
+        reason: 'the deal belongs to another sales person (ADR-0046)',
+      })
+      throw new NotFoundException('Không tìm thấy lần hệ thống tự đặt Việc tiếp theo')
+    }
 
     const restored = await db.transaction(async (tx) => {
-      const event = await this.loadUndoable(tx, eventId)
+      const event = await this.loadUndoable(tx, eventId, ownerId)
 
       /**
        * I-8. NOT `event.previousText` — that is whatever stood there a moment before, which on
@@ -427,7 +459,40 @@ export class AutoNextStepService {
    * The three refusals, all measured against SERVER time and the row itself rather than
    * against anything the client sent.
    */
-  private async loadUndoable(tx: CrmDatabase, eventId: string): Promise<{ opportunityId: string }> {
+  /** Does this event hang off a deal at a company the caller looks after? */
+  private async isWithinBoundary(eventId: string, ownerId: string): Promise<boolean> {
+    const [row] = await this.dbApp
+      .select({ id: autoNextStepEvents.id })
+      .from(autoNextStepEvents)
+      .innerJoin(opportunities, eq(opportunities.id, autoNextStepEvents.opportunityId))
+      .innerJoin(companies, eq(companies.id, opportunities.companyId))
+      .where(and(eq(autoNextStepEvents.id, eventId), eq(companies.ownerId, ownerId)))
+      .limit(1)
+
+    return Boolean(row)
+  }
+
+  private async loadUndoable(
+    tx: CrmDatabase,
+    eventId: string,
+    ownerId: string | null,
+  ): Promise<{ opportunityId: string }> {
+    /**
+     * OWNERSHIP IS CHECKED IN THE `WHERE`, not after the row is loaded (ADR-0046).
+     *
+     * Before this join, the only guards were "not the system" and "within seven days" — so any
+     * signed-in person holding an event id could undo it, and the ids were handed out by
+     * `listActive()` for every company in the product. Pressing it wrote `next_step_text`,
+     * `next_step_due_date` and `next_step_source` on somebody else's deal and recorded them as
+     * the person who did it. Under rule 5 of CLAUDE.md — the next step is the deal's heartbeat —
+     * that is deleting another Sales person's morning.
+     *
+     * Out-of-boundary and non-existent both come back NOT FOUND below, because a distinct
+     * refusal would confirm the id names a real event on a real deal.
+     */
+    const conditions = [eq(autoNextStepEvents.id, eventId)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const [event] = await tx
       .select({
         id: autoNextStepEvents.id,
@@ -436,7 +501,9 @@ export class AutoNextStepService {
         undoneAt: autoNextStepEvents.undoneAt,
       })
       .from(autoNextStepEvents)
-      .where(eq(autoNextStepEvents.id, eventId))
+      .innerJoin(opportunities, eq(opportunities.id, autoNextStepEvents.opportunityId))
+      .innerJoin(companies, eq(companies.id, opportunities.companyId))
+      .where(and(...conditions))
       .limit(1)
 
     if (!event) throw new NotFoundException('Không tìm thấy lần hệ thống tự đặt Việc tiếp theo')

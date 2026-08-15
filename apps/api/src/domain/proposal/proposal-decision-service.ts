@@ -1,5 +1,5 @@
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 import { type DecideProposalDto, type ProposalTargetField } from '@crm/contracts'
 import {
@@ -13,6 +13,7 @@ import {
 } from '@crm/db'
 
 import type { Actor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 import { AuditEventService } from '../../common/audit/audit-event-service'
 import { DRIZZLE_APP } from '../../common/db/db.module'
 import { dueDateFor } from '../opportunity/next-step-due-date'
@@ -49,7 +50,7 @@ export class ProposalDecisionService {
       throw new ForbiddenException('Hệ thống không được tự duyệt gợi ý')
     }
 
-    const proposal = await this.loadPending(proposalId)
+    const proposal = await this.loadPending(proposalId, ownerScopeFor(actor))
 
     /**
      * One transaction for the decision record, the queue flag and the change itself. Split them
@@ -138,7 +139,26 @@ export class ProposalDecisionService {
       .where(eq(opportunities.id, proposal.opportunityId as string))
   }
 
-  private async loadPending(proposalId: string): Promise<PendingProposal> {
+  /**
+   * ADR-0046 — the boundary is part of the lookup, so a suggestion outside it is simply not
+   * found. Deciding one used to need nothing but its id: the queue would not SHOW another
+   * person's card, but accepting it wrote to their company profile, their timeline or their
+   * deal's next step all the same, and recorded the decision as theirs to answer for.
+   *
+   * Soft-deleted companies drop out here too, matching `listPending`. Accepting a suggestion for
+   * a deleted company wrote to a row no screen can display.
+   */
+  private async loadPending(
+    proposalId: string,
+    ownerId: string | null,
+  ): Promise<PendingProposal> {
+    const conditions = [
+      eq(proposals.id, proposalId),
+      eq(proposals.status, 'pending'),
+      isNull(companies.deletedAt),
+    ]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const [row] = await this.db
       .select({
         id: proposals.id,
@@ -151,7 +171,8 @@ export class ProposalDecisionService {
       })
       .from(proposals)
       .innerJoin(claims, eq(claims.id, proposals.claimId))
-      .where(and(eq(proposals.id, proposalId), eq(proposals.status, 'pending')))
+      .innerJoin(companies, eq(companies.id, proposals.companyId))
+      .where(and(...conditions))
       .limit(1)
 
     if (!row) throw new NotFoundException('Không tìm thấy gợi ý đang chờ duyệt')

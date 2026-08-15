@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 const ROUTES = ['/cong-ty', '/co-hoi', '/tong-quan', '/hang-doi', '/dang-theo-doi', '/huong-dan', '/thong-bao']
 
 for (const width of [375, 1440]) {

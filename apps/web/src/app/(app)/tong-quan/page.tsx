@@ -3,18 +3,23 @@
 import { CircleCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { STAGE, type OverviewDto } from '@crm/contracts'
 
 import { Cell, Table } from '@/components/ui/table'
 import { OverdueFlag, WarningFlags } from '@/components/ui/warning-flag'
 import { PageHeader } from '@/components/shell/page-header'
+import { Select } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageBody } from '@/components/shell/page-body'
 import { api } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
+
+import { PerSalesTable } from './per-sales-table'
 
 /**
  * The overview. Four blocks, and two of them exist to keep a number honest:
@@ -24,14 +29,67 @@ import { cn } from '@/lib/utils'
  * - the lost-reason block puts deals with no reason on their own line, OUTSIDE the table, so
  *   the reasons add up to the deals that actually have one.
  *
- * No AI on this screen, therefore no machine hue anywhere on it.
+ * WHOSE numbers depends on who is looking (BTC addendum 3.3): a sales sees their own data,
+ * always — the screen answers "what must I do this morning" and the server pins the view. An
+ * admin sees the whole team, may narrow to one sales (`?sales=` in the URL, so a filtered
+ * view can be shared as a link), and gets a per-sales progress table.
+ *
+ * The proposal column of that table is the one machine-hued thing here; everything else is
+ * people's data and stays ink.
  */
 export default function OverviewPage() {
-  const overview = useQuery({ queryKey: ['overview'], queryFn: api.overview })
+  return (
+    /* `useSearchParams` needs a Suspense boundary to keep the standalone build prerendering. */
+    <Suspense fallback={<PageBody><PageHeader title="Tổng quan" /></PageBody>}>
+      <OverviewScreen />
+    </Suspense>
+  )
+}
+
+function OverviewScreen() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const me = useQuery({ queryKey: ['me'], queryFn: () => api.me(), retry: false })
+  const isAdmin = me.data?.role === 'admin'
+
+  // Only an admin's choice reaches the server; for sales the server pins the view anyway.
+  const selectedSales = isAdmin ? (searchParams.get('sales') ?? undefined) : undefined
+
+  const overview = useQuery({
+    queryKey: ['overview', selectedSales ?? 'all'],
+    queryFn: () => api.overview(selectedSales),
+    /**
+     * Held until the role is known. `selectedSales` is forced to `undefined` while `me` is in
+     * flight, so firing early would fetch whole-team numbers, paint them, and only then
+     * refetch the scoped view — an admin opening a shared `?sales=` link would watch someone
+     * else's totals flash past first.
+     */
+    enabled: !me.isPending,
+  })
+
+  function selectSales(userId: string | undefined) {
+    router.replace(userId ? `${pathname}?sales=${userId}` : pathname)
+  }
 
   return (
     <PageBody>
       <PageHeader title="Tổng quan" />
+
+      {/* A sales' screen is ALWAYS their own — said outright so nobody mistakes the smaller
+          numbers for missing data. This is a view default, not authorization. */}
+      {me.data && !isAdmin && (
+        <p className="text-sm text-ink-600">Đang xem: dữ liệu của bạn.</p>
+      )}
+
+      {isAdmin && overview.data?.perSales && (
+        <SalesFilter
+          rows={overview.data.perSales}
+          selected={selectedSales}
+          onSelect={selectSales}
+        />
+      )}
 
       {/* Skeletons shaped like the four blocks that are coming, so the page does not jump
           when they arrive. A single line of "Đang tải…" reflows the whole screen. */}
@@ -46,17 +104,71 @@ export default function OverviewPage() {
         <ErrorState error={overview.error} fallback={'Không tải được màn tổng quan'} />
       )}
 
-      {overview.data && <Blocks data={overview.data} />}
+      {overview.data && (
+        <Blocks
+          data={overview.data}
+          scoped={Boolean(selectedSales) || (me.data ? !isAdmin : false)}
+          onSelectSales={isAdmin ? selectSales : undefined}
+        />
+      )}
     </PageBody>
   )
 }
 
-function Blocks({ data }: { data: OverviewDto }) {
+function SalesFilter({
+  rows,
+  selected,
+  onSelect,
+}: {
+  rows: { userId: string; name: string }[]
+  selected: string | undefined
+  onSelect: (userId: string | undefined) => void
+}) {
+  return (
+    <div className="max-w-xs">
+      <Select
+        label="Xem theo Sales"
+        value={selected ?? ''}
+        onChange={(event) => onSelect(event.target.value || undefined)}
+      >
+        <option value="">Tất cả</option>
+        {rows.map((row) => (
+          <option key={row.userId} value={row.userId}>
+            {row.name}
+          </option>
+        ))}
+      </Select>
+    </div>
+  )
+}
+
+function Blocks({
+  data,
+  scoped,
+  onSelectSales,
+}: {
+  data: OverviewDto
+  scoped: boolean
+  onSelectSales?: (userId: string) => void
+}) {
   return (
     <>
       <MetricRow data={data} />
-      {/* Rule 5: what to do this morning comes FIRST, above every count. */}
+      {/* Rule 4: a narrowed view says what it CANNOT count instead of silently shrinking. */}
+      {scoped && data.unassignedCompanies > 0 && (
+        <p className="rounded-card border border-ink-200 bg-surface p-4 text-sm text-ink-700">
+          Không gồm <span className="tabular">{data.unassignedCompanies}</span> công ty chưa gán
+          cho Sales nào.
+        </p>
+      )}
+      {/* Rule 5: what to do this morning comes FIRST, above every count — late things, then
+          things about to be due, then deals whose heartbeat is missing entirely. */}
       <OverdueBlock data={data} />
+      <DueSoonBlock data={data} />
+      <MissingNextStepBlock data={data} />
+      {data.perSales && onSelectSales && (
+        <PerSalesTable rows={data.perSales} onSelect={onSelectSales} />
+      )}
       <PipelineBlock data={data} />
       <IndustryBlock data={data} />
       <LostReasonBlock data={data} />
@@ -77,11 +189,6 @@ function runningPipelineTotal(data: OverviewDto): number {
 
 /**
  * The three numbers this screen exists to say, at a size you can read from behind a chair.
- *
- * The screen used to open with four stacked tables — a report, not an overview. Rule 5 calls the
- * next step "the heartbeat of a deal", and a heartbeat rendered as an unremarkable table row is
- * not one. The overdue count is therefore the first thing on the page and the largest type in
- * the app.
  *
  * EVERY NUMBER HERE COMES FROM `OverviewDto`. The one sum this screen performs lives in a single
  * helper shared with the table below, because a second arithmetic path at the presentation layer
@@ -156,7 +263,7 @@ function OverdueBlock({ data }: { data: OverviewDto }) {
         Việc tiếp theo quá hạn
       </h2>
       {data.overdueNextSteps.length === 0 ? (
-        <EmptyState message="Không có việc nào quá hạn. Cơ hội chưa có Việc tiếp theo không nằm ở đây — chúng mang cờ cảnh báo trên bảng cơ hội." icon={CircleCheck} />
+        <EmptyState message="Không có việc nào quá hạn. Cơ hội chưa có Việc tiếp theo không nằm ở đây — chúng có khối riêng phía dưới." icon={CircleCheck} />
       ) : (
         <Table headers={['Cơ hội', 'Công ty', 'Việc tiếp theo', 'Hạn', 'Cờ']}>
           {data.overdueNextSteps.map((opportunity) => (
@@ -175,6 +282,86 @@ function OverdueBlock({ data }: { data: OverviewDto }) {
                 {opportunity.nextStepDueDate && (
                   <OverdueFlag dueDate={opportunity.nextStepDueDate} />
                 )}
+              </Cell>
+              <Cell>
+                <WarningFlags warnings={opportunity.warnings} />
+              </Cell>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </section>
+  )
+}
+
+/** Today through +3 days. Late rows are NOT here — they are in the block above, exactly once. */
+function DueSoonBlock({ data }: { data: OverviewDto }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-section font-semibold text-ink-900">
+        Đến hạn trong 3 ngày tới
+      </h2>
+      {data.dueSoon.length === 0 ? (
+        <EmptyState message="Không có việc nào đến hạn từ hôm nay tới 3 ngày tới." icon={CircleCheck} />
+      ) : (
+        <Table caption="Đến hạn trong 3 ngày tới" headers={['Cơ hội', 'Công ty', 'Việc tiếp theo', 'Hạn']}>
+          {data.dueSoon.map((opportunity) => (
+            <tr key={opportunity.id}>
+              <Cell>{opportunity.name}</Cell>
+              <Cell>
+                <Link
+                  href={`/cong-ty/${opportunity.companyId}`}
+                  className="underline underline-offset-2"
+                >
+                  {opportunity.companyName}
+                </Link>
+              </Cell>
+              <Cell>{opportunity.nextStepText}</Cell>
+              <Cell>
+                {opportunity.nextStepDueDate &&
+                  new Date(opportunity.nextStepDueDate).toLocaleDateString('vi-VN')}
+              </Cell>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </section>
+  )
+}
+
+/**
+ * Rule 5 calls the next step the deal's heartbeat — these open deals have none. Sorted by
+ * value on the server: the biggest silent deal is the most expensive silence.
+ */
+function MissingNextStepBlock({ data }: { data: OverviewDto }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-section font-semibold text-ink-900">
+        Cơ hội thiếu Việc tiếp theo
+      </h2>
+      {data.missingNextStep.length === 0 ? (
+        <EmptyState message="Mọi cơ hội đang mở đều có Việc tiếp theo." icon={CircleCheck} />
+      ) : (
+        <Table
+          caption="Cơ hội thiếu Việc tiếp theo"
+          headers={['Cơ hội', 'Công ty', 'Giai đoạn', { label: 'Giá trị', align: 'right' }, 'Cờ']}
+        >
+          {data.missingNextStep.map((opportunity) => (
+            <tr key={opportunity.id}>
+              <Cell>{opportunity.name}</Cell>
+              <Cell>
+                <Link
+                  href={`/cong-ty/${opportunity.companyId}`}
+                  className="underline underline-offset-2"
+                >
+                  {opportunity.companyName}
+                </Link>
+              </Cell>
+              <Cell>{STAGE[opportunity.stage]}</Cell>
+              <Cell numeric>
+                {opportunity.expectedValue
+                  ? `${Number(opportunity.expectedValue).toLocaleString('vi-VN')} ₫`
+                  : '—'}
               </Cell>
               <Cell>
                 <WarningFlags warnings={opportunity.warnings} />

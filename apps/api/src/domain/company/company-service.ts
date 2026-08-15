@@ -1,10 +1,11 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
-import { and, asc, eq, ilike, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, isNull, sql } from 'drizzle-orm'
 
 import type {
   CompanyDto,
   CreateCompanyDto,
   ListCompaniesQuery,
+  Paginated,
   UpdateCompanyDto,
 } from '@crm/contracts'
 import { type CrmDatabase, companies } from '@crm/db'
@@ -13,6 +14,7 @@ import { DRIZZLE_APP } from '../../common/db/db.module'
 import { AuditEventService } from '../../common/audit/audit-event-service'
 import { isSeedCompany } from '../../ai/resolve-observation-source'
 import type { Actor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 /**
  * Sales' official data (ontology 3.1, feature group 1) → injects `DRIZZLE_APP` ONLY.
@@ -47,8 +49,18 @@ export class CompanyService {
    * filter widens rather than narrows — a screen that starts empty until you pick something
    * hides the data it exists to show.
    */
-  async list(query: ListCompaniesQuery = {}): Promise<CompanyDto[]> {
+  async list(
+    query: ListCompaniesQuery = {},
+    ownerId: string | null = null,
+  ): Promise<Paginated<CompanyDto>> {
     const conditions = [isNull(companies.deletedAt)]
+    /**
+     * ADR-0046. `null` means an administrator and therefore no restriction; a user id narrows to
+     * the companies that person looks after. Note what `eq` does with an unassigned company:
+     * `NULL = x` is unknown, so a company with no owner drops out for Sales and stays visible to
+     * an administrator — which is the intended reading, not an accident of SQL.
+     */
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
     // `ilike` with wrapping wildcards: Sales types a fragment of the name, not a prefix, and
     // the Vietnamese name they remember is rarely the one at the start of the legal name.
     if (query.q) conditions.push(ilike(companies.name, `%${query.q}%`))
@@ -59,23 +71,66 @@ export class CompanyService {
     if (query.country) conditions.push(eq(companies.country, query.country))
     if (query.isWatched !== undefined) conditions.push(eq(companies.isWatched, query.isWatched))
 
-    const rows = await this.db
-      .select()
-      .from(companies)
-      .where(and(...conditions))
-      .orderBy(asc(companies.name))
+    const where = and(...conditions)
 
-    return rows.map(toDto)
+    /**
+     * ORDER BY ends in `id` (ADR-0047). Two companies can share a name — a duplicate typed by
+     * two people is ordinary — and without a unique last key their relative order between two
+     * requests is undefined, so one could appear on two pages or on neither.
+     *
+     * Collation is Postgres', deliberately: sorting a page in the browser would only sort that
+     * page. The Vietnamese ordering that gives is asserted by `company-list-pagination.test.ts`
+     * rather than assumed.
+     */
+    const column = query.sortBy === 'industry' ? companies.industry : companies.name
+    const direction = query.sortDir === 'desc' ? desc : asc
+    const ordering = [direction(column), asc(companies.id)]
+
+    const [{ total }] = await this.db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(companies)
+      .where(where)
+
+    const base = this.db.select().from(companies).where(where).orderBy(...ordering)
+
+    /** No `page` → the caller wants the whole list, and gets it in one page. */
+    const rows = query.page
+      ? await base.limit(query.pageSize ?? 20).offset((query.page - 1) * (query.pageSize ?? 20))
+      : await base
+
+    return {
+      items: rows.map(toDto),
+      total,
+      page: query.page ?? 1,
+      pageSize: query.page ? (query.pageSize ?? 20) : total,
+    }
   }
 
-  async byId(companyId: string): Promise<CompanyDto> {
+  /**
+   * NOT FOUND rather than FORBIDDEN when the company belongs to someone else (ADR-0046). A 403
+   * would confirm that this id names a real company, which is one bit more than a person outside
+   * the boundary is owed; the message is the same one an unknown id gets.
+   */
+  async byId(companyId: string, ownerId: string | null = null): Promise<CompanyDto> {
+    const conditions = [eq(companies.id, companyId), isNull(companies.deletedAt)]
+    if (ownerId) conditions.push(eq(companies.ownerId, ownerId))
+
     const [row] = await this.db
       .select()
       .from(companies)
-      .where(and(eq(companies.id, companyId), isNull(companies.deletedAt)))
+      .where(and(...conditions))
 
     if (!row) throw new NotFoundException('Không tìm thấy công ty')
     return toDto(row)
+  }
+
+  /**
+   * The visibility check the other domains borrow — observations, timeline, and anything else
+   * hanging off a company. Kept here because "which companies exist for this reader" is this
+   * service's question, and answering it in five places is how five answers start to differ.
+   */
+  async assertVisible(companyId: string, ownerId: string | null): Promise<void> {
+    await this.byId(companyId, ownerId)
   }
 
   /**
@@ -90,6 +145,9 @@ export class CompanyService {
       })
       throw new ForbiddenException('Hệ thống không được sửa hồ sơ công ty trực tiếp')
     }
+
+    /** ADR-0046 — outside the caller's boundary reads as "no such company", not as a refusal. */
+    await this.assertVisible(companyId, ownerScopeFor(actor))
 
     const [updated] = await this.db
       .update(companies)
@@ -125,6 +183,9 @@ export class CompanyService {
       })
       throw new ForbiddenException('Hệ thống không được tự bật nguồn web thật')
     }
+
+    /** ADR-0046 — the switch belongs to whoever looks after the company, not to anyone signed in. */
+    await this.assertVisible(companyId, ownerScopeFor(actor))
 
     /**
      * I-16, and only in the ENABLING direction. Moving a company toward the snapshot can never
@@ -165,6 +226,9 @@ export class CompanyService {
       })
       throw new ForbiddenException('Hệ thống không được xoá công ty')
     }
+
+    /** ADR-0046. Deleting someone else's company was the most damaging of the open write paths. */
+    await this.assertVisible(companyId, ownerScopeFor(actor))
 
     await this.db
       .update(companies)

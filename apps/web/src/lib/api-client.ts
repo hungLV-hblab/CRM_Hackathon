@@ -25,6 +25,8 @@ import type {
   ListCompaniesQuery,
   ListOpportunitiesQuery,
   NotificationDto,
+  Paginated,
+  ReorderOpportunityDto,
   ObservationWithClaimsDto,
   OpportunityDto,
   OverviewDto,
@@ -107,8 +109,13 @@ export const api = {
 
   me: () => call<{ userId: string; role: string }>('/auth/me'),
 
+  /**
+   * Paginated envelope (ADR-0047), but only when `page` is passed: leave it off and the whole
+   * list comes back in one page. Five of the six screens reading this want exactly that, and a
+   * default page size would have shortened all five without anyone seeing an error.
+   */
   listCompanies: (query: ListCompaniesQuery = {}) =>
-    call<CompanyDto[]>(`/companies${toQueryString(query)}`),
+    call<Paginated<CompanyDto>>(`/companies${toQueryString(query)}`),
 
   getCompany: (companyId: string) => call<CompanyDto>(`/companies/${companyId}`),
 
@@ -153,6 +160,13 @@ export const api = {
       body: JSON.stringify(dto),
     }),
 
+  /** Same-column reorder on the board — takes the slot of `targetId`, or the end when null. */
+  reorderOpportunity: (opportunityId: string, dto: ReorderOpportunityDto) =>
+    call<OpportunityDto>(`/opportunities/${opportunityId}/board-order`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+
   listTimeline: (companyId: string) =>
     call<TimelineEntryDto[]>(`/companies/${companyId}/timeline`),
 
@@ -162,7 +176,12 @@ export const api = {
       body: JSON.stringify(dto),
     }),
 
-  overview: () => call<OverviewDto>('/overview'),
+  /**
+   * `ownerId` only means something for an admin — the server pins a sales actor to their own
+   * view regardless, so the client never has to decide who the caller is.
+   */
+  overview: (ownerId?: string) =>
+    call<OverviewDto>(ownerId ? `/overview?ownerId=${encodeURIComponent(ownerId)}` : '/overview'),
 
   /** The read zone: snapshots newest first, each carrying the findings drawn from it. */
   readingZone: (companyId: string) =>
@@ -259,12 +278,26 @@ export const api = {
   undoAutoNextStep: (eventId: string) =>
     call<UndoResultDto>(`/auto-next-step-events/${eventId}/undo`, { method: 'POST' }),
 
-  /** In-product notices. Read AND unread — ontology 3.3 forbids one vanishing before it is seen. */
-  listNotifications: () => call<NotificationDto[]>('/notifications'),
+  /**
+   * In-product notices, paginated (ADR-0047). Read AND unread by default — ontology 3.3 forbids
+   * one vanishing before it is seen — and `unreadOnly` narrows it for the deal-board strip.
+   *
+   * Callers must put these parameters in their query key. One key over two different requests
+   * means whichever component mounts first wins the cache, and the history page would then
+   * render the unread subset as though it were the whole history.
+   */
+  listNotifications: (params: { page?: number; pageSize?: number; unreadOnly?: boolean } = {}) =>
+    call<Paginated<NotificationDto>>(`/notifications${toQueryString(params)}`),
 
   /** "Đã xem", and only pressing it ever writes `read_at`. */
   markNotificationRead: (notificationId: string) =>
     call<void>(`/notifications/${notificationId}/read`, { method: 'POST' }),
+
+  /**
+   * "Đánh dấu tất cả đã xem". One way: nothing records what `read_at` was before, so there is no
+   * undo for this and a redeploy will not bring the NULLs back.
+   */
+  markAllNotificationsRead: () => call<void>('/notifications/read-all', { method: 'POST' }),
 
   /**
    * "Nhật ký vòng quét" — one line per cycle, newest first, rolled-up lines marked in place.

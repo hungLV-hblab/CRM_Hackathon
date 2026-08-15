@@ -21,6 +21,79 @@ import {
  * machine hue would tell Sales the deal was written by the system.
  */
 export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: opportunity.id,
+  })
+
+  return (
+    <article
+      ref={setNodeRef}
+      style={{
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        transition,
+      }}
+      className={`flex flex-col gap-2 rounded-card border border-ink-200 bg-surface p-3 shadow-card transition-colors duration-(--duration-state) hover:border-ink-300 ${
+        // While a drag is live the clone in `DragOverlay` is the thing following the pointer;
+        // this in-place card stays behind as the dimmed slot the drop animation lands on.
+        isDragging ? 'opacity-40' : ''
+      }`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        /**
+         * The whole body is the grab handle, and it carries `min-h-11` for the 44px touch
+         * target. The link below sits outside it so opening a deal does not start a drag.
+         */
+        className="min-h-11 cursor-grab touch-none rounded-control focus:outline-2 focus:outline-offset-2 focus:outline-brand-600 active:cursor-grabbing"
+        aria-label={`Kéo cơ hội ${opportunity.name}, đang ở ${STAGE[opportunity.stage]}`}
+      >
+        <CardTitle opportunity={opportunity} />
+      </div>
+      <CardDetails opportunity={opportunity} />
+    </article>
+  )
+}
+
+/**
+ * The clone that follows the pointer, rendered inside the board's `DragOverlay`. It lives in a
+ * portal above every column, so it is never clipped by the board's horizontal scroll and never
+ * slides UNDER a neighbouring column the way the in-place card used to. Purely visual: no
+ * sortable wiring, nothing focusable.
+ *
+ * Amber border, not violet: dragging is a human acting (design-guidelines §1), the same reason
+ * the column under the pointer highlights amber.
+ *
+ * A `div` with `aria-hidden`, NOT a second `article`: the real card stays in the column for
+ * the whole drag (dimmed) and through the drop animation, so for that stretch the clone is a
+ * duplicate. Assistive tech already follows the drag through dnd-kit's live region — a second
+ * article with identical content would be read as a second deal.
+ */
+export function OpportunityCardOverlay({ opportunity }: { opportunity: OpportunityDto }) {
+  return (
+    <div
+      aria-hidden
+      className="flex cursor-grabbing flex-col gap-2 rounded-card border border-brand-400 bg-surface p-3 shadow-float"
+    >
+      <div className="min-h-11">
+        <CardTitle opportunity={opportunity} />
+      </div>
+      <CardDetails opportunity={opportunity} />
+    </div>
+  )
+}
+
+function CardTitle({ opportunity }: { opportunity: OpportunityDto }) {
+  return (
+    <>
+      <p className="text-sm font-medium text-ink-900">{opportunity.name}</p>
+      <p className="text-xs text-ink-600">{opportunity.companyName}</p>
+    </>
+  )
+}
+
+/** Everything below the grab handle — shared verbatim so the overlay clone keeps the card's height. */
+function CardDetails({ opportunity }: { opportunity: OpportunityDto }) {
   /**
    * Read here rather than drilled down from the board: every card shares ONE cache entry under
    * the `pending-proposals` key, so this is one request for the whole screen, and the board
@@ -33,34 +106,9 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
    * does not use. Absent for every deal Sales owns outright, which is most of them.
    */
   const autoNextStep = useAutoNextSteps()[opportunity.id]
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: opportunity.id,
-  })
 
   return (
-    <article
-      ref={setNodeRef}
-      style={{
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        transition,
-        opacity: isDragging ? 0.4 : undefined,
-      }}
-      className="flex flex-col gap-2 rounded-card border border-ink-200 bg-surface p-3 shadow-card transition-colors duration-(--duration-state) hover:border-ink-300"
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        /**
-         * The whole body is the grab handle, and it carries `min-h-11` for the 44px touch
-         * target. The link below sits outside it so opening a deal does not start a drag.
-         */
-        className="min-h-11 cursor-grab touch-none rounded-control focus:outline-2 focus:outline-offset-2 focus:outline-brand-600 active:cursor-grabbing"
-        aria-label={`Kéo cơ hội ${opportunity.name}, đang ở ${STAGE[opportunity.stage]}`}
-      >
-        <p className="text-sm font-medium text-ink-900">{opportunity.name}</p>
-        <p className="text-xs text-ink-600">{opportunity.companyName}</p>
-      </div>
-
+    <>
       <PendingProposalMarker count={pendingProposals[opportunity.companyId]} />
 
       {opportunity.expectedValue ? (
@@ -96,7 +144,7 @@ export function OpportunityCard({ opportunity }: { opportunity: OpportunityDto }
       >
         Mở công ty
       </Link>
-    </article>
+    </>
   )
 }
 

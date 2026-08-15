@@ -17,6 +17,7 @@ import { ProposalDecisionService } from './proposal-decision-service'
 import { ProposalService } from './proposal-service'
 import { ZodValidationPipe } from '../../common/zod-validation.pipe'
 import { getCurrentActor } from '../../common/actor/actor-context'
+import { ownerScopeFor } from '../../common/actor/owner-scope'
 
 /**
  * Feature group 3 over HTTP. There is no endpoint that CREATES a proposal, and that absence is
@@ -34,16 +35,24 @@ export class ProposalController {
     private readonly decisions: ProposalDecisionService,
   ) {}
 
-  /** The queue itself: everything still waiting, newest first. */
+  /**
+   * The queue itself: everything still waiting, newest first — for the companies this person
+   * looks after (ADR-0046).
+   *
+   * The role question is answered HERE and the answer passed down as a plain value, matching
+   * `OverviewController` and the rule ADR-0045 settled: vai trò is a controller concern. A
+   * service that read the actor itself could be handed an empty context by a direct-construction
+   * test and quietly default to seeing everything.
+   */
   @Get()
   listPending() {
-    return this.proposals.listPending()
+    return this.proposals.listPending(ownerScopeFor(this.actor()))
   }
 
-  /** `companyId → count`, for the "đang có gợi ý chờ duyệt" badges. */
+  /** `companyId → count`, for the "đang có gợi ý chờ duyệt" badges. Scoped identically. */
   @Get('pending-summary')
   pendingSummary() {
-    return this.proposals.pendingSummary()
+    return this.proposals.pendingSummary(ownerScopeFor(this.actor()))
   }
 
   /**

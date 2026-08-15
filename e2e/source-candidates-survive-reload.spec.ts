@@ -21,7 +21,7 @@ import { expect, test } from '@playwright/test'
  * every seed company, so this flow is only reachable on a company somebody added.
  */
 
-const SALES = { email: 'sales@hblab.vn', password: 'sales123' }
+const SALES = { email: 'sales@hblab.vn', password: 'hackathon#1' }
 const COMPANY = 'Cty Nguon Ung Vien'
 /** A real, boring, publicly resolvable host: the fixture derives `/news` and `/press` from it. */
 const WEBSITE = 'https://example.com'

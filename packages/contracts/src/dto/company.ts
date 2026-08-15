@@ -59,6 +59,20 @@ export interface ListCompaniesQuery {
   companyType?: string
   country?: string
   isWatched?: boolean
+  /**
+   * ABSENT MEANS EVERY ROW, not "page one" (ADR-0047).
+   *
+   * Five of the six screens that read this endpoint want the whole list — the deal board, Đang
+   * theo dõi, the command palette, the admin snapshot switch, and the filter dropdowns on the
+   * company screen itself. Defaulting an absent `page` to 20 rows would have truncated all five
+   * silently, which is the failure mode worth designing against: nobody notices a list that is
+   * merely shorter than it should be.
+   */
+  page?: number
+  pageSize?: number
+  /** Ordering is decided by the SERVER once the list is paged; sorting a page in the browser would only sort that page. */
+  sortBy?: 'name' | 'industry'
+  sortDir?: 'asc' | 'desc'
 }
 
 export interface CompanyDto {

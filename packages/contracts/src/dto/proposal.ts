@@ -31,6 +31,14 @@ export interface ProposalDto {
   companyId: string
   /** Shown on the card so the reviewer knows which company without a second query. */
   companyName: string
+  /**
+   * The Sales person who looks after that company (ADR-0046). Sales only ever sees their own
+   * name here, so the pair exists for the administrator: it is what lets the queue screen offer
+   * "filter by sales person" without a second endpoint. NULL when nobody has been assigned yet,
+   * which is a state only an administrator can see at all.
+   */
+  ownerId: string | null
+  ownerName: string | null
   proposalType: ProposalType
   /**
    * NULL for `timeline_entry`; one of `PROPOSAL_TARGET_FIELDS` for `field_update`;

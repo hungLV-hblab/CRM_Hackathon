@@ -47,7 +47,8 @@ export default function WatchedCompaniesPage() {
     },
   })
 
-  const rows = companies.data ?? []
+  // No `page` was requested, so the envelope carries every company in one page.
+  const rows = companies.data?.items ?? []
   const watched = rows.filter((row) => row.isWatched)
   const unwatched = rows.filter((row) => !row.isWatched)
 
