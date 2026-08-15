@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
+import { ImportDataPanel } from './import-data-panel'
 import { MetricsPanel } from './metrics-panel'
 import { PageHeader } from '@/components/shell/page-header'
 import { PageBody } from '@/components/shell/page-body'
@@ -61,6 +62,8 @@ export default function AdminPage() {
       {metrics.data && <MetricsPanel metrics={metrics.data} />}
 
       {settings.data && <SnapshotVariantSwitch />}
+
+      {settings.data && <ImportDataPanel />}
     </PageBody>
   )
 }

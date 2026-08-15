@@ -16,6 +16,7 @@ import type {
   CreateContactDto,
   CreateOpportunityDto,
   CreateTimelineEntryDto,
+  ImportSummaryDto,
   IngestResultDto,
   IngestSnapshotDto,
   ListCompaniesQuery,
@@ -327,4 +328,22 @@ export const api = {
       `/demo/companies/${companyId}/snapshot-variant`,
       { method: 'POST', body: JSON.stringify({ variant }) },
     ),
+
+  /**
+   * ADMIN ONLY — spec 7 condition 5, the UI replacement for "một lệnh". Wipes the current
+   * state and reloads it from the uploaded zip, same as `pnpm seed` but triggered from a
+   * browser. `FormData`, not `call()`: the browser must set its own `multipart/form-data`
+   * boundary in the `Content-Type` header, which `call()` always overrides with `application/json`.
+   */
+  importData: async (file: File): Promise<ImportSummaryDto> => {
+    const body = new FormData()
+    body.append('file', file)
+    const res = await fetch(`${BASE}/admin/import-data`, {
+      method: 'POST',
+      credentials: 'include',
+      body,
+    })
+    if (!res.ok) throw new ApiError(await readErrorMessage(res), res.status)
+    return (await res.json()) as ImportSummaryDto
+  },
 }
