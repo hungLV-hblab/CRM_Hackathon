@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { join } from 'node:path'
 
-import { runSkill, sandboxPath } from './claude-cli'
+import { resolveAuthMode, runSkill, sandboxPath } from './claude-cli'
 import { AgentRunError } from './errors'
 import { JobQueue, QueueDeadlineError } from './job-queue'
 import { loadSkills, requireSkill } from './skill-registry'
@@ -55,6 +55,21 @@ const skills = loadSkills(SKILLS_DIR, SKILL_TEMPLATE_VARS)
  */
 const ENABLED = Boolean(TOKEN)
 
+/**
+ * Boot log only. Says which of the three credentials won AND, for the last one, where it came
+ * from — a login inside the container leaves nothing in `.env`, so somebody reading the compose
+ * file has no other way to find out why calls are working.
+ *
+ * `none` is spelled out instead of omitted: the container is up and holds a token, so every
+ * other line of this log looks healthy right up until the first run is refused.
+ */
+const AUTH_LABEL: Record<'oauth' | 'api_key' | 'cli_login' | 'none', string> = {
+  oauth: 'OAuth subscription (CLAUDE_CODE_OAUTH_TOKEN)',
+  api_key: 'API key (ANTHROPIC_API_KEY)',
+  cli_login: 'phiên `claude /login` trong container ($HOME/.claude)',
+  none: 'CHƯA CÓ — mọi lượt chạy sẽ trả not_authenticated',
+}
+
 interface RunRequest {
   userPrompt?: unknown
 }
@@ -89,7 +104,16 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
        * do for a diagnostic.
        */
       grants: Object.fromEntries([...skills].map(([name, skill]) => [name, skill.policy.allowedTools])),
-      authMode: process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'oauth' : 'api_key',
+      /**
+       * Asked of `claude-cli.ts` rather than re-derived from the environment here. Two copies of
+       * "which credential are we on" drift the moment a third path appears — which is exactly
+       * what happened: a login performed INSIDE the container leaves no variable behind, and
+       * this line used to answer `api_key` for it while the run itself was refused outright.
+       *
+       * `null` is reported as such. "No credential" is a state an operator has to be able to
+       * read off /health, and it is not the same state as "running on a key".
+       */
+      authMode: resolveAuthMode(),
       sandbox: sandboxPath(),
       queue: queue.stats(),
     })
@@ -192,7 +216,6 @@ server.listen(PORT, () => {
     )
   }
   console.log(
-    `[agent] nghe cổng ${PORT} · skill: ${[...skills.keys()].join(', ')} · ` +
-      `auth: ${process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'OAuth subscription' : 'API key'}`,
+    `[agent] nghe cổng ${PORT} · skill: ${[...skills.keys()].join(', ')} · auth: ${AUTH_LABEL[resolveAuthMode() ?? 'none']}`,
   )
 })

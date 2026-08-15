@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
+import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -13,9 +13,9 @@ import type { SkillPolicy } from './skill-registry'
  *   1. The flags that bound what the model may do are no longer hard-coded. They come from the
  *      calling skill's `policy.json`, so "what this skill is allowed to reach for" is declared
  *      next to the prompt that needs it rather than compiled into the transport.
- *   2. Auth is passed EXPLICITLY through the environment. The spike relied on `~/.claude`
- *      existing on the machine; a container has no such directory, and inheriting the parent's
- *      whole environment would also hand the subprocess every database URL in the process.
+ *   2. The environment handed to the subprocess is BUILT, never inherited — inheriting it would
+ *      hand a model-driven process every database URL this one happens to hold. The spike
+ *      inherited everything and relied on `~/.claude` existing on the machine.
  *
  * What did NOT change, and must not: the working directory is an empty scratch folder. The CLI
  * reads `CLAUDE.md` and `.claude/` from wherever it runs, so running it inside the repo silently
@@ -55,29 +55,77 @@ function cliPath(): string {
 }
 
 /**
+ * Where the CLI keeps its own state, including the credential written by an interactive
+ * `claude /login`. `USERPROFILE` is the fallback so a developer machine on Windows resolves to
+ * the same directory the CLI itself would pick.
+ */
+function homeDir(): string | undefined {
+  return process.env.HOME?.trim() || process.env.USERPROFILE?.trim() || undefined
+}
+
+/**
+ * The credential file an interactive login leaves behind. Its mere presence is what we check —
+ * not its contents. An expired session looks identical from here and is supposed to: judging a
+ * credential is the API's job, and the CLI already reports a rejected one as a non-zero exit
+ * that `classifyCliFailure` turns back into `not_authenticated`. Parsing it here would mean
+ * this process reading a secret it has no reason to read.
+ */
+function hasCliLogin(): boolean {
+  const home = homeDir()
+  return home !== undefined && existsSync(join(home, '.claude', '.credentials.json'))
+}
+
+/** Which credential this process is actually running on, in the order the CLI resolves them. */
+export type AuthMode = 'oauth' | 'api_key' | 'cli_login'
+
+/**
+ * THREE ways to be authenticated, not two — and the third is the one a container acquires by
+ * itself. `claude /login` inside the running container writes `$HOME/.claude/.credentials.json`;
+ * no environment variable appears anywhere, and a check that only reads the environment refuses
+ * a subprocess that would have succeeded.
+ *
+ * Order matters and matches the CLI's own: an explicit token in the environment wins over
+ * whatever session happens to be lying on disk, so `.env` stays the thing that decides.
+ *
+ * `null` means no path at all — the run cannot happen, and saying so here costs nothing while
+ * finding out from the CLI costs the ~3.4s of process startup first.
+ */
+export function resolveAuthMode(): AuthMode | null {
+  if (process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim()) return 'oauth'
+  if (process.env.ANTHROPIC_API_KEY?.trim()) return 'api_key'
+  if (hasCliLogin()) return 'cli_login'
+  return null
+}
+
+/**
  * The subprocess gets an environment we BUILD, never the one we inherit.
  *
  * `apps/api` holds `DATABASE_URL_SYSTEM`; this process does not, and this function is the
  * reason it stays that way even if that ever changes — a subprocess that inherited it would
  * have the AI identity's database credentials and none of the domain code that constrains how
  * they may be used.
+ *
+ * `HOME` is passed for the same reason the other two are: on the `cli_login` path it IS the
+ * credential — drop it and the child looks for its session in a directory that does not exist.
  */
-function childEnv(): NodeJS.ProcessEnv {
-  const token = process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim()
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim()
+export function childEnv(): NodeJS.ProcessEnv {
+  const mode = resolveAuthMode()
 
-  if (!token && !apiKey) {
+  if (mode === null) {
     throw new AgentRunError(
       'not_authenticated',
-      'Thiếu cả CLAUDE_CODE_OAUTH_TOKEN và ANTHROPIC_API_KEY — không có đường xác thực nào',
+      'Không có đường xác thực nào: thiếu CLAUDE_CODE_OAUTH_TOKEN, thiếu ANTHROPIC_API_KEY, ' +
+        'và cũng chưa đăng nhập bằng `claude /login` trong container',
     )
   }
 
+  const home = homeDir()
+
   return {
     PATH: process.env.PATH,
-    HOME: process.env.HOME,
-    ...(token ? { CLAUDE_CODE_OAUTH_TOKEN: token } : {}),
-    ...(apiKey ? { ANTHROPIC_API_KEY: apiKey } : {}),
+    ...(home ? { HOME: home, USERPROFILE: home } : {}),
+    ...(mode === 'oauth' ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim() } : {}),
+    ...(mode === 'api_key' ? { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY?.trim() } : {}),
   }
 }
 
