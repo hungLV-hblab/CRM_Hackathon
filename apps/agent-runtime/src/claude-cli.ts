@@ -58,8 +58,12 @@ function cliPath(): string {
  * Where the CLI keeps its own state, including the credential written by an interactive
  * `claude /login`. `USERPROFILE` is the fallback so a developer machine on Windows resolves to
  * the same directory the CLI itself would pick.
+ *
+ * Exported because `login-session.ts` writes into that same directory, and a second copy of this
+ * three-line fallback is a second answer to "where does the credential live" — the kind of split
+ * that already cost this file one bug when `/health` and `/run` each decided auth for themselves.
  */
-function homeDir(): string | undefined {
+export function homeDir(): string | undefined {
   return process.env.HOME?.trim() || process.env.USERPROFILE?.trim() || undefined
 }
 

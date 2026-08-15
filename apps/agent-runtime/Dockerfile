@@ -39,6 +39,18 @@ ENV NODE_ENV=production
 # versions. An upgrade should be a commit somebody reviewed, not whatever npm served that day.
 RUN npm install -g @anthropic-ai/claude-code@2.0.76
 
+# `script(1)`, for ONE reason: `claude setup-token` is an Ink app, and Ink calls
+# `process.stdin.setRawMode()`. Without a terminal that call throws `Raw mode is not supported on
+# the current process.stdin` and the CLI is dead before it prints anything — which is exactly what
+# happens when a web request tries to log this container in (see src/login-session.ts).
+#
+# `script -qec "claude setup-token" /dev/null` allocates the PTY that satisfies Ink. The obvious
+# alternative, `node-pty`, is a native module: it needs python3, make and g++, none of which are in
+# this image, so it would mean building a musl toolchain here to obtain a pseudo-terminal that
+# util-linux has shipped for decades. busybox's own `script` lacks the `-e` flag that propagates the
+# child's exit status, so the package is named explicitly rather than assumed.
+RUN apk add --no-cache util-linux
+
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/db/package.json packages/db/

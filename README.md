@@ -69,6 +69,12 @@ docker compose -f infra/docker-compose.yml --env-file .env exec agent-runtime cl
 
 Phiên đăng nhập nằm trong volume `agent-claude-home`, sống qua `up --build`, nên chỉ làm một lần. `pnpm reset` (`down -v`) xoá nó cùng với CSDL.
 
+**Không muốn mở terminal lần nào?** Đăng nhập ngay trong giao diện: vào `/quan-tri` bằng tài khoản Quản trị → mục **Đăng nhập Claude** → bấm nút → mở đường dẫn hiện ra, uỷ quyền với Anthropic, copy mã dán lại vào ô ([ADR-0043](docs/decisions/0043-dang-nhap-claude-qua-giao-dien-va-vi-sao-api-chi-ky-ve.md)). Cùng chỗ đó có nút **Đăng xuất** xoá credential.
+
+Mã uỷ quyền đi **thẳng** từ trình duyệt tới `agent-runtime` qua tiền tố `/agent-auth/*` của Caddy, không đi qua `api` — tiến trình cầm `DATABASE_URL_SYSTEM` không bao giờ thấy một secret của Claude. `api` chỉ ký một cái vé HMAC hạn 5 phút, dùng một lần. `/run/*` **không** được Caddy mở ra ngoài và phải giữ nguyên như vậy.
+
+Vẫn cần `AGENT_TOKEN` — không có nó thì panel nói rõ tính năng **đang tắt** (không phải hỏng). Một phiên đăng nhập tại một thời điểm, hạn 5 phút; khởi động lại container giữa chừng là mất phiên, bấm lại từ đầu.
+
 Kiểm nó lên chưa:
 
 ```bash

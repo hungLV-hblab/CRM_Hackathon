@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
+import { ClaudeLoginPanel } from './claude-login-panel'
 import { ImportDataPanel } from './import-data-panel'
 import { MetricsPanel } from './metrics-panel'
 import { PageHeader } from '@/components/shell/page-header'
@@ -57,6 +58,13 @@ export default function AdminPage() {
       )}
 
       {settings.data && <SystemParametersPanel settings={settings.data} />}
+
+      {/**
+       * Gated on `settings.data` like every other panel here: that query is the admin check. A
+       * Sales session gets a 403 on it and sees the notice above instead of a login control it
+       * would be refused anyway.
+       */}
+      {settings.data && <ClaudeLoginPanel />}
 
       {metrics.isPending && !forbidden && <p className="text-sm text-ink-500">Đang tải chỉ số…</p>}
       {metrics.data && <MetricsPanel metrics={metrics.data} />}
