@@ -1,15 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { Logger } from '@nestjs/common'
-import { z } from 'zod'
 
 import {
   MAX_CANDIDATES_PER_COMPANY,
-  SOURCE_TIER,
   type SourceCandidate,
   type SourceDiscovery,
   type SourceDiscoveryInput,
-  enumCodes,
 } from '@crm/contracts'
+
+import { parseSourceCandidates, sourceUrlKey } from './parse-source-candidates'
 
 /**
  * The real adapter behind `SOURCE_DISCOVERY`: Anthropic's `web_search` server tool finds candidate
@@ -49,15 +48,6 @@ const MAX_CANDIDATES = MAX_CANDIDATES_PER_COMPANY
 
 /** Only the transport is injected, so the tests can script responses without a network. */
 export type MessageCreate = (params: Anthropic.MessageCreateParams) => Promise<Anthropic.Message>
-
-const candidateSchema = z.object({
-  url: z.string().trim().min(1),
-  sourceTier: z.enum(enumCodes(SOURCE_TIER)),
-  snippet: z.string().trim().default(''),
-  reason: z.string().trim().default(''),
-})
-
-const responseSchema = z.object({ candidates: z.array(candidateSchema) })
 
 const SYSTEM_PROMPT = `Bạn giúp đội Sales ITO tìm các trang web công khai nói về MỘT công ty cụ thể.
 
@@ -143,32 +133,25 @@ export class AnthropicSourceDiscovery implements SourceDiscovery {
    * An answer we cannot parse yields ZERO candidates, never a thrown request — the same rule as
    * `anthropic-claim-extractor.ts:143-148`. A model that starts writing prose shows up as an
    * empty list a person can see, not as a 500 that takes the page down.
+   *
+   * The shape check itself lives in `parse-source-candidates.ts`, shared with the adapter that
+   * reaches the model through the Claude CLI: what counts as a well-formed candidate must not
+   * depend on which transport carried it. What stays HERE is the part that is specific to this
+   * transport — the comparison against what the search actually returned.
    */
   private parse(
     text: string,
     searched: ReadonlySet<string>,
     input: SourceDiscoveryInput,
   ): SourceCandidate[] {
-    const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)
-    if (json.length === 0) {
-      this.logger.warn(`Model trả về không phải JSON khi tìm nguồn cho "${input.companyName}"`)
-      return []
-    }
-
-    const parsed = responseSchema.safeParse(safeJsonParse(json))
-    if (!parsed.success) {
-      this.logger.warn(
-        `Model trả JSON sai hình dạng khi tìm nguồn cho "${input.companyName}": ${parsed.error.message}`,
-      )
-      return []
-    }
+    const candidates = parseSourceCandidates(text, this.logger, `tìm nguồn "${input.companyName}"`)
 
     const seen = new Set<string>()
     const kept: SourceCandidate[] = []
     let invented = 0
 
-    for (const candidate of parsed.data.candidates) {
-      const key = normaliseUrl(candidate.url)
+    for (const candidate of candidates) {
+      const key = sourceUrlKey(candidate.url)
       if (key === null) continue
 
       /**
@@ -228,7 +211,7 @@ function searchResultUrls(content: unknown[]): string[] {
 
     for (const result of block.content) {
       if (!isRecord(result) || typeof result.url !== 'string') continue
-      const key = normaliseUrl(result.url)
+      const key = sourceUrlKey(result.url)
       if (key !== null) urls.push(key)
     }
   }
@@ -245,30 +228,6 @@ function textOf(content: unknown[]): string {
     .join('')
 }
 
-/**
- * The comparison key for "is this the address the search returned". A trailing slash and a
- * lower-case host are the same page; rejecting a candidate over punctuation would throw away good
- * sources, while comparing raw strings loosely would throw away the guarantee.
- */
-function normaliseUrl(url: string): string | null {
-  try {
-    const parsed = new URL(url.trim())
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
-    const path = parsed.pathname.replace(/\/+$/, '')
-    return `${parsed.protocol}//${parsed.host.toLowerCase()}${path}${parsed.search}`
-  } catch {
-    return null
-  }
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
-}
-
-function safeJsonParse(json: string): unknown {
-  try {
-    return JSON.parse(json)
-  } catch {
-    return null
-  }
 }

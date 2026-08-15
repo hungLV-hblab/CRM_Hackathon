@@ -30,6 +30,14 @@ x-llm-access: &llm-access
   # the exact string `live_crawl` falls back to the snapshot set, which is what T-1..T-10 expect.
   OBSERVATION_SOURCE: ${OBSERVATION_SOURCE:-}
 
+# Given to BOTH api and worker, even though only the API may use it. The worker reads the same
+# variables and LOGS that it is refusing them — a boundary that announces itself at boot is one
+# a reviewer can check, while a variable quietly withheld looks identical to a variable somebody
+# forgot. See `claim-extractor.provider.ts`.
+x-agent-access: &agent-access
+  AGENT_RUNTIME_URL: '${AGENT_RUNTIME_URL:-}'
+  AGENT_TOKEN: '${AGENT_TOKEN:-}'
+
 x-api-image: &api-image
   build:
     # Repository root: a pnpm workspace package cannot build from its own directory.
@@ -76,7 +84,7 @@ services:
   api:
     <<: *api-image
     environment:
-      <<: [*database-urls, *llm-access]
+      <<: [*database-urls, *llm-access, *agent-access]
       APP_ROLE: api
       API_PORT: 3001
       JWT_SECRET: '${JWT_SECRET:?JWT_SECRET is missing from .env — generate one with openssl rand -hex 32}'
@@ -93,12 +101,36 @@ services:
   worker:
     <<: *api-image
     environment:
-      <<: [*database-urls, *llm-access]
+      <<: [*database-urls, *llm-access, *agent-access]
       APP_ROLE: worker
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is missing from .env}
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+  # The only container holding a Claude credential, and it holds no database credential —
+  # `x-database-urls` is deliberately absent below. `api` is the mirror image: databases, no
+  # Claude. Neither process can do the other's damage.
+  #
+  # Optional by construction. With no CLAUDE_CODE_OAUTH_TOKEN the container still starts and
+  # still answers /health; `claim-extractor.provider.ts` only routes here when AGENT_RUNTIME_URL
+  # AND AGENT_TOKEN are both set, and falls back to the SDK or the fixture otherwise.
+  agent-runtime:
+    build:
+      context: ..
+      dockerfile: apps/agent-runtime/Dockerfile
+    restart: unless-stopped
+    environment:
+      AGENT_PORT: 4700
+      AGENT_TOKEN: '${AGENT_TOKEN:-}'
+      CLAUDE_CODE_OAUTH_TOKEN: '${CLAUDE_CODE_OAUTH_TOKEN:-}'
+      # Falls back to an API key when no subscription token is present, so one image covers
+      # both credentials rather than two images differing by which line is commented out.
+      ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY:-}'
+    # Never published and never routed through Caddy. A reachable /run endpoint is a way to
+    # spend somebody's subscription quota from outside.
+    expose:
+      - '4700'
 
   web:
     build:

@@ -99,6 +99,22 @@ function isPrivateIpv6(host: string): boolean {
 }
 
 /**
+ * Is this ADDRESS — not URL — one that never leaves the machine or the local network?
+ *
+ * Exported so the DNS gate can ask the same question of an address a resolver returned, which
+ * arrives bare (`127.0.0.1`, `::1`) rather than as a URL host. Re-spelling these ranges over there
+ * would put a second copy of the table in the repository, and the copy that drifted would be the
+ * one nobody was reading — the exact failure `isPrivateIpv4` is written numerically to avoid.
+ *
+ * Accepts both spellings of IPv6, bracketed or bare, because a URL host has the brackets and a
+ * resolver's answer does not.
+ */
+export function isPrivateAddress(address: string): boolean {
+  const bare = address.startsWith('[') ? address.slice(1, -1) : address
+  return bare.includes(':') ? isPrivateIpv6(`[${bare}]`) : isPrivateIpv4(bare)
+}
+
+/**
  * Throws `BlockedUrlError` unless this URL is a plain public web address.
  *
  * Parse FIRST, match SECOND. `http://2130706433/`, `http://0x7f.0.0.1/` and `http://127.1/` are
@@ -131,7 +147,7 @@ export function assertPublicUrl(url: string): void {
   if (host === 'localhost' || host.endsWith('.localhost')) {
     throw new BlockedUrlError('blocked_url', 'localhost')
   }
-  if (host.startsWith('[') ? isPrivateIpv6(host) : isPrivateIpv4(host)) {
+  if (isPrivateAddress(host)) {
     throw new BlockedUrlError('blocked_url', `địa chỉ nội bộ ${host}`)
   }
 }

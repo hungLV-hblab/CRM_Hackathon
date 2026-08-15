@@ -1,0 +1,5 @@
+{
+  "allowedTools": ["WebSearch"],
+  "maxTurns": 8,
+  "timeoutMs": 180000
+}
