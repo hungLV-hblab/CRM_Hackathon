@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 import { config } from 'dotenv'
@@ -237,9 +238,14 @@ export async function toggleAiAuditEvents(): Promise<{ from: boolean; to: boolea
  * produces a card for it.
  *
  * Fixed ids, cleared first: running the suite twice must not accumulate copies.
+ *
+ * `San-e` (real BTC company, `C27`) replaces the old fictional "Ohara Retail Group": it is one
+ * of only two real companies with `is_watched = false`, and it carries no opportunity in the
+ * real dataset, so no other spec's flow ever touches it. Same property Ohara was picked for,
+ * different company because Ohara no longer exists (real data import, feature 260815-1026).
  */
-export const SEEDED_PROPOSAL_COMPANY = 'Ohara Retail Group'
-export const SEEDED_PROPOSAL_VALUE = 'https://ohara-retail.example.jp/gian-hang-moi'
+export const SEEDED_PROPOSAL_COMPANY = 'San-e'
+export const SEEDED_PROPOSAL_VALUE = 'https://san-e.example.jp/gian-hang-moi'
 
 const SEEDED_OBSERVATION_ID = 'eeeeeeee-0009-4000-8000-000000000001'
 const SEEDED_CLAIM_ID = 'eeeeeeee-0009-4000-8000-000000000002'
@@ -248,7 +254,7 @@ const SEEDED_PROPOSAL_ID = 'eeeeeeee-0009-4000-8000-000000000003'
 export async function seedPendingProposal(): Promise<void> {
   const pool = ownerPool()
   const quote = `Website chính thức: ${SEEDED_PROPOSAL_VALUE}`
-  const rawContent = `Ohara Retail Group mở gian hàng mới. ${quote}`
+  const rawContent = `${SEEDED_PROPOSAL_COMPANY} mở gian hàng mới. ${quote}`
 
   try {
     await pool.query('DELETE FROM proposal_decisions WHERE proposal_id = $1', [SEEDED_PROPOSAL_ID])
@@ -291,6 +297,110 @@ export async function seedPendingProposal(): Promise<void> {
                'Sales mở nhầm trang, mất một lượt tiếp cận')`,
       [SEEDED_PROPOSAL_ID, companyId, SEEDED_CLAIM_ID, SEEDED_PROPOSAL_VALUE],
     )
+  } finally {
+    await pool.end()
+  }
+}
+
+/**
+ * Inserts one `snapshot_pages` row for a company, by id. Used by T-6/T-7's e2e spec to give a
+ * FRESH, self-created company (its own, not a real imported one) real content for the "Đọc bản
+ * chụp sau" button to read through the actual pipeline — real BTC content has no funding/
+ * leadership_hire signal anywhere (verified by full line-level diff, see
+ * `t8-watch-cycle-writes-timeline.spec.ts`), so this is the one legitimate way left to exercise
+ * I-6 end to end without touching or fabricating a real company's data.
+ */
+export async function seedSnapshotPage(
+  companyId: string,
+  pageSlug: string,
+  sourceUrl: string,
+  beforeHtml: string,
+  afterHtml: string,
+): Promise<void> {
+  const pool = ownerPool()
+  try {
+    await pool.query(
+      `INSERT INTO snapshot_pages (company_id, page_slug, source_url, before_html, after_html)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (company_id, page_slug) DO UPDATE
+         SET source_url = EXCLUDED.source_url, before_html = EXCLUDED.before_html, after_html = EXCLUDED.after_html`,
+      [companyId, pageSlug, sourceUrl, beforeHtml, afterHtml],
+    )
+  } finally {
+    await pool.end()
+  }
+}
+
+/** The id Sales' browser ends up on after opening a company's profile — `/cong-ty/<id>`. */
+export async function companyIdByName(companyName: string): Promise<string> {
+  const pool = ownerPool()
+  try {
+    const { rows } = await pool.query('SELECT id FROM companies WHERE name = $1', [companyName])
+    if (rows.length === 0) throw new Error(`No company named "${companyName}"`)
+    return rows[0].id
+  } finally {
+    await pool.end()
+  }
+}
+
+/**
+ * Seeds one system-authored timeline entry directly (observation → claim → entry), for tests
+ * that verify the UI's display/interaction with a zone-4 row (label, quote click-through, delete
+ * with reason) without depending on the watch cycle actually detecting real content — see
+ * `t8-watch-cycle-writes-timeline.spec.ts` test 3's KNOWN LIMITATION note for why that path is
+ * unavailable against the real BTC dataset without `ANTHROPIC_API_KEY`. `crm_owner`, not the
+ * product's own write path — this is scenario setup, same category as `seedPendingProposal`.
+ */
+export async function seedSystemTimelineEntry(
+  companyName: string,
+  description: string,
+  quoteText: string,
+): Promise<string> {
+  const pool = ownerPool()
+  const rawContent = `${description} ${quoteText}`
+  // Deterministic hex suffix from the company name, so re-running the harness on the same
+  // company reuses (and clears) the same three rows instead of accumulating new ones.
+  const suffix = createHash('sha256').update(companyName).digest('hex').slice(0, 12)
+  const observationId = `ffffffff-0001-4000-8000-${suffix}`
+  const claimId = `ffffffff-0002-4000-8000-${suffix}`
+  const entryId = `ffffffff-0003-4000-8000-${suffix}`
+
+  try {
+    await pool.query('DELETE FROM timeline_entries WHERE id = $1', [entryId])
+    await pool.query('DELETE FROM claims WHERE id = $1', [claimId])
+    await pool.query('DELETE FROM observations WHERE id = $1', [observationId])
+
+    const { rows } = await pool.query('SELECT id FROM companies WHERE name = $1', [companyName])
+    if (rows.length === 0) throw new Error(`No company named "${companyName}". Run \`pnpm seed\` first.`)
+    const companyId = rows[0].id
+
+    await pool.query(
+      `INSERT INTO observations (id, company_id, source_url, raw_content, extractor_version,
+                                 content_hash, fetch_status)
+       VALUES ($1, $2, 'https://example.test/harness', $3, 't8-harness', $4, 'ok')`,
+      [observationId, companyId, rawContent, `t8-harness-${entryId}`],
+    )
+    await pool.query(
+      `INSERT INTO claims (id, company_id, observation_id, statement, signal_type, confidence,
+                           quote_text, quote_start, quote_end, trigger_context)
+       VALUES ($1, $2, $3, $4, 'expansion', 'likely', $5, $6, $7, 'watch_cycle')`,
+      [
+        claimId,
+        companyId,
+        observationId,
+        description,
+        quoteText,
+        rawContent.indexOf(quoteText),
+        rawContent.indexOf(quoteText) + quoteText.length,
+      ],
+    )
+    await pool.query(
+      `INSERT INTO timeline_entries (id, company_id, entry_type, occurred_at, description,
+                                     created_by, source_claim_id)
+       VALUES ($1, $2, 'system_entry', now(), $3, 'system', $4)`,
+      [entryId, companyId, description, claimId],
+    )
+    return entryId
   } finally {
     await pool.end()
   }

@@ -83,7 +83,7 @@ test('T-B · nút chính mang nền thương hiệu, nút phá huỷ thì không
 
   // A destructive action never wears the brand colour — CLAUDE.md's forbidden list.
   await page.goto('/cong-ty')
-  await page.getByRole('link', { name: 'Sakura Manufacturing KK' }).click()
+  await page.getByRole('link', { name: 'Keyware Solution' }).click()
   const danger = page.getByRole('button', { name: 'Xoá' }).first()
   await expect(danger).toBeVisible()
   expect(await styleOf(danger, 'background-color')).not.toBe(BRAND_400)
@@ -102,9 +102,9 @@ test('T-C · nhãn của máy mang màu tím, nhãn dữ liệu người nhập 
    * fresh seed creates NO observations and NO proposals, and an assertion that depends on which
    * specs ran first is an assertion that reports run order, not colour.
    *
-   * Marlin is the one company no other spec touches, so reading it disturbs nobody.
+   * Toyoshingo is a real BTC company no other spec touches, so reading it disturbs nobody.
    */
-  await page.getByRole('link', { name: 'Marlin Product Labs' }).click()
+  await page.getByRole('link', { name: 'Toyoshingo' }).click()
   await page.getByRole('button', { name: 'Đọc bản chụp sau' }).click()
 
   const machineBadge = page.getByText('Vùng đọc — do AI sinh').first()

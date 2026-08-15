@@ -28,7 +28,7 @@ test('công ty chi tiết: một cột ở 375, hai cột ở 1440', async ({ pa
   await page.getByLabel('Email').fill(SALES.email)
   await page.getByLabel('Mật khẩu').fill(SALES.password)
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
-  await page.getByRole('link', { name: 'Sakura Manufacturing KK' }).click()
+  await page.getByRole('link', { name: 'SAS' }).click()
   await expect(page.getByRole('heading', { name: 'Dòng thời gian' })).toBeVisible()
 
   for (const [width, expected] of [[375, 1], [1440, 2]] as const) {
