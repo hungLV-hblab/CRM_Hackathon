@@ -131,6 +131,16 @@ services:
     # spend somebody's subscription quota from outside.
     expose:
       - '4700'
+    # The third auth path (ADR-0042): `docker compose exec agent-runtime claude /login` writes a
+    # session into $HOME, and $HOME is this volume, so the login survives `up --build` instead of
+    # being wiped by every rebuild.
+    #
+    # A named volume, NOT a bind mount of the host's `~/.claude` — that is option D of ADR-0038,
+    # rejected because it puts a personal credential path into a committed compose file. Nothing
+    # here names any host directory, and the volume is EMPTY on a fresh checkout, so a judge who
+    # never logs in gets the documented off state.
+    volumes:
+      - agent-claude-home:/claude-home
 
   web:
     build:
@@ -153,3 +163,7 @@ services:
 
 volumes:
   postgres-data:
+  # Holds a real credential, so `pnpm reset` (`down -v`) logs you out as well as dropping the
+  # database. That is the intended blast radius of "reset": one command that leaves nothing of
+  # this stack behind on the machine.
+  agent-claude-home:

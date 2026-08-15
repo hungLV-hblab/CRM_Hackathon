@@ -89,10 +89,16 @@ export class AgentRuntimeClient {
     return (await response.json()) as AgentRunResult
   }
 
-  /** Used at boot to say in the log which brain is actually running (ADR-0014). */
-  async health(): Promise<{ skills: string[]; authMode: string }> {
+  /**
+   * Used at boot to say in the log which brain is actually running (ADR-0014).
+   *
+   * `authMode` is nullable because "no credential at all" is a real state of that container and
+   * a different one from any of the three ways of being authenticated — it answers /health with
+   * `null` there rather than naming a credential it does not have.
+   */
+  async health(): Promise<{ skills: string[]; authMode: string | null }> {
     const response = await fetch(`${this.baseUrl}/health`)
     if (!response.ok) throw new AgentRuntimeError('unreachable', `health trả mã ${response.status}`)
-    return (await response.json()) as { skills: string[]; authMode: string }
+    return (await response.json()) as { skills: string[]; authMode: string | null }
   }
 }

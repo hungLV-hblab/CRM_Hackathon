@@ -2,8 +2,11 @@ import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } fro
 import { and, desc, eq, isNull, lte, ne, notInArray, or, sql } from 'drizzle-orm'
 
 import {
+  AUTO_WRITE_CONFIDENCE,
+  AUTO_WRITE_SIGNALS,
   CLOSED_STAGES,
   type AutoNextStepMap,
+  type AutoWriteSignal,
   type ClaimDto,
   type UndoResultDto,
 } from '@crm/contracts'
@@ -44,17 +47,6 @@ import { dueDateFor, dueDaysFor, dueReasonFor } from './next-step-due-date'
  *   I-9  `next-step-due-date.ts` — the date comes from the urgency table, never from a model.
  */
 
-/**
- * I-6, half one. Two signal types, and the choice is a product judgement written down: a
- * funding round and a new decision-maker both open a window that closes on its own, so being
- * a day late costs the deal. `expansion` and `mass_hiring` are real news with no such clock,
- * so they go through the review queue where a person picks the moment.
- */
-const AUTO_WRITE_SIGNALS = ['funding', 'leadership_hire'] as const
-type AutoWriteSignal = (typeof AUTO_WRITE_SIGNALS)[number]
-
-/** I-6, half two. `speculative` never causes a write into official data — rule 4 of CLAUDE.md. */
-const AUTO_WRITE_CONFIDENCE = ['certain', 'likely'] as const
 
 /**
  * The sentence is built by CODE from a fixed opener plus the finding's own statement. The

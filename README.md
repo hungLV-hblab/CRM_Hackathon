@@ -61,12 +61,22 @@ claude setup-token          # trên máy đã đăng nhập Claude, in ra một 
 
 Rồi `pnpm start` như bình thường — `agent-runtime` là service trong cùng compose, không phải chạy tay.
 
+**Không muốn để token cá nhân trong `.env`?** Bỏ trống `CLAUDE_CODE_OAUTH_TOKEN` và đăng nhập thẳng trong container ([ADR-0042](docs/decisions/0042-dang-nhap-trong-container-la-duong-xac-thuc-thu-ba-va-no-song-trong-volume-rieng.md)). `AGENT_RUNTIME_URL` và `AGENT_TOKEN` vẫn bắt buộc — chúng mới là công tắc bật:
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file .env exec agent-runtime claude /login
+```
+
+Phiên đăng nhập nằm trong volume `agent-claude-home`, sống qua `up --build`, nên chỉ làm một lần. `pnpm reset` (`down -v`) xoá nó cùng với CSDL.
+
 Kiểm nó lên chưa:
 
 ```bash
 docker compose -f infra/docker-compose.yml exec api wget -qO- http://agent-runtime:4700/health
 # {"ok":true,"skills":["discover-sources","extract-claims"],"authMode":"oauth",...}
 ```
+
+`authMode` nói credential nào **thật sự** đang chạy, không phải cái nào được cấu hình: `oauth` (biến trong `.env`) · `api_key` · `cli_login` (đăng nhập trong container) · `null` (chưa có gì — mọi lượt chạy sẽ trả `not_authenticated`). Log boot của `agent-runtime` in đúng thông tin đó.
 
 Ba điều nên biết trước khi bật:
 

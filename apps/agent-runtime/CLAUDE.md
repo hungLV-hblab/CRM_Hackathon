@@ -28,6 +28,10 @@ Mọi nới lỏng ở đây cần một ADR.
 
 Thiếu cấu hình cũng vậy — **mất năng lực, không phải chết**. Xem [ADR-0041](../../docs/decisions/0041-thieu-cau-hinh-la-mat-nang-luc-khong-phai-chet-va-vi-sao-khong-ghi-audit-tu-day.md).
 
+Nhưng **"thiếu cấu hình" phải hỏi đúng chỗ**. Có **ba** đường xác thực, không phải hai: hai biến môi trường, và một phiên `claude /login` chạy ngay trong container — phiên này **không để lại biến nào**, nó nằm ở `$HOME/.claude/.credentials.json` trong volume `agent-claude-home` ([ADR-0042](../../docs/decisions/0042-dang-nhap-trong-container-la-duong-xac-thuc-thu-ba-va-no-song-trong-volume-rieng.md)). Chỉ hỏi `process.env` là chặn nhầm một container xác thực được thật.
+
+`resolveAuthMode()` trong `claude-cli.ts` là **nguồn sự thật duy nhất** cho việc này. `/run`, `/health` và log boot đều hỏi nó. Đừng đọc lại biến môi trường ở chỗ thứ hai — hai bản suy luận song song chính là thứ đã lệch nhau một lần.
+
 ## Trước khi sửa
 
 | Sửa gì | Đọc trước |

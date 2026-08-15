@@ -53,9 +53,16 @@ COPY --from=build /repo/apps/agent-runtime/dist apps/agent-runtime/dist
 # prompt is editing a file in here plus a container restart (see skill-registry.ts).
 COPY apps/agent-runtime/skills apps/agent-runtime/skills
 
-# The CLI writes nothing to $HOME (`--no-session-persistence`), but it still expects the
-# variable to exist, and `childEnv()` in claude-cli.ts passes exactly this one through.
-ENV HOME=/tmp
+# $HOME IS a credential store, not a formality — `claude /login` run inside this container
+# writes the session to `$HOME/.claude/.credentials.json`, and that file is the third way this
+# process can be authenticated (ADR-0042). `--no-session-persistence` suppresses transcripts,
+# not the login.
+#
+# Its own directory rather than /tmp for two reasons: compose mounts a named volume here so the
+# login survives `up --build`, and /tmp is also where `claude-cli.ts` mkdtemps the sandbox cwd —
+# a volume over it would persist scratch directories forever and mix them with the credential.
+ENV HOME=/claude-home
+RUN mkdir -p /claude-home
 
 WORKDIR /repo/apps/agent-runtime
 CMD ["node", "dist/main.js"]
